@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Usuarios autenticados pueden acceder a sus datos
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Empresas - solo usuarios autenticados
+    match /companies/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Tareas - solo usuarios autenticados
+    match /tasks/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Para desarrollo - permitir acceso completo temporal
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "companies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "mode": "ASCENDING" },
+        { "fieldPath": "createdAt", "mode": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "companies", 
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "mode": "ASCENDING" },
+        { "fieldPath": "status", "mode": "ASCENDING" },
+        { "fieldPath": "isDeleted", "mode": "ASCENDING" },
+        { "fieldPath": "name", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "companies",
+      "queryScope": "COLLECTION", 
+      "fields": [
+        { "fieldPath": "createdBy", "mode": "ASCENDING" },
+        { "fieldPath": "industry", "mode": "ASCENDING" },
+        { "fieldPath": "isDeleted", "mode": "ASCENDING" },
+        { "fieldPath": "name", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "mode": "ASCENDING" },
+        { "fieldPath": "createdAt", "mode": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tasks", 
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "mode": "ASCENDING" },
+        { "fieldPath": "dueDate", "mode": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "mode": "ASCENDING" },
+        { "fieldPath": "createdAt", "mode": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
