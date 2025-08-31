@@ -74,6 +74,7 @@ import { CompanyEnhanced } from '@/types/company-enhanced';
 import { firestoreDateToDate } from '@/lib/utils/dateUtils';
 import { TaskModal } from '@/components/modals/TaskModal';
 import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
+import { CompanyIcon } from '@/components/companies/CompanyIcon';
 
 import { Timestamp } from 'firebase/firestore';
 
@@ -162,30 +163,14 @@ const SortableCompanyCard = ({
               >
                 <GripVertical className="h-4 w-4 text-gray-400 group-hover:text-gray-600 group-active:text-blue-500 transition-colors" />
               </div>
-              <div 
-                className={`rounded-lg ${isCollapsed ? 'p-2' : 'p-2'} flex items-center justify-center`}
-                style={{ backgroundColor: `${company.color}20` }}
-              >
-                {company.logoUrl ? (
-                  <img 
-                    src={company.logoUrl} 
-                    alt={`Logo de ${company.name}`}
-                    className={`${isCollapsed ? 'h-6 w-6' : 'h-5 w-5'} object-cover rounded`}
-                    onError={(e) => {
-                      // Si la imagen falla, mostrar el icono predeterminado
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                ) : null}
-                <div 
-                  className={`${company.logoUrl ? 'hidden' : ''} ${isCollapsed ? 'h-6 w-6' : 'h-5 w-5'}`}
-                  style={{ color: company.color }}
-                >
-                  {getCompanyIcon(company)}
-                </div>
-              </div>
+              <CompanyIcon
+                logoUrl={company.logoUrl}
+                defaultIcon={company.defaultIcon}
+                name={company.name}
+                size={isCollapsed ? 'sm' : 'sm'}
+                color={company.color}
+                className="flex-shrink-0"
+              />
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
                   <CardTitle 
@@ -722,7 +707,9 @@ export const CompanyTasksBoard = ({ className }: CompanyTasksBoardProps) => {
   };
 
   const handleOpenCompanyTasksPage = (company: CompanyEnhanced) => {
-    window.location.hash = `company=${company.id}`;
+    console.log('🔗 CompanyTasksBoard - Opening company tasks page for:', company.name, company.id);
+    // Usar router.push para mejor compatibilidad móvil
+    router.push(`/dashboard#company=${company.id}`);
   };
 
   const handleCompleteTask = async (e: React.MouseEvent, task: Task) => {
@@ -800,35 +787,25 @@ export const CompanyTasksBoard = ({ className }: CompanyTasksBoardProps) => {
                       className="relative group transition-all duration-200 transform hover:scale-110"
                       title={`${isSelected ? 'Ocultar' : 'Mostrar'} ${company.name}`}
                     >
-                      <div
-                        className={`
-                          w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200
-                          ${isSelected 
-                            ? 'shadow-lg' 
-                            : 'shadow-md hover:shadow-lg opacity-40 grayscale'
-                          }
-                        `}
-                        style={{ backgroundColor: isSelected ? company.color : '#9CA3AF' }}
-                      >
-                        {company.logoUrl ? (
-                          <img 
-                            src={company.logoUrl} 
-                            alt={`Logo de ${company.name}`}
-                            className="w-6 h-6 object-cover rounded"
-                            onError={(e) => {
-                              // Si la imagen falla, mostrar el icono predeterminado
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div 
-                          className={`${company.logoUrl ? 'hidden' : ''} w-6 h-6 flex items-center justify-center text-white`}
-                        >
-                          {getCompanyIcon(company)}
-                        </div>
-                      </div>
+                                          <div
+                      className={`
+                        w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200
+                        ${isSelected 
+                          ? 'shadow-lg' 
+                          : 'shadow-md hover:shadow-lg opacity-40 grayscale'
+                        }
+                      `}
+                      style={{ backgroundColor: isSelected ? company.color : '#9CA3AF' }}
+                    >
+                      <CompanyIcon
+                        logoUrl={company.logoUrl}
+                        defaultIcon={company.defaultIcon}
+                        name={company.name}
+                        size="sm"
+                        color={isSelected ? company.color : '#FFFFFF'}
+                        className="w-6 h-6"
+                      />
+                    </div>
                       
                       {/* Tooltip */}
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
@@ -878,14 +855,22 @@ export const CompanyTasksBoard = ({ className }: CompanyTasksBoardProps) => {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div 
-                      className="p-2 rounded-lg"
-                      style={{ backgroundColor: `${company.color}20` }}
-                    >
-                      <Building2 className="h-5 w-5" style={{ color: company.color }} />
-                    </div>
+                    <CompanyIcon
+                      logoUrl={company.logoUrl}
+                      defaultIcon={company.defaultIcon}
+                      name={company.name}
+                      size="sm"
+                      color={company.color}
+                      className="flex-shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg truncate">{company.name}</CardTitle>
+                      <CardTitle 
+                        className="text-lg truncate cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={() => handleOpenCompanyTasksPage(company)}
+                        title="Ver todas las tareas pendientes"
+                      >
+                        {company.name}
+                      </CardTitle>
                       <CardDescription className="text-sm">
                         {stats.completedThisWeek} completadas esta semana
                       </CardDescription>

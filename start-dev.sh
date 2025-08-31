@@ -1,62 +1,78 @@
 #!/bin/bash
 
-echo "🚀 Iniciando entorno de desarrollo Octopus..."
-echo ""
+echo "🚀 Iniciando Octopus en modo desarrollo..."
+
+# Verificar si Node.js está instalado
+if ! command -v node &> /dev/null; then
+    echo "❌ Node.js no está instalado. Por favor instala Node.js primero."
+    exit 1
+fi
+
+# Verificar si npm está instalado
+if ! command -v npm &> /dev/null; then
+    echo "❌ npm no está instalado. Por favor instala npm primero."
+    exit 1
+fi
 
 # Verificar si Firebase CLI está instalado
 if ! command -v firebase &> /dev/null; then
-    echo "❌ Firebase CLI no está instalado. Instálalo con: npm install -g firebase-tools"
-    exit 1
+    echo "⚠️  Firebase CLI no está instalado. Instalando..."
+    npm install -g firebase-tools
 fi
 
-# Verificar si el proyecto está inicializado
-if [ ! -f "firebase.json" ]; then
-    echo "❌ Firebase no está inicializado. Ejecuta: firebase init"
-    exit 1
+# Verificar si las dependencias están instaladas
+if [ ! -d "node_modules" ]; then
+    echo "📦 Instalando dependencias..."
+    npm install
 fi
 
-echo "✅ Configuración verificada"
+# Verificar si existe el archivo .env
+if [ ! -f ".env.local" ]; then
+    echo "⚠️  Archivo .env.local no encontrado. Copiando desde .env.example..."
+    if [ -f ".env.example" ]; then
+        cp .env.example .env.local
+        echo "✅ Archivo .env.local creado. Por favor configura las variables de entorno."
+    else
+        echo "❌ Archivo .env.example no encontrado."
+        exit 1
+    fi
+fi
+
+echo "🔥 Iniciando emuladores de Firebase..."
+# Iniciar emuladores en segundo plano
+firebase emulators:start --only auth,firestore,storage --import=./firebase-data --export-on-exit=./firebase-data &
+FIREBASE_PID=$!
+
+# Esperar un momento para que los emuladores se inicien
+echo "⏳ Esperando que los emuladores se inicien..."
+sleep 5
+
+echo "🌐 Iniciando servidor de desarrollo de Next.js..."
+# Iniciar Next.js en modo desarrollo
+npm run dev &
+NEXT_PID=$!
+
+echo "✅ Octopus iniciado correctamente!"
 echo ""
+echo "📱 Aplicación: http://localhost:3000"
+echo "🔥 Emuladores Firebase: http://localhost:4000"
+echo "📊 Firestore UI: http://localhost:4000/firestore"
+echo "🔐 Auth UI: http://localhost:4000/auth"
+echo ""
+echo "💡 Para detener los servidores, presiona Ctrl+C"
 
-# Función para limpiar al salir
+# Función para limpiar procesos al salir
 cleanup() {
     echo ""
-    echo "🛑 Deteniendo emuladores..."
-    pkill -f "firebase emulators"
-    echo "✅ Emuladores detenidos"
+    echo "🛑 Deteniendo servidores..."
+    kill $FIREBASE_PID 2>/dev/null
+    kill $NEXT_PID 2>/dev/null
+    echo "✅ Servidores detenidos."
     exit 0
 }
 
-# Capturar Ctrl+C
-trap cleanup SIGINT
+# Capturar señal de interrupción
+trap cleanup SIGINT SIGTERM
 
-echo "🔥 Iniciando emuladores de Firebase..."
-echo "📊 UI del emulador: http://localhost:4000"
-echo "🔐 Auth emulator: localhost:9099"
-echo "🗄️  Firestore emulator: localhost:8080"
-echo "⚡ Functions emulator: localhost:5001"
-echo ""
-
-# Iniciar emuladores en background
-firebase emulators:start --only auth,firestore,functions &
-EMULATOR_PID=$!
-
-# Esperar a que los emuladores estén listos
-echo "⏳ Esperando a que los emuladores estén listos..."
-sleep 10
-
-# Verificar que los emuladores estén ejecutándose
-if ! lsof -i :9099 > /dev/null 2>&1; then
-    echo "❌ Error: Los emuladores no se iniciaron correctamente"
-    exit 1
-fi
-
-echo "✅ Emuladores iniciados correctamente"
-echo ""
-
-echo "🌐 Iniciando servidor de desarrollo..."
-echo "📱 Aplicación: http://localhost:3001"
-echo ""
-
-# Iniciar servidor de desarrollo
-npm run dev
+# Mantener el script ejecutándose
+wait

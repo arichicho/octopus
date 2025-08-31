@@ -286,7 +286,7 @@ export function CompaniesConfigView() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <CompanyAvatar company={company} size="lg" />
+                      <CompanyAvatar companyId={company.id} size="lg" />
                       <div className="flex-1 min-w-0">
                         <CardTitle className="text-lg mb-1">{company.name}</CardTitle>
                         <CardDescription className="text-sm line-clamp-2">

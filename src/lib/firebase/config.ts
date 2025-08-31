@@ -63,16 +63,14 @@ if (typeof window !== 'undefined') {
   console.log('🔐 Persistencia de autenticación configurada');
 }
 
-// Configurar emuladores para desarrollo
-if (appConfig.useEmulator && typeof window !== 'undefined') {
-  if (appConfig.nodeEnv === 'development') {
-    try {
-      connectAuthEmulator(auth, `http://${appConfig.authEmulatorHost}`, { disableWarnings: true });
-      connectFirestoreEmulator(db, 'localhost', 8081);
-      console.log('🔧 Firebase emuladores conectados');
-    } catch (error) {
-      console.log('⚠️  Error conectando emuladores (puede estar ya conectado)', error);
-    }
+// Configurar emuladores SOLO para desarrollo
+if (appConfig.useEmulator && typeof window !== 'undefined' && appConfig.nodeEnv === 'development') {
+  try {
+    connectAuthEmulator(auth, `http://${appConfig.authEmulatorHost}`, { disableWarnings: true });
+    connectFirestoreEmulator(db, 'localhost', 8081);
+    console.log('🔧 Firebase emuladores conectados (DESARROLLO)');
+  } catch (error) {
+    console.log('⚠️  Error conectando emuladores (puede estar ya conectado)', error);
   }
 }
 
@@ -81,6 +79,7 @@ let analytics = null;
 if (typeof window !== 'undefined' && appConfig.nodeEnv === 'production') {
   try {
     analytics = getAnalytics(app);
+    console.log('📊 Analytics inicializado para producción');
   } catch (error) {
     console.warn('Analytics no pudo ser inicializado:', error);
   }

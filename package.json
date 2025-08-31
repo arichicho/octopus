@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "build:static": "next build",
-    "clean:txt": "find out -name '*.txt' -type f -delete 2>/dev/null || true",
+    "clean": "rm -rf out .next",
     "start": "next start",
     "lint": "eslint",
     "deploy": "npm run build:static && firebase deploy --only hosting:theceo",

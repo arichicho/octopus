@@ -32,7 +32,7 @@ import { Company } from '@/types/company';
 import { CompanyEnhanced } from '@/types/company-enhanced';
 
 interface BaseFieldProps {
-  control: Control<TaskFormData, any, FieldValues>;
+  control: Control<TaskFormData>;
   name: keyof TaskFormData;
   label: string;
   description?: string;

@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, Clock, AlertTriangle, Calendar, Plus } from 'lucide-react';
-import { CompanyEnhanced, Task, TaskStatus } from '@/types';
+import { Task, TaskStatus } from '@/types';
+import { CompanyEnhanced } from '@/types/company-enhanced';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -88,7 +89,7 @@ const CompanyTasksModal: React.FC<CompanyTasksModalProps> = ({
   const isOverdue = (dueDate: Date | null | undefined) => {
     if (!dueDate) return false;
     try {
-      const dateObj = dueDate instanceof Date ? dueDate : (typeof dueDate.toDate === 'function' ? dueDate.toDate() : new Date(dueDate));
+      const dateObj = dueDate instanceof Date ? dueDate : new Date(dueDate as any);
       return dateObj < new Date();
     } catch {
       return false;
@@ -160,7 +161,7 @@ const CompanyTasksModal: React.FC<CompanyTasksModalProps> = ({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
               {pendingTasks.map((task) => {
-                const dueDate = task.dueDate ? (task.dueDate instanceof Date ? task.dueDate : (typeof task.dueDate.toDate === 'function' ? task.dueDate.toDate() : new Date(task.dueDate as any))) : null;
+                const dueDate = task.dueDate ? (task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate as any)) : null;
                 
                 return (
                   <Card

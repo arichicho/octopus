@@ -3,6 +3,7 @@
 import { Sidebar } from '@/components/common/Sidebar';
 import { SidebarProvider, useSidebar } from '@/lib/context/SidebarContext';
 import { ModalProvider, useModal } from '@/lib/context/ModalContext';
+import { DragDropProvider } from '@/lib/context/DragDropContext';
 import { CompanyModal } from '@/components/companies/CompanyModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { Button } from '@/components/ui/button';
@@ -108,7 +109,9 @@ export default function DashboardLayout({
     <AuthGuard requireAuth={true}>
       <SidebarProvider>
         <ModalProvider>
-          <DashboardContent>{children}</DashboardContent>
+          <DragDropProvider>
+            <DashboardContent>{children}</DashboardContent>
+          </DragDropProvider>
         </ModalProvider>
       </SidebarProvider>
     </AuthGuard>

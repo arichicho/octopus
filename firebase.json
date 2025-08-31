@@ -4,14 +4,24 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "site": "theceo", 
+    "site": "theceo",
     "public": "out",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
     ],
-    "cleanUrls": true
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "apphosting": {
+    "backend": "octopus-app"
   },
   "emulators": {
     "auth": {
@@ -23,6 +33,12 @@
     "ui": {
       "enabled": true,
       "port": 4001
+    },
+    "hub": {
+      "port": 4400
+    },
+    "logging": {
+      "port": 4500
     }
   }
 }

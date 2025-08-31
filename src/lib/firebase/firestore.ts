@@ -524,3 +524,78 @@ export const getCompanyPeople = async (companyId: string): Promise<Person[]> => 
     { field: 'companies', operator: 'array-contains', value: companyId }
   ], 'name', 'asc');
 };
+
+export const getUsersByCompany = async (companyId: string): Promise<User[]> => {
+  try {
+    console.log('🔍 Getting users for company:', companyId);
+    
+    if (isMockMode()) {
+      console.warn('Firestore no configurado. Modo demo activado.');
+      const users = mockDataStorage.get('users') || [];
+      // En modo mock, devolver usuarios que tengan la empresa en su array de companies
+      return users.filter((user: User) => 
+        user.companies && user.companies.some(company => company.companyId === companyId)
+      );
+    }
+
+    if (!db) {
+      console.error('Firestore no configurado');
+      return [];
+    }
+
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('companies', 'array-contains', { companyId, role: 'admin' }));
+    
+    const querySnapshot = await getDocs(q);
+    const users: User[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const userData = doc.data();
+      users.push({
+        id: doc.id,
+        ...userData,
+        createdAt: userData.createdAt?.toDate() || new Date(),
+        lastActive: userData.lastActive?.toDate() || new Date(),
+      } as User);
+    });
+
+    // También buscar usuarios con roles 'editor' y 'viewer'
+    const editorQuery = query(usersRef, where('companies', 'array-contains', { companyId, role: 'editor' }));
+    const viewerQuery = query(usersRef, where('companies', 'array-contains', { companyId, role: 'viewer' }));
+    
+    const [editorSnapshot, viewerSnapshot] = await Promise.all([
+      getDocs(editorQuery),
+      getDocs(viewerQuery)
+    ]);
+
+    editorSnapshot.forEach((doc) => {
+      const userData = doc.data();
+      if (!users.find(u => u.id === doc.id)) {
+        users.push({
+          id: doc.id,
+          ...userData,
+          createdAt: userData.createdAt?.toDate() || new Date(),
+          lastActive: userData.lastActive?.toDate() || new Date(),
+        } as User);
+      }
+    });
+
+    viewerSnapshot.forEach((doc) => {
+      const userData = doc.data();
+      if (!users.find(u => u.id === doc.id)) {
+        users.push({
+          id: doc.id,
+          ...userData,
+          createdAt: userData.createdAt?.toDate() || new Date(),
+          lastActive: userData.lastActive?.toDate() || new Date(),
+        } as User);
+      }
+    });
+
+    console.log('✅ Found users for company:', users.length);
+    return users;
+  } catch (error) {
+    console.error('❌ Error getting users by company:', error);
+    return [];
+  }
+};

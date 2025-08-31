@@ -34,6 +34,12 @@ interface CompanyEnhancedStore {
   deleteCompanyAction: (companyId: string) => Promise<void>;
   restoreCompanyAction: (companyId: string) => Promise<void>;
   
+  // Actions - Bulk Operations
+  bulkUpdateCompanies: (companyIds: string[], updates: Partial<CompanyFormDataEnhanced>) => Promise<void>;
+  bulkDeleteCompanies: (companyIds: string[]) => Promise<void>;
+  bulkRestoreCompanies: (companyIds: string[]) => Promise<void>;
+  bulkArchiveCompanies: (companyIds: string[]) => Promise<void>;
+  
   // Actions - Utility
   setSelectedCompany: (company: CompanyEnhanced | null) => void;
   reorderCompanies: (reorderedCompanies: CompanyEnhanced[]) => void;
@@ -273,6 +279,126 @@ export const useCompanyEnhancedStore = create<CompanyEnhancedStore>((set, get) =
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Error al restaurar empresa', 
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  // Bulk operations
+  bulkUpdateCompanies: async (companyIds, updates) => {
+    set({ loading: true, error: null });
+    try {
+      const promises = companyIds.map(id => updateCompany(id, updates));
+      await Promise.all(promises);
+      
+      set((state) => {
+        const updatedCompanies = state.companies.map(company =>
+          companyIds.includes(company.id) 
+            ? { ...company, ...updates, updatedAt: new Date() }
+            : company
+        );
+        
+        const updatedActiveCompanies = state.activeCompanies.map(company =>
+          companyIds.includes(company.id) 
+            ? { ...company, ...updates, updatedAt: new Date() }
+            : company
+        );
+
+        const updatedFilteredCompanies = state.filteredCompanies.map(company =>
+          companyIds.includes(company.id) 
+            ? { ...company, ...updates, updatedAt: new Date() }
+            : company
+        );
+
+        return {
+          companies: updatedCompanies,
+          activeCompanies: updatedActiveCompanies,
+          filteredCompanies: updatedFilteredCompanies,
+          loading: false,
+        };
+      });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Error al actualizar empresas', 
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  bulkDeleteCompanies: async (companyIds) => {
+    set({ loading: true, error: null });
+    try {
+      const promises = companyIds.map(id => deleteCompany(id));
+      await Promise.all(promises);
+      
+      set((state) => ({
+        companies: state.companies.filter(c => !companyIds.includes(c.id)),
+        activeCompanies: state.activeCompanies.filter(c => !companyIds.includes(c.id)),
+        filteredCompanies: state.filteredCompanies.filter(c => !companyIds.includes(c.id)),
+        selectedCompany: state.selectedCompany && companyIds.includes(state.selectedCompany.id) 
+          ? null 
+          : state.selectedCompany,
+        loading: false,
+      }));
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Error al eliminar empresas', 
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  bulkRestoreCompanies: async (companyIds) => {
+    set({ loading: true, error: null });
+    try {
+      const promises = companyIds.map(id => restoreCompany(id));
+      await Promise.all(promises);
+      
+      // Refetch companies to get the restored ones
+      const userId = undefined; // You might want to pass this from the component
+      await get().fetchCompanies(userId);
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Error al restaurar empresas', 
+        loading: false 
+      });
+      throw error;
+    }
+  },
+
+  bulkArchiveCompanies: async (companyIds) => {
+    set({ loading: true, error: null });
+    try {
+      const promises = companyIds.map(id => updateCompany(id, { status: 'archived' }));
+      await Promise.all(promises);
+      
+      set((state) => {
+        const updatedCompanies = state.companies.map(company =>
+          companyIds.includes(company.id) 
+            ? { ...company, status: 'archived', updatedAt: new Date() }
+            : company
+        );
+        
+        const updatedActiveCompanies = state.activeCompanies.filter(c => !companyIds.includes(c.id));
+        const updatedFilteredCompanies = state.filteredCompanies.map(company =>
+          companyIds.includes(company.id) 
+            ? { ...company, status: 'archived', updatedAt: new Date() }
+            : company
+        );
+
+        return {
+          companies: updatedCompanies,
+          activeCompanies: updatedActiveCompanies,
+          filteredCompanies: updatedFilteredCompanies,
+          loading: false,
+        };
+      });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Error al archivar empresas', 
         loading: false 
       });
       throw error;

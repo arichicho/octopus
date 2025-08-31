@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -42,11 +42,13 @@ export const Sidebar = () => {
   const { openCompanyModal } = useModal();
   const { user, signOut } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    console.log('🔍 Sidebar - Pathname actual:', pathname);
+  }, [pathname]);
 
   const handleSignOut = async () => {
     try {
@@ -54,6 +56,11 @@ export const Sidebar = () => {
     } catch (error) {
       console.error('Error signing out:', error);
     }
+  };
+
+  const handleNavigation = (href: string) => {
+    console.log('🔗 Sidebar - Navegando a:', href);
+    router.push(href);
   };
 
   const navigation = [
@@ -80,14 +87,8 @@ export const Sidebar = () => {
         },
         {
           title: 'Historial',
-          href: '/dashboard/history',
+          href: '/dashboard#history',
           icon: History,
-          badge: null
-        },
-        {
-          title: 'Empresas',
-          href: '/dashboard/companies',
-          icon: Building2,
           badge: null
         },
         {
@@ -154,6 +155,12 @@ export const Sidebar = () => {
           badge: null
         },
         {
+          title: 'Empresas',
+          href: '/dashboard/companies',
+          icon: Building2,
+          badge: null
+        },
+        {
           title: 'Perfil',
           href: '/dashboard/settings/profile',
           icon: Users,
@@ -188,12 +195,6 @@ export const Sidebar = () => {
           href: '/dashboard/settings/api',
           icon: Database,
           badge: null
-        },
-        {
-          title: 'Empresas',
-          href: '/dashboard/settings/companies',
-          icon: Building2,
-          badge: null
         }
       ]
     }
@@ -203,6 +204,9 @@ export const Sidebar = () => {
     if (!mounted) return false;
     if (href === '/dashboard') {
       return pathname === '/dashboard';
+    }
+    if (href === '/dashboard#history') {
+      return pathname === '/dashboard' && typeof window !== 'undefined' && window.location.hash === '#history';
     }
     return pathname.startsWith(href);
   };
@@ -278,10 +282,10 @@ export const Sidebar = () => {
                   
                   return (
                     <li key={item.href} role="listitem">
-                      <Link
-                        href={item.href}
+                      <button
+                        onClick={() => handleNavigation(item.href)}
                         className={cn(
-                          "flex items-center px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset",
+                          "w-full flex items-center px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset hover:bg-gray-100 dark:hover:bg-gray-800",
                           active
                             ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-r-2 border-blue-600"
                             : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
@@ -294,7 +298,7 @@ export const Sidebar = () => {
                         )} aria-hidden="true" />
                         {!collapsed && (
                           <>
-                            <span className="ml-3 flex-1 truncate">{item.title}</span>
+                            <span className="ml-3 flex-1 truncate text-left">{item.title}</span>
                             {item.badge && (
                               <Badge 
                                 variant={item.badge === 'Nuevo' ? 'default' : 'secondary'}
@@ -305,7 +309,7 @@ export const Sidebar = () => {
                             )}
                           </>
                         )}
-                      </Link>
+                      </button>
                     </li>
                   );
                 })}

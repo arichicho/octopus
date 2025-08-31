@@ -71,6 +71,7 @@ export const CompanyIcon: React.FC<CompanyIconProps> = ({
   showFallback = true,
 }) => {
   const [imageError, setImageError] = React.useState(false);
+  const [imageLoading, setImageLoading] = React.useState(true);
   
   // Size mappings
   const sizeClasses = {
@@ -95,21 +96,41 @@ export const CompanyIcon: React.FC<CompanyIconProps> = ({
   // Get the icon component
   const IconComponent = iconMap[defaultIcon] || Building;
 
+  // Reset error state when logoUrl changes
+  React.useEffect(() => {
+    if (logoUrl) {
+      setImageError(false);
+      setImageLoading(true);
+    }
+  }, [logoUrl]);
+
   // If we have a logo URL and it hasn't errored, show the image
   if (logoUrl && !imageError) {
     return (
       <div 
         className={cn(
           containerSize,
-          'relative rounded-lg overflow-hidden flex items-center justify-center',
+          'relative rounded-lg overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-800',
           className
         )}
       >
+        {imageLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded w-full h-full"></div>
+          </div>
+        )}
         <img
           src={logoUrl}
           alt={`Logo de ${name}`}
-          className="w-full h-full object-cover"
-          onError={() => setImageError(true)}
+          className={cn(
+            "w-full h-full object-cover transition-opacity duration-200",
+            imageLoading ? "opacity-0" : "opacity-100"
+          )}
+          onLoad={() => setImageLoading(false)}
+          onError={() => {
+            setImageError(true);
+            setImageLoading(false);
+          }}
         />
       </div>
     );
@@ -152,6 +173,7 @@ export const CompanyAvatar: React.FC<CompanyAvatarProps> = ({
   className,
 }) => {
   const [imageError, setImageError] = React.useState(false);
+  const [imageLoading, setImageLoading] = React.useState(true);
   
   // Size mappings
   const sizeClasses = {
@@ -173,21 +195,41 @@ export const CompanyAvatar: React.FC<CompanyAvatarProps> = ({
     return words.slice(0, 2).map(word => word[0]).join('').toUpperCase();
   };
 
+  // Reset error state when logoUrl changes
+  React.useEffect(() => {
+    if (logoUrl) {
+      setImageError(false);
+      setImageLoading(true);
+    }
+  }, [logoUrl]);
+
   // If we have a logo URL and it hasn't errored, show the image
   if (logoUrl && !imageError) {
     return (
       <div 
         className={cn(
           containerSize,
-          'relative rounded-full overflow-hidden',
+          'relative rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800',
           className
         )}
       >
+        {imageLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-full w-full h-full"></div>
+          </div>
+        )}
         <img
           src={logoUrl}
           alt={`Logo de ${name}`}
-          className="w-full h-full object-cover"
-          onError={() => setImageError(true)}
+          className={cn(
+            "w-full h-full object-cover transition-opacity duration-200",
+            imageLoading ? "opacity-0" : "opacity-100"
+          )}
+          onLoad={() => setImageLoading(false)}
+          onError={() => {
+            setImageError(true);
+            setImageLoading(false);
+          }}
         />
       </div>
     );

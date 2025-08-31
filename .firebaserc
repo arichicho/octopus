@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "iamtheoceo"
+  },
+  "targets": {
+    "iamtheoceo": {
+      "hosting": {
+        "theceo": [
+          "iamtheoceo"
+        ]
+      }
+    }
+  }
+}

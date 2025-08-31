@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ExternalLink, Settings, Loader2 } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Settings, Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -37,6 +37,18 @@ export default function HomePage() {
     );
   }
 
+  // Si está autenticado, mostrar loading mientras redirige
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm text-muted-foreground">Redirigiendo al dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="w-full max-w-md mx-auto">
@@ -61,17 +73,12 @@ export default function HomePage() {
               </Alert>
             )}
             
-            {/* Debug info */}
-            <div className="text-xs bg-gray-100 p-2 rounded">
-              <p>Debug: isAuth={isAuthenticated ? 'true' : 'false'}, loading={loading ? 'true' : 'false'}</p>
-              <p>User: {user?.email || 'none'}</p>
-            </div>
-            
             <div className="space-y-4">
               {isFirebaseConfigured ? (
                 <Button asChild className="w-full">
                   <Link href="/login">
                     Iniciar Sesión
+                    <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
                 </Button>
               ) : (

@@ -22,6 +22,9 @@ interface TaskState {
   clearFilters: () => void;
   setLoading: (loading: boolean) => void;
   applyFilters: () => void;
+  changeTaskPriority: (taskId: string, newPriority: "urgent" | "high" | "medium" | "low") => Promise<{ success: boolean; taskTitle: string; newPriority: string; oldPriority: string }>;
+  changeTaskStatus: (taskId: string, newStatus: "pending" | "in_progress" | "completed" | "cancelled") => Promise<{ success: boolean; taskTitle: string; newStatus: string; oldStatus: string }>;
+  changeTaskAssignment: (taskId: string, newAssignedTo: string[] | null) => Promise<{ success: boolean; taskTitle: string; newAssignedTo: string[] | null; oldAssignedTo: string[] }>;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -110,6 +113,193 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       get().applyFilters();
     } catch (error) {
       console.error('Error updating task:', error);
+      throw error;
+    }
+  },
+
+  // Método específico para drag & drop con optimistic updates
+  moveTaskToWeek: async (taskId: string, newDueDate: Date | null) => {
+    console.log('🔄 TaskStore: Moving task', taskId, 'to date:', newDueDate);
+    
+    const task = get().tasks.find(t => t.id === taskId);
+    if (!task) {
+      console.error('❌ TaskStore: Task not found:', taskId);
+      throw new Error('Task not found');
+    }
+
+    console.log('🔄 TaskStore: Found task:', task.title, 'current date:', task.dueDate);
+
+    // Optimistic update
+    const optimisticUpdate = { dueDate: newDueDate };
+    set((state) => ({
+      tasks: state.tasks.map(t => 
+        t.id === taskId ? { ...t, ...optimisticUpdate } : t
+      ),
+      filteredTasks: state.filteredTasks.map(t => 
+        t.id === taskId ? { ...t, ...optimisticUpdate } : t
+      )
+    }));
+
+    console.log('🔄 TaskStore: Applied optimistic update');
+
+    try {
+      // Actualizar en Firestore
+      await updateTaskFirestore(taskId, optimisticUpdate);
+      console.log('✅ TaskStore: Task moved successfully:', { taskId, newDueDate });
+      
+      // Re-aplicar filtros después de la actualización
+      get().applyFilters();
+      
+      // Retornar información para notificación
+      return {
+        success: true,
+        taskTitle: task.title,
+        newDueDate,
+        oldDueDate: task.dueDate
+      };
+    } catch (error) {
+      console.error('❌ TaskStore: Error moving task:', error);
+      
+      // Rollback en caso de error
+      set((state) => ({
+        tasks: state.tasks.map(t => 
+          t.id === taskId ? { ...t, dueDate: task.dueDate } : t
+        ),
+        filteredTasks: state.filteredTasks.map(t => 
+          t.id === taskId ? { ...t, dueDate: task.dueDate } : t
+        )
+      }));
+      
+      console.log('🔄 TaskStore: Applied rollback due to error');
+      throw error;
+    }
+  },
+
+  // Método para cambiar prioridad con drag & drop
+  changeTaskPriority: async (taskId: string, newPriority: "urgent" | "high" | "medium" | "low") => {
+    console.log('🔄 TaskStore: Changing task priority', taskId, 'to:', newPriority);
+    
+    const task = get().tasks.find(t => t.id === taskId);
+    if (!task) {
+      console.error('❌ TaskStore: Task not found:', taskId);
+      throw new Error('Task not found');
+    }
+
+    console.log('🔄 TaskStore: Found task:', task.title, 'current priority:', task.priority);
+
+    // Optimistic update
+    const optimisticUpdate = { priority: newPriority };
+    set((state) => ({
+      tasks: state.tasks.map(t => 
+        t.id === taskId ? { ...t, priority: newPriority } : t
+      ),
+      filteredTasks: state.filteredTasks.map(t => 
+        t.id === taskId ? { ...t, priority: newPriority } : t
+      )
+    }));
+
+    console.log('🔄 TaskStore: Applied optimistic update for priority');
+
+    try {
+      // Actualizar en Firestore
+      await updateTaskFirestore(taskId, optimisticUpdate);
+      console.log('✅ TaskStore: Task priority changed successfully:', { taskId, newPriority });
+      
+      // Re-aplicar filtros después de la actualización
+      get().applyFilters();
+      
+      // Retornar información para notificación
+      return {
+        success: true,
+        taskTitle: task.title,
+        newPriority,
+        oldPriority: task.priority
+      };
+    } catch (error) {
+      console.error('❌ TaskStore: Error changing task priority:', error);
+      
+      // Rollback en caso de error
+      set((state) => ({
+        tasks: state.tasks.map(t => 
+          t.id === taskId ? { ...t, priority: task.priority } : t
+        ),
+        filteredTasks: state.filteredTasks.map(t => 
+          t.id === taskId ? { ...t, priority: task.priority } : t
+        )
+      }));
+      
+      console.log('🔄 TaskStore: Applied rollback due to error');
+      throw error;
+    }
+  },
+
+  // Método para cambiar estado con drag & drop
+  changeTaskStatus: async (taskId: string, newStatus: "pending" | "in_progress" | "completed" | "cancelled") => {
+    console.log('🔄 TaskStore: Changing task status', taskId, 'to:', newStatus);
+    const task = get().tasks.find(t => t.id === taskId);
+    if (!task) {
+      console.error('❌ TaskStore: Task not found:', taskId);
+      throw new Error('Task not found');
+    }
+    console.log('🔄 TaskStore: Found task:', task.title, 'current status:', task.status);
+    set((state) => ({
+      tasks: state.tasks.map(t => 
+        t.id === taskId ? { ...t, status: newStatus } : t
+      ),
+      filteredTasks: state.filteredTasks.map(t => 
+        t.id === taskId ? { ...t, status: newStatus } : t
+      )
+    }));
+    console.log('🔄 TaskStore: Applied optimistic update for status');
+    try {
+      const updateData: any = { status: newStatus, updatedAt: new Date() };
+      if (newStatus === 'completed') {
+        updateData.completedAt = new Date();
+      }
+      await updateTaskFirestore(taskId, updateData);
+      console.log('✅ TaskStore: Task status changed successfully:', { taskId, newStatus });
+      get().applyFilters();
+      return { success: true, taskTitle: task.title, newStatus, oldStatus: task.status };
+    } catch (error) {
+      console.error('❌ TaskStore: Error changing task status:', error);
+      set((state) => ({
+        tasks: state.tasks.map(t => t.id === taskId ? { ...t, status: task.status } : t),
+        filteredTasks: state.filteredTasks.map(t => t.id === taskId ? { ...t, status: task.status } : t)
+      }));
+      console.log('🔄 TaskStore: Applied rollback due to error');
+      throw error;
+    }
+  },
+
+  changeTaskAssignment: async (taskId: string, newAssignedTo: string[] | null) => {
+    console.log('🔄 TaskStore: Changing task assignment', taskId, 'to:', newAssignedTo);
+    const task = get().tasks.find(t => t.id === taskId);
+    if (!task) {
+      console.error('❌ TaskStore: Task not found:', taskId);
+      throw new Error('Task not found');
+    }
+    console.log('🔄 TaskStore: Found task:', task.title, 'current assignment:', task.assignedTo);
+    set((state) => ({
+      tasks: state.tasks.map(t => 
+        t.id === taskId ? { ...t, assignedTo: newAssignedTo || [] } : t
+      ),
+      filteredTasks: state.filteredTasks.map(t => 
+        t.id === taskId ? { ...t, assignedTo: newAssignedTo || [] } : t
+      )
+    }));
+    console.log('🔄 TaskStore: Applied optimistic update for assignment');
+    try {
+      await updateTaskFirestore(taskId, { assignedTo: newAssignedTo || [], updatedAt: new Date() });
+      console.log('✅ TaskStore: Task assignment changed successfully:', { taskId, newAssignedTo });
+      get().applyFilters();
+      return { success: true, taskTitle: task.title, newAssignedTo, oldAssignedTo: task.assignedTo };
+    } catch (error) {
+      console.error('❌ TaskStore: Error changing task assignment:', error);
+      set((state) => ({
+        tasks: state.tasks.map(t => t.id === taskId ? { ...t, assignedTo: task.assignedTo } : t),
+        filteredTasks: state.filteredTasks.map(t => t.id === taskId ? { ...t, assignedTo: task.assignedTo } : t)
+      }));
+      console.log('🔄 TaskStore: Applied rollback due to error');
       throw error;
     }
   },

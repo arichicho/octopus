@@ -55,22 +55,18 @@ export function CreateTaskForm({ companies, users, onSubmit, onCancel, loading =
     
     switch (field) {
       case 'title':
-        if (!value.trim()) {
-          newErrors.title = 'El título es obligatorio';
+        if (!value || typeof value !== 'string' || !value.trim()) {
+          return 'El título es requerido';
         } else if (value.length < 3) {
-          newErrors.title = 'El título debe tener al menos 3 caracteres';
-        } else {
-          delete newErrors.title;
+          return 'El título debe tener al menos 3 caracteres';
         }
         break;
       
       case 'description':
-        if (!value.trim()) {
-          newErrors.description = 'La descripción es obligatoria';
+        if (!value || typeof value !== 'string' || !value.trim()) {
+          return 'La descripción es requerida';
         } else if (value.length < 10) {
-          newErrors.description = 'La descripción debe tener al menos 10 caracteres';
-        } else {
-          delete newErrors.description;
+          return 'La descripción debe tener al menos 10 caracteres';
         }
         break;
       

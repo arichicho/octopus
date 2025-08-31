@@ -52,7 +52,13 @@ export const AddTaskModal = ({ isOpen, onClose, company }: AddTaskModalProps) =>
         companyId: company.id,
         assignedTo: formData.assigneeId ? [formData.assigneeId] : [],
         dueDate: formData.dueDate ? Timestamp.fromDate(formData.dueDate) : Timestamp.fromDate(new Date()),
+        progress: 0,
+        linkedDocs: [],
+        linkedEvents: [],
+        tags: formData.tags || [],
         createdBy: user?.uid || 'current-user',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       
       // Reset form

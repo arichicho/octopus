@@ -39,17 +39,28 @@ export default function DashboardPage() {
   useEffect(() => {
     setMounted(true);
     
-    // Check for hash in URL to set active tab
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'history') {
-        setActiveTab('history');
-      } else if (hash.startsWith('company=')) {
-        setActiveTab('company');
-      } else if (hash === 'companies-config') {
-        setActiveTab('companies-config');
+    const handleHashChange = () => {
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash.replace('#', '');
+        console.log('🔍 Dashboard - Hash changed:', hash);
+        
+        if (hash === 'history') {
+          setActiveTab('history');
+        } else if (hash.startsWith('company=')) {
+          console.log('🏢 Dashboard - Showing company view for:', hash);
+          setActiveTab('company');
+        } else if (hash === 'companies-config') {
+          setActiveTab('companies-config');
+        }
       }
-    }
+    };
+
+    // Check initial hash
+    handleHashChange();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   // Check if we should show company view or companies config view

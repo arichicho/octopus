@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Clock, AlertTriangle, Calendar, Plus, ArrowLeft, Building2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CheckCircle, Clock, AlertTriangle, Calendar, Plus, ArrowLeft, Building2, Star, Users, List, CalendarDays } from 'lucide-react';
 import { Task, TaskStatus } from '@/types/task';
 import { CompanyEnhanced } from '@/types/company-enhanced';
 import { format } from 'date-fns';
@@ -15,6 +16,13 @@ import { useCompanyEnhancedStore } from '@/lib/store/useCompanyEnhancedStore';
 import { useTaskStore } from '@/lib/store/useTaskStore';
 import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
 import { TaskModal } from '@/components/modals/TaskModal';
+import { CompanyIcon } from '@/components/companies/CompanyIcon';
+import { PriorityKanbanView } from '@/components/dashboard/PriorityKanbanView';
+import { StatusWorkflowView } from '@/components/dashboard/StatusWorkflowView';
+import { DeadlineKanbanView } from '@/components/dashboard/DeadlineKanbanView';
+import { TaskListView } from '@/components/dashboard/TaskListView';
+import { TeamAssignmentView } from '@/components/dashboard/TeamAssignmentView';
+import { CalendarTimelineView } from '@/components/dashboard/CalendarTimelineView';
 
 export function CompanyTasksView() {
   const router = useRouter();
@@ -22,6 +30,7 @@ export function CompanyTasksView() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | undefined>();
+  const [activeView, setActiveView] = useState<'priority' | 'status' | 'deadlines' | 'calendar' | 'team' | 'list'>('deadlines');
 
   const { companies, fetchCompanies } = useCompanyEnhancedStore();
   const { tasks, loadTasks, updateTask } = useTaskStore();
@@ -29,6 +38,46 @@ export function CompanyTasksView() {
   const company = companies.find(c => c.id === companyId);
   const companyTasks = tasks.filter(task => task.companyId === companyId);
   const pendingTasks = companyTasks.filter(task => task.status !== 'completed');
+
+  // Configuración de las vistas disponibles
+  const viewConfigs = [
+    {
+      id: 'priority' as const,
+      title: 'Por Prioridad',
+      icon: Star,
+      description: 'Organiza tareas por nivel de urgencia'
+    },
+    {
+      id: 'status' as const,
+      title: 'Por Estado',
+      icon: Clock,
+      description: 'Flujo de trabajo por estado'
+    },
+    {
+      id: 'deadlines' as const,
+      title: 'Por Vencimientos',
+      icon: CalendarDays,
+      description: 'Organiza por fechas de vencimiento'
+    },
+    {
+      id: 'calendar' as const,
+      title: 'Calendario',
+      icon: Calendar,
+      description: 'Vista de calendario temporal'
+    },
+    {
+      id: 'team' as const,
+      title: 'Por Equipo',
+      icon: Users,
+      description: 'Organiza por responsables'
+    },
+    {
+      id: 'list' as const,
+      title: 'Lista',
+      icon: List,
+      description: 'Vista de lista simple'
+    }
+  ];
 
   useEffect(() => {
     fetchCompanies();
@@ -39,10 +88,13 @@ export function CompanyTasksView() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
+      console.log('🔍 CompanyTasksView - Hash changed:', hash);
       if (hash.startsWith('company=')) {
         const id = hash.split('=')[1];
+        console.log('🏢 CompanyTasksView - Setting company ID:', id);
         setCompanyId(id);
       } else {
+        console.log('❌ CompanyTasksView - No company ID in hash');
         setCompanyId(null);
       }
     };
@@ -54,6 +106,18 @@ export function CompanyTasksView() {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  // Debug logs
+  useEffect(() => {
+    console.log('🔍 CompanyTasksView - Component state:', {
+      companyId,
+      company: company?.name,
+      companyTasks: companyTasks.length,
+      pendingTasks: pendingTasks.length,
+      activeView,
+      mounted: true
+    });
+  }, [companyId, company, companyTasks.length, pendingTasks.length, activeView]);
 
   const getStatusIcon = (status: TaskStatus) => {
     switch (status) {
@@ -116,6 +180,15 @@ export function CompanyTasksView() {
     }
   };
 
+  const getDaysRemaining = (dueDate: Date) => {
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dueDateStart = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+    const diffTime = dueDateStart.getTime() - todayStart.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const handleCompleteTask = async (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
     try {
@@ -148,7 +221,7 @@ export function CompanyTasksView() {
   };
 
   const handleBackToBoard = () => {
-    window.location.hash = '';
+    router.push('/dashboard');
   };
 
   if (!companyId) {
@@ -160,7 +233,7 @@ export function CompanyTasksView() {
           </h1>
           <Button onClick={handleBackToBoard}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al Tablero
+            Volver al Dashboard
           </Button>
         </div>
       </div>
@@ -179,7 +252,7 @@ export function CompanyTasksView() {
           </p>
           <Button onClick={handleBackToBoard}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al Tablero
+            Volver al Dashboard
           </Button>
         </div>
       </div>
@@ -198,23 +271,17 @@ export function CompanyTasksView() {
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Volver al Tablero</span>
+              <span>Volver al Dashboard</span>
             </Button>
             <div className="flex items-center space-x-3">
-              <div 
-                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-lg" 
-                style={{ backgroundColor: company.color }}
-              >
-                {company.logoUrl ? (
-                  <img 
-                    src={company.logoUrl} 
-                    alt={`Logo de ${company.name}`}
-                    className="w-10 h-10 object-cover rounded-full"
-                  />
-                ) : (
-                  <Building2 className="w-6 h-6" />
-                )}
-              </div>
+              <CompanyIcon
+                logoUrl={company.logoUrl}
+                defaultIcon={company.defaultIcon}
+                name={company.name}
+                size="lg"
+                color={company.color}
+                className="flex-shrink-0"
+              />
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {company.name}
@@ -254,75 +321,141 @@ export function CompanyTasksView() {
               Crear Nueva Tarea
             </Button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {pendingTasks.map((task) => {
-              const dueDate = firestoreDateToDate(task.dueDate);
+                ) : (
+          <div className="w-full">
+            {/* Debug info */}
+            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                🔍 Debug: Mostrando menú de vistas para {company.name} ({pendingTasks.length} tareas pendientes)
+              </p>
+            </div>
+            
+            {/* Menú de vistas mejorado */}
+            <div className="mb-6">
+              {/* Título del menú de vistas */}
+              <div className="mb-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Vistas de Tareas
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Selecciona cómo quieres visualizar las tareas de {company.name}
+                </p>
+              </div>
               
-              return (
-                <Card 
-                  key={task.id} 
-                  className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${
-                    isOverdue(dueDate) 
-                      ? 'border-red-200 bg-red-50 dark:bg-red-900/20' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => handleOpenEditModal(task as any)}
-                >
-                  <CardContent className="p-4">
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-2 flex-1 min-w-0">
-                          {getStatusIcon(task.status)}
-                          <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
-                            {task.title}
-                          </h4>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 hover:bg-green-100 hover:text-green-600"
-                          onClick={(e) => handleCompleteTask(e, task as any)}
-                          title="Marcar como completada"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
+                  {viewConfigs.map((view) => (
+                    <button
+                      key={view.id}
+                      onClick={() => setActiveView(view.id)}
+                      className={`flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-lg transition-all duration-200 group relative ${
+                        activeView === view.id 
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 shadow-sm border border-blue-200 dark:border-blue-800' 
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                      }`}
+                      title={view.description}
+                    >
+                      <view.icon className="h-4 w-4" />
+                      <span className="text-xs font-medium text-center">{view.title}</span>
+                      
+                      {/* Tooltip para pantallas pequeñas */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 sm:hidden">
+                        {view.description}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                       </div>
-                      
-                      {task.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                          {task.description}
-                        </p>
-                      )}
-                      
-                      <div className="flex flex-wrap gap-1">
-                        <Badge 
-                          variant="secondary" 
-                          className={`text-xs ${getPriorityColor(task.priority)}`}
-                        >
-                          {task.priority}
-                        </Badge>
-                        {task.tags && task.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                      
-                      {dueDate && (
-                        <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
-                          <Calendar className="h-3 w-3" />
-                          <span className={isOverdue(dueDate) ? 'text-red-600 font-medium' : ''}>
-                            {isOverdue(dueDate) ? 'Vencida: ' : 'Vence: '}
-                            {formatDate(dueDate)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Indicador de vista activa */}
+              <div className="mt-3 flex items-center justify-center">
+                <div className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-sm">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span>Vista: {viewConfigs.find(v => v.id === activeView)?.title}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Contenido de las vistas */}
+            {activeView === 'priority' && (
+              <PriorityKanbanView
+                tasks={companyTasks}
+                onTaskClick={handleOpenEditModal}
+                onCompleteTask={handleCompleteTask}
+                getStatusIcon={getStatusIcon}
+                getStatusColor={getStatusColor}
+                getPriorityColor={getPriorityColor}
+                formatDate={formatDate}
+                isOverdue={isOverdue}
+              />
+            )}
+            
+            {activeView === 'status' && (
+              <StatusWorkflowView
+                tasks={companyTasks}
+                onTaskClick={handleOpenEditModal}
+                onCompleteTask={handleCompleteTask}
+                getStatusIcon={getStatusIcon}
+                getStatusColor={getStatusColor}
+                getPriorityColor={getPriorityColor}
+                formatDate={formatDate}
+                isOverdue={isOverdue}
+              />
+            )}
+            
+            {activeView === 'deadlines' && (
+              <DeadlineKanbanView
+                tasks={companyTasks}
+                onTaskClick={handleOpenEditModal}
+                onCompleteTask={handleCompleteTask}
+                getStatusIcon={getStatusIcon}
+                getStatusColor={getStatusColor}
+                getPriorityColor={getPriorityColor}
+                formatDate={formatDate}
+                isOverdue={isOverdue}
+              />
+            )}
+            
+            {activeView === 'calendar' && (
+              <CalendarTimelineView
+                tasks={companyTasks}
+                onTaskClick={handleOpenEditModal}
+                onCompleteTask={handleCompleteTask}
+                getStatusIcon={getStatusIcon}
+                getStatusColor={getStatusColor}
+                getPriorityColor={getPriorityColor}
+                formatDate={formatDate}
+                isOverdue={isOverdue}
+              />
+            )}
+            
+            {activeView === 'team' && (
+              <TeamAssignmentView
+                tasks={companyTasks}
+                onTaskClick={handleOpenEditModal}
+                onCompleteTask={handleCompleteTask}
+                getStatusIcon={getStatusIcon}
+                getStatusColor={getStatusColor}
+                getPriorityColor={getPriorityColor}
+                formatDate={formatDate}
+                isOverdue={isOverdue}
+                companyId={company.id}
+              />
+            )}
+            
+            {activeView === 'list' && (
+              <TaskListView
+                tasks={companyTasks}
+                onTaskClick={handleOpenEditModal}
+                onCompleteTask={handleCompleteTask}
+                getStatusIcon={getStatusIcon}
+                getStatusColor={getStatusColor}
+                getPriorityColor={getPriorityColor}
+                formatDate={formatDate}
+                isOverdue={isOverdue}
+              />
+            )}
           </div>
         )}
       </div>

@@ -51,8 +51,8 @@ export const TaskModal = ({ isOpen, onClose, company, task, mode = 'create' }: T
         description: task.description || '',
         priority: task.priority || 'medium',
         status: task.status || 'pending',
-        dueDate: task.dueDate ? (task.dueDate instanceof Date ? task.dueDate : task.dueDate.toDate()) : undefined,
-        assigneeId: task.assigneeId || '',
+        dueDate: task.dueDate ? (task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate as any)) : undefined,
+        assigneeId: task.assignedTo?.[0] || '',
         tags: task.tags || [],
       });
     } else if (mode === 'create') {
@@ -79,8 +79,15 @@ export const TaskModal = ({ isOpen, onClose, company, task, mode = 'create' }: T
         await createTask({
           ...formData,
           companyId: company.id,
-          dueDate: formData.dueDate ? Timestamp.fromDate(formData.dueDate) : Timestamp.fromDate(new Date()),
+          assignedTo: formData.assigneeId ? [formData.assigneeId] : [],
+          dueDate: formData.dueDate || new Date(),
+          progress: 0,
+          linkedDocs: [],
+          linkedEvents: [],
+          tags: formData.tags || [],
           createdBy: user?.uid || 'current-user',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         });
       } else if (mode === 'edit' && task?.id) {
         await updateTask(task.id, {

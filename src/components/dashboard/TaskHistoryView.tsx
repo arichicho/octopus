@@ -383,7 +383,7 @@ export const TaskHistoryView: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <CalendarDays className="h-4 w-4 text-gray-400" />
                           <span className="text-sm text-gray-500">
-                            Completada: {formatDate(task.completedAt)}
+                            Completada: {task.completedAt ? formatDate(task.completedAt instanceof Date ? task.completedAt : task.completedAt.toDate()) : 'N/A'}
                           </span>
                         </div>
                       </div>
@@ -422,7 +422,7 @@ export const TaskHistoryView: React.FC = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setSelectedTask(task);
+                          setSelectedTask(task as any);
                           setIsTaskModalOpen(true);
                         }}
                         className="flex items-center space-x-1"
@@ -435,7 +435,7 @@ export const TaskHistoryView: React.FC = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setTaskToUncomplete(task);
+                          setTaskToUncomplete(task as any);
                           setIsUncompleteDialogOpen(true);
                         }}
                         className="flex items-center space-x-1 text-orange-600 hover:text-orange-700"
@@ -462,7 +462,7 @@ export const TaskHistoryView: React.FC = () => {
           }}
           company={companies.find(c => c.id === selectedTask.companyId)}
           task={selectedTask}
-          mode="view"
+          mode="edit"
         />
       )}
 

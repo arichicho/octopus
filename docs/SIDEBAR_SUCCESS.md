@@ -32,7 +32,8 @@ El sidebar ahora está completamente funcional y visible en la aplicación Octop
 
 ## 🚀 **Cómo Acceder**
 
-1. **URL**: `http://localhost:3001/dashboard`
+1. **URL Local**: `http://localhost:3001/dashboard`
+2. **URL Producción**: `https://theceo.web.app/dashboard`
 2. **Puerto**: 3001 (no 3000)
 3. **Estado**: Completamente funcional
 
