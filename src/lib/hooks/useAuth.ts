@@ -5,7 +5,8 @@ import { getUserByEmail, createUser, updateUser } from '../firebase/firestore';
 import { User } from '../firebase/firestore';
 import { Timestamp } from 'firebase/firestore';
 import { auth } from '../firebase/config';
-import { isEmailAuthorized } from '../auth/authorizedEmails';
+// Usa lista de emails autorizados desde variables de entorno (cliente)
+import { isEmailAuthorized } from '../auth/authorization';
 
 export const useAuth = () => {
   const { 

@@ -4,13 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "build:static": "next build",
-    "clean": "rm -rf out .next",
+    "build": "next build",
+    "clean": "rm -rf .next",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "npm run build:static && firebase deploy --only hosting:theceo",
-    "deploy:all": "npm run build:static && firebase deploy"
+    "deploy": "npm run build && firebase deploy --only apphosting:theceo",
+    "deploy:all": "npm run build && firebase deploy"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -37,6 +36,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "firebase": "^12.1.0",
+    "firebase-admin": "^13.5.0",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
     "next-themes": "^0.4.6",

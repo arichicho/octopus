@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { Sidebar } from '@/components/common/Sidebar';
 import { SidebarProvider, useSidebar } from '@/lib/context/SidebarContext';
 import { ModalProvider, useModal } from '@/lib/context/ModalContext';

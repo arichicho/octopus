@@ -20,6 +20,30 @@ export const metadata: Metadata = {
   themeColor: '#3B82F6',
 };
 
+// Componente de versión visible
+       function VersionIndicator() {
+         const version = process.env.NEXT_PUBLIC_APP_VERSION || 'dev';
+         const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME || new Date().toISOString();
+         const deployTime = new Date().toISOString();
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '10px',
+      right: '10px',
+      background: 'rgba(0,0,0,0.8)',
+      color: 'white',
+      padding: '4px 8px',
+      borderRadius: '4px',
+      fontSize: '10px',
+      zIndex: 9999,
+      fontFamily: 'monospace'
+    }}>
+                   v{version} | {new Date(buildTime).toLocaleTimeString()} | {new Date(deployTime).toLocaleTimeString()}
+    </div>
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,6 +59,7 @@ export default function RootLayout({
       <body className={inter.className}>
         {children}
         <Toaster />
+        <VersionIndicator />
       </body>
     </html>
   );

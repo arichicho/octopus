@@ -1,24 +1,71 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Usuarios autenticados pueden acceder a sus datos
+    // Helpers
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isCompanyOwner(companyId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/companies/$(companyId)) &&
+        get(/databases/$(database)/documents/companies/$(companyId)).data.ownerId == request.auth.uid;
+    }
+
+    function hasCompanyAccess(companyId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/companies/$(companyId)) &&
+        (
+          get(/databases/$(database)/documents/companies/$(companyId)).data.ownerId == request.auth.uid ||
+          request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.members
+        );
+    }
+
+    // Users: only self
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
-    
-    // Empresas - solo usuarios autenticados
-    match /companies/{document} {
-      allow read, write: if request.auth != null;
+
+    // Companies: owner may update/delete, members can read
+    match /companies/{companyId} {
+      allow read: if hasCompanyAccess(companyId);
+      allow create: if isAuthenticated();
+      allow update, delete: if isCompanyOwner(companyId);
     }
-    
-    // Tareas - solo usuarios autenticados
-    match /tasks/{document} {
-      allow read, write: if request.auth != null;
+
+    // Tasks: only for companies the user can access
+    match /tasks/{taskId} {
+      allow read, write: if hasCompanyAccess(resource.data.companyId);
+      allow create: if isAuthenticated() && hasCompanyAccess(request.resource.data.companyId);
     }
-    
-    // Para desarrollo - permitir acceso completo temporal
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // People: first company in list determines access
+    match /people/{personId} {
+      allow read, write: if hasCompanyAccess(resource.data.companies[0]);
+      allow create: if isAuthenticated() && hasCompanyAccess(request.resource.data.companies[0]);
+    }
+
+    // Invitations: creator or invited email can read; only creator can update
+    match /invitations/{invitationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.invitedBy == request.auth.uid ||
+        resource.data.email == request.auth.token.email
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.invitedBy == request.auth.uid;
+    }
+
+    // Integrations: only owner may read/write
+    match /googleIntegrations/{docId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    match /claudeIntegrations/{docId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Notifications: only recipient
+    match /notifications/{notificationId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
   }
 }

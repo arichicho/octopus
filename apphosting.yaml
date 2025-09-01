@@ -7,6 +7,11 @@ runConfig:
   # cpu: 1
   # memoryMiB: 512
 
+# Build configuration for Next.js
+buildConfig:
+  buildCommand: npm run build
+  nodeVersion: 20
+
 # Environment variables and secrets.
 # env:
   # Configure environment variables.

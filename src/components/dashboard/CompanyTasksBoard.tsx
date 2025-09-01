@@ -68,6 +68,7 @@ import {
 } from 'lucide-react';
 import { useCompanyEnhancedStore } from '@/lib/store/useCompanyEnhancedStore';
 import { useTaskStore } from '@/lib/store/useTaskStore';
+import { useHashNavigation } from '@/lib/hooks/useHashNavigation';
 import { Task } from '@/lib/firebase/firestore';
 import { TaskStatus } from '@/types/task';
 import { CompanyEnhanced } from '@/types/company-enhanced';
@@ -432,8 +433,32 @@ const SortableCompanyCard = ({
 };
 
 export const CompanyTasksBoard = ({ className }: CompanyTasksBoardProps) => {
+  console.log('🚨🚨🚨 CompanyTasksBoard - DEPLOY VERSION 15.0 - FORCED BUILD - Starting component initialization 🚨🚨🚨');
+  console.log('🚨🚨🚨 CompanyTasksBoard - APP_VERSION:', process.env.NEXT_PUBLIC_APP_VERSION || 'NO_VERSION_SET');
+  console.log('🚨🚨🚨 CompanyTasksBoard - BUILD_TIME:', process.env.NEXT_PUBLIC_BUILD_TIME || 'NO_BUILD_TIME');
+  console.log('🚨🚨🚨 CompanyTasksBoard - DEPLOY_TIMESTAMP:', new Date().toISOString());
+  console.log('🚨🚨🚨 CompanyTasksBoard - RANDOM_ID:', Math.random().toString(36).substring(7));
+  console.log('🚨🚨🚨 CompanyTasksBoard - THIS IS VERSION 15.0 - FORCED BUILD WITH STANDALONE OUTPUT 🚨🚨🚨');
+  console.log('🚨🚨🚨 CompanyTasksBoard - URL:', window.location.href);
+  console.log('🚨🚨🚨 CompanyTasksBoard - USER_AGENT:', navigator.userAgent);
+  
+  // FORZAR RELOAD SI NO VEMOS LOS LOGS NUEVOS
+  if (!window.location.href.includes('theceo.web.app')) {
+    console.log('🚨🚨🚨 CompanyTasksBoard - NOT ON PRODUCTION - Forcing reload 🚨🚨🚨');
+    window.location.reload();
+    return null;
+  }
+  
   const { companies, reorderCompanies } = useCompanyEnhancedStore();
   const { tasks, loading, updateTask } = useTaskStore();
+  
+  console.log('🚨🚨🚨 CompanyTasksBoard - About to call useHashNavigation 🚨🚨🚨');
+  const { navigateToCompany } = useHashNavigation();
+  
+  console.log('🚨🚨🚨 CompanyTasksBoard - Component initialized 🚨🚨🚨');
+  console.log('🚨🚨🚨 CompanyTasksBoard - navigateToCompany function:', navigateToCompany);
+  console.log('🚨🚨🚨 CompanyTasksBoard - navigateToCompany type:', typeof navigateToCompany);
+  
   const [collapsedCompanies, setCollapsedCompanies] = useState<Set<string>>(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -707,9 +732,27 @@ export const CompanyTasksBoard = ({ className }: CompanyTasksBoardProps) => {
   };
 
   const handleOpenCompanyTasksPage = (company: CompanyEnhanced) => {
-    console.log('🔗 CompanyTasksBoard - Opening company tasks page for:', company.name, company.id);
-    // Usar router.push para mejor compatibilidad móvil
-    router.push(`/dashboard#company=${company.id}`);
+    console.log('🚨🚨🚨 CompanyTasksBoard - DEPLOY VERSION 4.0 - Opening company tasks page for:', company.name, company.id);
+    console.log('🚨🚨🚨 CompanyTasksBoard - Current URL before:', window.location.href);
+    console.log('🚨🚨🚨 CompanyTasksBoard - Current hash before:', window.location.hash);
+    
+    try {
+      // Navegación directa sin depender del hook
+      const newHash = `company=${company.id}`;
+      console.log('🚨🚨🚨 CompanyTasksBoard - Setting hash to:', newHash);
+      window.location.hash = newHash;
+      console.log('🚨🚨🚨 CompanyTasksBoard - New hash after:', window.location.hash);
+      console.log('🚨🚨🚨 CompanyTasksBoard - New URL after:', window.location.href);
+      
+      // Forzar la actualización de la vista
+      setTimeout(() => {
+        console.log('🚨🚨🚨 CompanyTasksBoard - Forcing view update');
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      }, 100);
+      
+    } catch (error) {
+      console.error('🚨🚨🚨 CompanyTasksBoard - Error setting hash:', error);
+    }
   };
 
   const handleCompleteTask = async (e: React.MouseEvent, task: Task) => {

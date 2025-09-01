@@ -14,6 +14,7 @@ import { es } from 'date-fns/locale';
 import { firestoreDateToDate } from '@/lib/utils/dateUtils';
 import { useCompanyEnhancedStore } from '@/lib/store/useCompanyEnhancedStore';
 import { useTaskStore } from '@/lib/store/useTaskStore';
+import { useHashNavigation } from '@/lib/hooks/useHashNavigation';
 import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
 import { TaskModal } from '@/components/modals/TaskModal';
 import { CompanyIcon } from '@/components/companies/CompanyIcon';
@@ -26,14 +27,15 @@ import { CalendarTimelineView } from '@/components/dashboard/CalendarTimelineVie
 
 export function CompanyTasksView() {
   const router = useRouter();
-  const [companyId, setCompanyId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | undefined>();
   const [activeView, setActiveView] = useState<'priority' | 'status' | 'deadlines' | 'calendar' | 'team' | 'list'>('deadlines');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { companies, fetchCompanies } = useCompanyEnhancedStore();
-  const { tasks, loadTasks, updateTask } = useTaskStore();
+  const { companies, fetchCompanies, loading: companiesLoading } = useCompanyEnhancedStore();
+  const { tasks, loadTasks, updateTask, loading: tasksLoading } = useTaskStore();
+  const { companyId, clearHash } = useHashNavigation();
 
   const company = companies.find(c => c.id === companyId);
   const companyTasks = tasks.filter(task => task.companyId === companyId);
@@ -79,33 +81,23 @@ export function CompanyTasksView() {
     }
   ];
 
+
+
+  // Load data when companyId changes
   useEffect(() => {
-    fetchCompanies();
-    loadTasks();
-  }, [fetchCompanies, loadTasks]);
-
-  // Handle hash routing
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      console.log('🔍 CompanyTasksView - Hash changed:', hash);
-      if (hash.startsWith('company=')) {
-        const id = hash.split('=')[1];
-        console.log('🏢 CompanyTasksView - Setting company ID:', id);
-        setCompanyId(id);
-      } else {
-        console.log('❌ CompanyTasksView - No company ID in hash');
-        setCompanyId(null);
-      }
-    };
-
-    // Check initial hash
-    handleHashChange();
-
-    // Listen for hash changes
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    if (companyId) {
+      console.log('🔄 CompanyTasksView - Loading data for company:', companyId);
+      setIsLoading(true);
+      Promise.all([
+        fetchCompanies(),
+        loadTasks()
+      ]).finally(() => {
+        setIsLoading(false);
+      });
+    } else {
+      setIsLoading(false);
+    }
+  }, [companyId, fetchCompanies, loadTasks]);
 
   // Debug logs
   useEffect(() => {
@@ -221,7 +213,19 @@ export function CompanyTasksView() {
   };
 
   const handleBackToBoard = () => {
-    router.push('/dashboard');
+    console.log('🚨🚨🚨 CompanyTasksView - DEPLOY VERSION 3.0 - Back to dashboard clicked');
+    console.log('🚨🚨🚨 CompanyTasksView - Current URL before:', window.location.href);
+    console.log('🚨🚨🚨 CompanyTasksView - Current hash before:', window.location.hash);
+    
+    try {
+      // Navegación directa sin depender del hook
+      console.log('🚨🚨🚨 CompanyTasksView - Clearing hash');
+      window.location.hash = '';
+      console.log('🚨🚨🚨 CompanyTasksView - New hash after:', window.location.hash);
+      console.log('🚨🚨🚨 CompanyTasksView - New URL after:', window.location.href);
+    } catch (error) {
+      console.error('🚨🚨🚨 CompanyTasksView - Error clearing hash:', error);
+    }
   };
 
   if (!companyId) {
@@ -229,8 +233,11 @@ export function CompanyTasksView() {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            ID de empresa no proporcionado
+            Selecciona una empresa
           </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Haz clic en una empresa del tablero para ver sus tareas
+          </p>
           <Button onClick={handleBackToBoard}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver al Dashboard
@@ -248,7 +255,7 @@ export function CompanyTasksView() {
             Empresa no encontrada
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            La empresa con ID {companyId} no existe
+            La empresa con ID {companyId} no existe o no tienes permisos para acceder
           </p>
           <Button onClick={handleBackToBoard}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -305,7 +312,21 @@ export function CompanyTasksView() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        {pendingTasks.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center animate-spin">
+              <svg className="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              Cargando tareas...
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Por favor, espera mientras se cargan los datos de {company.name}
+            </p>
+          </div>
+        ) : pendingTasks.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <CheckCircle className="h-8 w-8 text-gray-400" />

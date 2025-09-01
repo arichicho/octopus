@@ -4,15 +4,15 @@ import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 
-// Configuración de Firebase para producción
+// Configuración de Firebase (tomada exclusivamente de variables de entorno)
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyButtaDMIheklUExNySlL9HCNaVUW-8UFY",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "iamtheoceo.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "iamtheoceo",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "iamtheoceo.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "511546212594",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:511546212594:web:08397e8ff7f942a34a906b",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-KEKWYZY33Y"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ''
 };
 
 // Configuración de la aplicación
@@ -89,21 +89,20 @@ const functions = {}; // Se puede agregar getFunctions(app) si se necesita
 
 // Log de configuración
 if (typeof window !== 'undefined') {
-  console.log('🌍 Environment:', {
-    nodeEnv: appConfig.nodeEnv,
-    useEmulator: appConfig.useEmulator,
-    domain: window.location.hostname,
-    url: window.location.href
-  });
+  if (appConfig.debugMode) {
+    console.log('🌍 Environment:', {
+      nodeEnv: appConfig.nodeEnv,
+      useEmulator: appConfig.useEmulator,
+      domain: window.location.hostname,
+      url: window.location.href
+    });
+  }
   
   if (appConfig.useEmulator && appConfig.nodeEnv === 'development') {
     console.log('🔧 Firebase configurado con emuladores para desarrollo');
   } else {
+    // No registrar configuración sensible en producción
     console.log('🔥 Firebase configurado para producción');
-    console.log('🔑 Firebase config:', {
-      projectId: firebaseConfig.projectId,
-      authDomain: firebaseConfig.authDomain
-    });
   }
 }
 

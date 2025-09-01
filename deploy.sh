@@ -1,13 +1,11 @@
 #!/bin/bash
 
-# 🚀 Script de Deploy Automatizado - Octopus App
-# Deploy a Firebase Hosting en theceo.web.app
+# Script de despliegue para Firebase App Hosting
+# Octopus App - Integraciones
 
-set -e  # Exit on any error
+set -e
 
-echo "🐙 Iniciando deploy de Octopus App..."
-echo "📍 Destino: https://theceo.web.app"
-echo ""
+echo "🚀 Iniciando despliegue de Octopus App..."
 
 # Colores para output
 RED='\033[0;31m'
@@ -16,28 +14,22 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Función para imprimir con colores
+# Función para imprimir mensajes con colores
 print_status() {
-    echo -e "${BLUE}🔍 $1${NC}"
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
 print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED}[ERROR]${NC} $1"
 }
-
-# Verificar que estamos en el directorio correcto
-if [ ! -f "package.json" ]; then
-    print_error "No se encontró package.json. Asegúrate de estar en el directorio raíz del proyecto."
-    exit 1
-fi
 
 # Verificar que Firebase CLI esté instalado
 if ! command -v firebase &> /dev/null; then
@@ -45,49 +37,66 @@ if ! command -v firebase &> /dev/null; then
     exit 1
 fi
 
-# Verificar que estemos logueados en Firebase
+# Verificar que estés logueado en Firebase
 if ! firebase projects:list &> /dev/null; then
     print_error "No estás logueado en Firebase. Ejecuta: firebase login"
     exit 1
 fi
 
-print_status "Limpiando builds anteriores..."
-rm -rf out .next
-print_success "Limpieza completada"
+# Verificar variables de entorno
+print_status "Verificando configuración..."
 
+if [ ! -f ".env.local" ] && [ ! -f ".env" ]; then
+    print_warning "No se encontró archivo .env.local o .env"
+    print_warning "Asegúrate de configurar las variables de entorno necesarias"
+fi
+
+# Limpiar builds anteriores
+print_status "Limpiando builds anteriores..."
+npm run clean
+
+# Instalar dependencias
 print_status "Instalando dependencias..."
 npm install
-print_success "Dependencias instaladas"
 
-print_status "Construyendo aplicación..."
-npm run build:static
-print_success "Build completado"
+# Ejecutar linting
+print_status "Ejecutando linting..."
+npm run lint || print_warning "Linting falló, continuando..."
 
-print_status "Verificando archivos generados..."
-if [ ! -d "out" ]; then
-    print_error "No se generó la carpeta 'out'. El build falló."
+# Construir la aplicación
+print_status "Construyendo la aplicación..."
+npm run build
+
+# Verificar que el build fue exitoso
+if [ ! -d ".next" ]; then
+    print_error "El build falló. Revisa los errores arriba."
     exit 1
 fi
 
-file_count=$(find out -type f | wc -l)
-print_success "Se generaron $file_count archivos"
+print_success "Build completado exitosamente"
 
-print_status "Desplegando a Firebase Hosting..."
-firebase deploy --only hosting:theceo
-print_success "Deploy completado"
+# Desplegar a Firebase
+print_status "Desplegando a Firebase App Hosting..."
 
-print_status "Verificando que la aplicación esté funcionando..."
-if curl -s -o /dev/null -w "%{http_code}" https://theceo.web.app | grep -q "200"; then
-    print_success "Aplicación funcionando correctamente"
-else
-    print_warning "La aplicación puede no estar funcionando correctamente"
-fi
+# Verificar el proyecto actual
+CURRENT_PROJECT=$(firebase use --json | grep -o '"current":"[^"]*"' | cut -d'"' -f4)
+print_status "Proyecto actual: $CURRENT_PROJECT"
 
-echo ""
-print_success "🎉 Deploy completado exitosamente!"
-echo ""
-echo "🌐 URL de la aplicación: https://theceo.web.app"
-echo "📊 Console de Firebase: https://console.firebase.google.com/project/iamtheoceo/overview"
-echo ""
-echo "📝 Para futuros deploys, simplemente ejecuta: ./deploy.sh"
-echo ""
+# Desplegar
+firebase deploy --only apphosting:theceo
+
+print_success "¡Despliegue completado exitosamente! 🎉"
+
+# Mostrar información del sitio
+print_status "Información del sitio:"
+firebase hosting:sites:list
+
+print_status "Para ver el sitio desplegado, visita:"
+echo "https://$CURRENT_PROJECT.web.app"
+
+print_status "Para configurar variables de entorno en producción:"
+echo "1. Ve a Firebase Console > App Hosting > Settings"
+echo "2. Configura las variables de entorno necesarias"
+echo "3. Reinicia el servicio"
+
+print_success "¡Octopus App está ahora en producción! 🐙"
