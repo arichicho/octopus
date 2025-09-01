@@ -10,7 +10,8 @@ runConfig:
 # Build configuration for Next.js
 buildConfig:
   buildCommand: npm run build
-  nodeVersion: 20
+  nodeVersion: 18
+  outputDirectory: .next
 
 # Environment variables and secrets.
 # env:
