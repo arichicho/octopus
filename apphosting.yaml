@@ -11,6 +11,7 @@ runConfig:
 buildConfig:
   buildCommand: npm run build
   nodeVersion: 18
+  # Force deployment
 
 # Environment variables and secrets.
 # env:
