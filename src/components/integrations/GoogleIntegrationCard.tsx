@@ -20,6 +20,7 @@ import {
 import { GoogleIntegrationService } from '@/lib/services/google-integrations';
 import { IntegrationStatus, GmailIntegration, CalendarIntegration, DriveIntegration } from '@/types/integrations';
 import { useAuthStore } from '@/lib/store/useAuthStore';
+import { ENABLE_GOOGLE_INTEGRATIONS } from '@/lib/config/flags';
 
 interface GoogleIntegrationCardProps {
   type: 'gmail' | 'calendar' | 'drive';
@@ -190,7 +191,11 @@ export default function GoogleIntegrationCard({ type }: GoogleIntegrationCardPro
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {isConnected ? (
+        {!ENABLE_GOOGLE_INTEGRATIONS ? (
+          <div className="space-y-3">
+            <div className="text-sm text-gray-500 dark:text-gray-400">Esta integración está deshabilitada por configuración</div>
+          </div>
+        ) : isConnected ? (
           <>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Estado de sincronización</span>

@@ -205,3 +205,4 @@ const handleBackToBoard = () => {
 7. **¿En la vista de vencimientos, la semana actual ocupa todo el ancho?**
 
 **Si alguna respuesta es ❌, por favor describe exactamente qué ves en lugar de lo esperado.**
+

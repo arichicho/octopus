@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { isEmailAuthorized } from '@/lib/auth/authorizedEmails';
+import { checkAuthorization } from '@/lib/auth/authorization';
+const BYPASS_AUTH = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
 import { Chrome } from 'lucide-react';
 
 interface GoogleSignInButtonProps {
@@ -21,10 +22,13 @@ export const GoogleSignInButton = ({ className, children }: GoogleSignInButtonPr
       const user = await signIn();
       
       // Verificar autorización después del login
-      if (user && !isEmailAuthorized(user.email)) {
+      if (user && !BYPASS_AUTH && !(await checkAuthorization(user.email))) {
         console.warn('Usuario no autorizado después del login:', user.email);
         window.location.href = '/unauthorized';
         return;
+      }
+      if (BYPASS_AUTH) {
+        console.log('🟢 BYPASS_AUTH activo post-login. Acceso permitido a:', user?.email);
       }
     } catch (error) {
       console.error('Error signing in with Google:', error);

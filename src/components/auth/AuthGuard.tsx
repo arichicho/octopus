@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
@@ -18,19 +18,28 @@ export const AuthGuard = ({
 }: AuthGuardProps) => {
   const { isAuthenticated, loading, user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const redirectingRef = useRef(false);
 
   // Deshabilitado modo demo - siempre requiere autenticación
   const isDemoMode = false;
 
   useEffect(() => {
-    if (!loading && !isDemoMode) {
-      if (requireAuth && !isAuthenticated) {
+    if (redirectingRef.current || loading || isDemoMode) return;
+
+    // Evitar loops: no redirigir si ya estamos en el destino
+    if (requireAuth && !isAuthenticated) {
+      if (pathname !== redirectTo) {
+        redirectingRef.current = true;
         router.push(redirectTo);
-      } else if (!requireAuth && isAuthenticated) {
+      }
+    } else if (!requireAuth && isAuthenticated) {
+      if (pathname !== '/dashboard') {
+        redirectingRef.current = true;
         router.push('/dashboard');
       }
     }
-  }, [isAuthenticated, loading, requireAuth, redirectTo, router, isDemoMode]);
+  }, [isAuthenticated, loading, requireAuth, redirectTo, router, isDemoMode, pathname]);
 
   if (loading && !isDemoMode) {
     return (

@@ -15,6 +15,7 @@ import { firestoreDateToDate } from '@/lib/utils/dateUtils';
 import { useCompanyEnhancedStore } from '@/lib/store/useCompanyEnhancedStore';
 import { useTaskStore } from '@/lib/store/useTaskStore';
 import { useHashNavigation } from '@/lib/hooks/useHashNavigation';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
 import { TaskModal } from '@/components/modals/TaskModal';
 import { CompanyIcon } from '@/components/companies/CompanyIcon';
@@ -30,19 +31,26 @@ export function CompanyTasksView() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | undefined>();
-  const [activeView, setActiveView] = useState<'priority' | 'status' | 'deadlines' | 'calendar' | 'team' | 'list'>('deadlines');
+  const [activeView, setActiveView] = useState<'priority' | 'status' | 'deadlines' | 'calendar' | 'team' | 'list'>('list');
   const [isLoading, setIsLoading] = useState(true);
 
-  const { companies, fetchCompanies, loading: companiesLoading } = useCompanyEnhancedStore();
+  const { user } = useAuth();
+  const { companies, fetchCompanies, loading: companiesLoading, selectedCompany } = useCompanyEnhancedStore();
   const { tasks, loadTasks, updateTask, loading: tasksLoading } = useTaskStore();
   const { companyId, clearHash } = useHashNavigation();
 
-  const company = companies.find(c => c.id === companyId);
-  const companyTasks = tasks.filter(task => task.companyId === companyId);
-  const pendingTasks = companyTasks.filter(task => task.status !== 'completed');
+  const company = selectedCompany || companies.find(c => c.id === companyId);
+  const companyTasks = tasks.filter(task => task.companyId === company?.id);
+  const pendingTasks = companyTasks.filter(task => task.status !== 'completed' && task.status !== 'cancelled');
 
   // Configuración de las vistas disponibles
   const viewConfigs = [
+    {
+      id: 'list' as const,
+      title: 'Lista',
+      icon: List,
+      description: 'Vista de lista simple'
+    },
     {
       id: 'priority' as const,
       title: 'Por Prioridad',
@@ -72,12 +80,6 @@ export function CompanyTasksView() {
       title: 'Por Equipo',
       icon: Users,
       description: 'Organiza por responsables'
-    },
-    {
-      id: 'list' as const,
-      title: 'Lista',
-      icon: List,
-      description: 'Vista de lista simple'
     }
   ];
 
@@ -85,19 +87,19 @@ export function CompanyTasksView() {
 
   // Load data when companyId changes
   useEffect(() => {
-    if (companyId) {
-      console.log('🔄 CompanyTasksView - Loading data for company:', companyId);
+    if (companyId && user?.uid) {
+      console.log('🔄 CompanyTasksView - Loading data for company:', companyId, 'user:', user.uid);
       setIsLoading(true);
       Promise.all([
-        fetchCompanies(),
-        loadTasks()
+        fetchCompanies(user.uid),
+        loadTasks(user.uid)
       ]).finally(() => {
         setIsLoading(false);
       });
     } else {
       setIsLoading(false);
     }
-  }, [companyId, fetchCompanies, loadTasks]);
+  }, [companyId, user?.uid, fetchCompanies, loadTasks]);
 
   // Debug logs
   useEffect(() => {
@@ -401,7 +403,7 @@ export function CompanyTasksView() {
             {/* Contenido de las vistas */}
             {activeView === 'priority' && (
               <PriorityKanbanView
-                tasks={companyTasks}
+                tasks={pendingTasks}
                 onTaskClick={handleOpenEditModal}
                 onCompleteTask={handleCompleteTask}
                 getStatusIcon={getStatusIcon}
@@ -414,7 +416,7 @@ export function CompanyTasksView() {
             
             {activeView === 'status' && (
               <StatusWorkflowView
-                tasks={companyTasks}
+                tasks={pendingTasks}
                 onTaskClick={handleOpenEditModal}
                 onCompleteTask={handleCompleteTask}
                 getStatusIcon={getStatusIcon}
@@ -427,7 +429,7 @@ export function CompanyTasksView() {
             
             {activeView === 'deadlines' && (
               <DeadlineKanbanView
-                tasks={companyTasks}
+                tasks={pendingTasks}
                 onTaskClick={handleOpenEditModal}
                 onCompleteTask={handleCompleteTask}
                 getStatusIcon={getStatusIcon}
@@ -440,7 +442,7 @@ export function CompanyTasksView() {
             
             {activeView === 'calendar' && (
               <CalendarTimelineView
-                tasks={companyTasks}
+                tasks={pendingTasks}
                 onTaskClick={handleOpenEditModal}
                 onCompleteTask={handleCompleteTask}
                 getStatusIcon={getStatusIcon}
@@ -453,7 +455,7 @@ export function CompanyTasksView() {
             
             {activeView === 'team' && (
               <TeamAssignmentView
-                tasks={companyTasks}
+                tasks={pendingTasks}
                 onTaskClick={handleOpenEditModal}
                 onCompleteTask={handleCompleteTask}
                 getStatusIcon={getStatusIcon}
@@ -467,7 +469,7 @@ export function CompanyTasksView() {
             
             {activeView === 'list' && (
               <TaskListView
-                tasks={companyTasks}
+                tasks={pendingTasks}
                 onTaskClick={handleOpenEditModal}
                 onCompleteTask={handleCompleteTask}
                 getStatusIcon={getStatusIcon}

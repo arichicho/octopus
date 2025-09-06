@@ -14,50 +14,52 @@ export const useHashNavigation = () => {
   });
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      setState({ companyId: null, view: null, isLoading: false });
+      return;
+    }
+
     const handleHashChange = () => {
-      if (typeof window === 'undefined') return;
-
       const hash = window.location.hash.replace('#', '');
-      console.log('🔍 useHashNavigation - Hash changed:', hash);
-      console.log('🔍 useHashNavigation - Current URL:', window.location.href);
-
+      
       let companyId: string | null = null;
       let view: string | null = null;
 
       if (hash.startsWith('company=')) {
         companyId = hash.split('=')[1];
-        console.log('🏢 useHashNavigation - Company ID:', companyId);
       } else if (hash === 'history') {
         view = 'history';
       } else if (hash === 'companies-config') {
         view = 'companies-config';
       }
 
-      console.log('🔍 useHashNavigation - Setting state:', { companyId, view, isLoading: false });
-      setState({
-        companyId,
-        view,
-        isLoading: false
+      setState(prevState => {
+        // Only update if state actually changed
+        if (prevState.companyId === companyId && prevState.view === view && !prevState.isLoading) {
+          return prevState;
+        }
+        return {
+          companyId,
+          view,
+          isLoading: false
+        };
       });
     };
 
     // Check initial hash immediately
-    console.log('🔍 useHashNavigation - Initial setup');
     handleHashChange();
 
     // Listen for hash changes
     window.addEventListener('hashchange', handleHashChange);
     
-    // Also listen for popstate (back/forward buttons)
-    window.addEventListener('popstate', handleHashChange);
-    
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
-      window.removeEventListener('popstate', handleHashChange);
     };
   }, []);
 
   const navigateToCompany = (companyId: string) => {
+    if (typeof window === 'undefined') return;
     console.log('🔗 useHashNavigation - Navigating to company:', companyId);
     console.log('🔗 useHashNavigation - Current hash before:', window.location.hash);
     window.location.hash = `company=${companyId}`;
@@ -65,11 +67,13 @@ export const useHashNavigation = () => {
   };
 
   const navigateToView = (view: string) => {
+    if (typeof window === 'undefined') return;
     console.log('🔗 useHashNavigation - Navigating to view:', view);
     window.location.hash = view;
   };
 
   const clearHash = () => {
+    if (typeof window === 'undefined') return;
     console.log('🔗 useHashNavigation - Clearing hash');
     console.log('🔗 useHashNavigation - Current hash before:', window.location.hash);
     window.location.hash = '';

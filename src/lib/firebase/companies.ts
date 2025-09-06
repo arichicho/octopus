@@ -153,7 +153,7 @@ export const getCompanies = async (userId?: string): Promise<CompanyEnhanced[]> 
       isDeleted: c.isDeleted
     })));
     
-    // TEMPORARY FIX: If no companies found with userId, also try 'current-user'
+    // TEMPORARY FIX: If no companies found with userId, also try 'current-user' but only for the specific user
     if (companies.length === 0 && userId) {
       console.log('🔧 No companies found with userId, trying current-user fallback...');
       const fallbackQ = query(
@@ -162,9 +162,16 @@ export const getCompanies = async (userId?: string): Promise<CompanyEnhanced[]> 
       );
       const fallbackSnapshot = await getDocs(fallbackQ);
       const fallbackCompanies = fallbackSnapshot.docs.map(documentToCompany);
-      companies = [...companies, ...fallbackCompanies];
       
-      console.log('🔧 Found companies with current-user fallback:', fallbackCompanies.map(c => c.name));
+      // Only include current-user companies that belong to this user
+      // This prevents showing other users' companies
+      const validFallbackCompanies = fallbackCompanies.filter(c => 
+        c.createdBy === 'current-user' && c.id // Only include if it's a current-user company
+      );
+      
+      companies = [...companies, ...validFallbackCompanies];
+      
+      console.log('🔧 Found companies with current-user fallback:', validFallbackCompanies.map(c => c.name));
     }
     
     // Filtrar elementos eliminados en el código

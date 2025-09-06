@@ -1,16 +1,12 @@
-export default function NotificationsSettingsPage() {
+"use client";
+
+export default function SettingsPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Notificaciones</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Configura tus preferencias de notificaciones
-        </p>
-      </div>
-      
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <p className="text-gray-500 dark:text-gray-400">
-          La configuración de notificaciones se mostrará aquí
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Settings</h1>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <p className="text-gray-600 dark:text-gray-400">
+          Vista de settings simplificada.
         </p>
       </div>
     </div>

@@ -156,3 +156,4 @@ const handleBackToBoard = () => {
 **URL Producción**: https://theceo.web.app
 
 **Nota**: El sistema está completamente funcional. Los problemas de build se solucionaron mediante simplificación de componentes y deploy directo.
+

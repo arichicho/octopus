@@ -6,7 +6,8 @@ import { User } from '../firebase/firestore';
 import { Timestamp } from 'firebase/firestore';
 import { auth } from '../firebase/config';
 // Usa lista de emails autorizados desde variables de entorno (cliente)
-import { isEmailAuthorized } from '../auth/authorization';
+import { checkAuthorization } from '../auth/authorization';
+const BYPASS_AUTH = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
 
 export const useAuth = () => {
   const { 
@@ -28,15 +29,15 @@ export const useAuth = () => {
       return;
     }
     
-    const unsubscribe = onAuthStateChange(async (firebaseUser) => {
+    const unsubscribe = onAuthStateChange((firebaseUser) => {
       if (firebaseUser) {
         console.log('🔐 Usuario loggeado:', firebaseUser.email);
         
-        // Verificar si el email está autorizado
-        if (!isEmailAuthorized(firebaseUser.email)) {
+        // Verificar si el email está autorizado (respetando bypass)
+        if (!BYPASS_AUTH && !checkAuthorization(firebaseUser.email)) {
           console.warn('❌ Usuario no autorizado:', firebaseUser.email);
           console.log('📋 Emails autorizados:', ['ariel.chicho@daleplayrecords.com']);
-          await signOutUser(); // Cerrar sesión inmediatamente
+          signOutUser(); // Cerrar sesión inmediatamente
           setUser(null);
           setUserProfile(null);
           setLoading(false);
@@ -44,59 +45,68 @@ export const useAuth = () => {
           window.location.href = '/unauthorized';
           return;
         }
-        
+        if (BYPASS_AUTH) {
+          console.log('🟢 BYPASS_AUTH activo. Acceso permitido a:', firebaseUser.email);
+        }
+
         console.log('✅ Usuario autorizado:', firebaseUser.email);
 
         setUser(firebaseUser);
         
-        try {
-          // Check if user profile exists in Firestore
-          const existingUser = await getUserByEmail(firebaseUser.email!);
-          
-          if (existingUser) {
-            setUserProfile(existingUser);
-            // Update last active
-            await updateUser(existingUser.id!, { lastActive: Timestamp.now() });
-          } else {
-            // Create new user profile
-            const newUser: Omit<User, 'id' | 'createdAt'> = {
-              email: firebaseUser.email!,
-              displayName: firebaseUser.displayName || '',
-              photoURL: firebaseUser.photoURL || '',
-              companies: [],
-              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-              preferences: {
-                theme: 'system',
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                language: 'es',
-                notifications: {
-                  email: true,
-                  push: true,
-                  dailyDigest: true,
-                  meetingReminders: true,
-                },
-                dashboard: {
-                  defaultView: 'my-day',
-                  showCompletedTasks: false,
-                  autoRefresh: true,
-                },
-              },
-              lastActive: Timestamp.now(),
-              status: 'active',
-            };
+        // Cargar perfil de usuario de forma asíncrona
+        const loadUserProfile = async () => {
+          try {
+            // Check if user profile exists in Firestore
+            const existingUser = await getUserByEmail(firebaseUser.email!);
             
-            const { id, data } = await createUser(newUser);
-            setUserProfile({ ...data, id });
+            if (existingUser) {
+              setUserProfile(existingUser);
+              // Update last active
+              await updateUser(existingUser.id!, { lastActive: Timestamp.now() });
+            } else {
+              // Create new user profile
+              const newUser: Omit<User, 'id' | 'createdAt'> = {
+                email: firebaseUser.email!,
+                displayName: firebaseUser.displayName || '',
+                photoURL: firebaseUser.photoURL || '',
+                companies: [],
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                preferences: {
+                  theme: 'system',
+                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  language: 'es',
+                  notifications: {
+                    email: true,
+                    push: true,
+                    dailyDigest: true,
+                    meetingReminders: true,
+                  },
+                  dashboard: {
+                    defaultView: 'my-day',
+                    showCompletedTasks: false,
+                    autoRefresh: true,
+                  },
+                },
+                lastActive: Timestamp.now(),
+                status: 'active',
+              };
+              
+              const { id, data } = await createUser(newUser);
+              setUserProfile({ ...data, id });
+            }
+          } catch (error) {
+            console.error('Error al cargar perfil de usuario:', error);
+          } finally {
+            setLoading(false);
           }
-        } catch (error) {
-          console.error('Error al cargar perfil de usuario:', error);
-          setLoading(false);
-        }
+        };
+        
+        loadUserProfile();
       } else {
         setUser(null);
         setUserProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();

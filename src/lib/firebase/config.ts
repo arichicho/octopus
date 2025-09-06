@@ -2,17 +2,24 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getAnalytics } from 'firebase/analytics';
+// Import de analytics removido en server; se cargará dinámicamente en navegador
+
+// Extender Window interface para evitar errores de TypeScript
+declare global {
+  interface Window {
+    firebaseInitialized?: boolean;
+  }
+}
 
 // Configuración de Firebase (tomada exclusivamente de variables de entorno)
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ''
+  apiKey: (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '').replace(/\n/g, '').trim(),
+  authDomain: (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '').replace(/\n/g, '').trim(),
+  projectId: (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '').replace(/\n/g, '').trim(),
+  storageBucket: (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '').replace(/\n/g, '').trim(),
+  messagingSenderId: (process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '').replace(/\n/g, '').trim(),
+  appId: (process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '').replace(/\n/g, '').trim(),
+  measurementId: (process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '').replace(/\n/g, '').trim()
 };
 
 // Configuración de la aplicación
@@ -48,10 +55,17 @@ const appConfig = {
   defaultTimezone: process.env.DEFAULT_TIMEZONE || 'America/Mexico_City',
   defaultLanguage: process.env.DEFAULT_LANGUAGE || 'es',
   defaultTheme: process.env.DEFAULT_THEME || 'light',
+  // Analytics
+  enableAnalytics: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
 };
 
-// Inicializar Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Inicializar Firebase - Solo una vez
+let app: any;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
+}
 
 // Inicializar servicios de Firebase
 const auth = getAuth(app);
@@ -74,34 +88,59 @@ if (appConfig.useEmulator && typeof window !== 'undefined' && appConfig.nodeEnv 
   }
 }
 
-// Inicializar Analytics (solo en producción y en el navegador)
-let analytics = null;
+// Inicializar Analytics (solo navegador, import dinámico)
+let analytics = null as any;
 if (typeof window !== 'undefined' && appConfig.nodeEnv === 'production') {
-  try {
-    analytics = getAnalytics(app);
-    console.log('📊 Analytics inicializado para producción');
-  } catch (error) {
-    console.warn('Analytics no pudo ser inicializado:', error);
+  const hasAppId = !!firebaseConfig.appId;
+  const hasMeasurement = !!firebaseConfig.measurementId;
+  if (appConfig.enableAnalytics === true && hasAppId && hasMeasurement) {
+    import('firebase/analytics')
+      .then(({ getAnalytics, isSupported }) =>
+        isSupported().then((supported) => {
+          if (!supported) return;
+          try {
+            analytics = getAnalytics(app);
+            console.log('📊 Analytics inicializado para producción');
+          } catch (error) {
+            console.warn('Analytics no pudo ser inicializado:', error);
+          }
+        })
+      )
+      .catch(() => {
+        console.log('📊 Analytics no soportado en este entorno');
+      });
+  } else {
+    console.log(
+      '📊 Analytics deshabilitado - enableAnalytics:',
+      appConfig.enableAnalytics,
+      'AppId:',
+      !!firebaseConfig.appId,
+      'MeasurementId:',
+      !!firebaseConfig.measurementId
+    );
   }
 }
 
 const functions = {}; // Se puede agregar getFunctions(app) si se necesita
 
-// Log de configuración
-if (typeof window !== 'undefined') {
-  if (appConfig.debugMode) {
-    console.log('🌍 Environment:', {
-      nodeEnv: appConfig.nodeEnv,
-      useEmulator: appConfig.useEmulator,
-      domain: window.location.hostname,
-      url: window.location.href
-    });
-  }
+// Log de configuración - Solo una vez
+if (typeof window !== 'undefined' && !window.firebaseInitialized) {
+  window.firebaseInitialized = true;
+  
+  // Verificar configuración de Firebase
+  console.log('🔍 Firebase Config Check:', {
+    apiKey: firebaseConfig.apiKey ? '✅' : '❌',
+    authDomain: firebaseConfig.authDomain ? '✅' : '❌',
+    projectId: firebaseConfig.projectId ? '✅' : '❌',
+    storageBucket: firebaseConfig.storageBucket ? '✅' : '❌',
+    messagingSenderId: firebaseConfig.messagingSenderId ? '✅' : '❌',
+    appId: firebaseConfig.appId ? '✅' : '❌',
+    measurementId: firebaseConfig.measurementId ? '✅' : '❌'
+  });
   
   if (appConfig.useEmulator && appConfig.nodeEnv === 'development') {
     console.log('🔧 Firebase configurado con emuladores para desarrollo');
   } else {
-    // No registrar configuración sensible en producción
     console.log('🔥 Firebase configurado para producción');
   }
 }

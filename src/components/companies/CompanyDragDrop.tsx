@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CompanyEnhanced } from '@/types/company-enhanced';
+import { Task } from '@/types/task';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,7 +30,10 @@ import {
   GripVertical, 
   ChevronRight,
   Plus,
-  MoreHorizontal
+  MoreHorizontal,
+  CheckCircle,
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 
 interface CompanyDragDropProps {
@@ -39,6 +43,7 @@ interface CompanyDragDropProps {
   onCreateTask: (company: CompanyEnhanced) => void;
   onEditCompany: (company: CompanyEnhanced) => void;
   selectedCompanyId?: string;
+  tasksByCompany?: Record<string, Task[]>;
 }
 
 interface SortableCompanyItemProps {
@@ -47,6 +52,7 @@ interface SortableCompanyItemProps {
   onSelect: () => void;
   onCreateTask: () => void;
   onEdit: () => void;
+  tasks?: Task[];
 }
 
 function SortableCompanyItem({ 
@@ -54,7 +60,8 @@ function SortableCompanyItem({
   isSelected, 
   onSelect, 
   onCreateTask, 
-  onEdit 
+  onEdit,
+  tasks = []
 }: SortableCompanyItemProps) {
   const {
     attributes,
@@ -148,6 +155,69 @@ function SortableCompanyItem({
             </div>
           </div>
         </CardHeader>
+        
+        {/* Mostrar tareas de la empresa */}
+        {tasks.length > 0 && (
+          <CardContent className="pt-0">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                <span>{tasks.length} tareas</span>
+                <div className="flex items-center space-x-2">
+                  {tasks.filter(t => t.status === 'pending').length > 0 && (
+                    <div className="flex items-center space-x-1">
+                      <Clock className="h-3 w-3 text-yellow-500" />
+                      <span>{tasks.filter(t => t.status === 'pending').length}</span>
+                    </div>
+                  )}
+                  {tasks.filter(t => t.status === 'in_progress').length > 0 && (
+                    <div className="flex items-center space-x-1">
+                      <AlertCircle className="h-3 w-3 text-blue-500" />
+                      <span>{tasks.filter(t => t.status === 'in_progress').length}</span>
+                    </div>
+                  )}
+                  {tasks.filter(t => t.status === 'completed').length > 0 && (
+                    <div className="flex items-center space-x-1">
+                      <CheckCircle className="h-3 w-3 text-green-500" />
+                      <span>{tasks.filter(t => t.status === 'completed').length}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Mostrar primeras 3 tareas */}
+              <div className="space-y-1">
+                {tasks.slice(0, 3).map((task) => (
+                  <div key={task.id} className="flex items-center space-x-2 text-sm">
+                    <div className={`w-2 h-2 rounded-full ${
+                      task.status === 'completed' ? 'bg-green-500' :
+                      task.status === 'in_progress' ? 'bg-blue-500' :
+                      'bg-yellow-500'
+                    }`} />
+                    <span className="truncate flex-1">{task.title}</span>
+                    {task.priority && (
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${
+                          task.priority === 'high' ? 'border-red-200 text-red-600' :
+                          task.priority === 'medium' ? 'border-yellow-200 text-yellow-600' :
+                          'border-green-200 text-green-600'
+                        }`}
+                      >
+                        {task.priority === 'high' ? 'Alta' :
+                         task.priority === 'medium' ? 'Media' : 'Baja'}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+                {tasks.length > 3 && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    +{tasks.length - 3} tareas más...
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        )}
       </Card>
     </div>
   );
@@ -160,6 +230,7 @@ export function CompanyDragDrop({
   onCreateTask,
   onEditCompany,
   selectedCompanyId,
+  tasksByCompany = {},
 }: CompanyDragDropProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -199,6 +270,7 @@ export function CompanyDragDrop({
               onSelect={() => onSelectCompany(company)}
               onCreateTask={() => onCreateTask(company)}
               onEdit={() => onEditCompany(company)}
+              tasks={tasksByCompany[company.id] || []}
             />
           ))}
         </div>

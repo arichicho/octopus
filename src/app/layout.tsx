@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// Forzar runtime Node.js en todo el árbol para evitar Edge en Vercel
+export const runtime = 'nodejs';
+
 export const metadata: Metadata = {
   title: "Octopus - Sistema de Gestión de Tareas",
   description: "Sistema completo de gestión de tareas multi-empresa con integraciones avanzadas",

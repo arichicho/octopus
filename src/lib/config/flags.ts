@@ -1,0 +1,3 @@
+export const ENABLE_GOOGLE_INTEGRATIONS =
+  (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_INTEGRATIONS ?? '1') !== '0';
+

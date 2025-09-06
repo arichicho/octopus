@@ -45,24 +45,37 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       let tasks: Task[] = [];
       
       if (userId) {
-        // First try to get tasks with real userId
-        const userConditions = [{ field: 'createdBy', operator: '==', value: userId }];
-        tasks = await getDocuments<Task>('tasks', userConditions);
+        // Try multiple approaches to find tasks
+        const searchStrategies = [
+          // Strategy 1: Direct UID match
+          { field: 'createdBy', operator: '==', value: userId },
+          // Strategy 2: Email match (if userId is email)
+          { field: 'createdBy', operator: '==', value: userId },
+          // Strategy 3: Current user fallback
+          { field: 'createdBy', operator: '==', value: 'current-user' }
+        ];
         
-        console.log('📋 Found tasks with userId:', tasks.length);
-        
-        // TEMPORARY FIX: If no tasks found with userId, also try 'current-user'
-        if (tasks.length === 0) {
-          console.log('🔧 No tasks found with userId, trying current-user fallback...');
-          const fallbackConditions = [{ field: 'createdBy', operator: '==', value: 'current-user' }];
-          const fallbackTasks = await getDocuments<Task>('tasks', fallbackConditions);
-          tasks = [...tasks, ...fallbackTasks];
+        for (const strategy of searchStrategies) {
+          const conditions = [strategy];
+          const foundTasks = await getDocuments<Task>('tasks', conditions);
+          tasks = [...tasks, ...foundTasks];
+          console.log(`📋 Found tasks with strategy ${strategy.value}:`, foundTasks.length);
           
-          console.log('🔧 Found tasks with current-user fallback:', fallbackTasks.length);
+          if (foundTasks.length > 0) {
+            break; // Stop at first successful strategy
+          }
         }
+        
+        // Remove duplicates based on task ID
+        const uniqueTasks = tasks.filter((task, index, self) => 
+          index === self.findIndex(t => t.id === task.id)
+        );
+        tasks = uniqueTasks;
+        
       } else {
-        // If no userId, get all tasks
-        tasks = await getDocuments<Task>('tasks');
+        // If no userId, return empty array (no tasks)
+        console.log('⚠️ No userId provided, returning empty tasks array');
+        tasks = [];
       }
       
       console.log('✅ Total loaded tasks:', tasks.length);

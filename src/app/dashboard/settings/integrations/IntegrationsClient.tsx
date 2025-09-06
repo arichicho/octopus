@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/store/useAuthStore';
 import { useEffect, useState } from 'react';
 import { GoogleIntegrationService } from '@/lib/services/google-integrations';
 import { Badge } from '@/components/ui/badge';
+import { ENABLE_GOOGLE_INTEGRATIONS } from '@/lib/config/flags';
 
 function IntegrationsOverview() {
   const { user } = useAuthStore();
@@ -70,11 +71,15 @@ export default function IntegrationsClient() {
 
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Integraciones de Google</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <GoogleIntegrationCard type="gmail" />
-          <GoogleIntegrationCard type="calendar" />
-          <GoogleIntegrationCard type="drive" />
-        </div>
+        {ENABLE_GOOGLE_INTEGRATIONS ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <GoogleIntegrationCard type="gmail" />
+            <GoogleIntegrationCard type="calendar" />
+            <GoogleIntegrationCard type="drive" />
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500 dark:text-gray-400">Integraciones de Google deshabilitadas</div>
+        )}
       </div>
 
       <div>
@@ -84,4 +89,3 @@ export default function IntegrationsClient() {
     </div>
   );
 }
-

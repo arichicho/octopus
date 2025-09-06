@@ -152,3 +152,4 @@ const handleBackToBoard = () => {
 **Fecha**: Diciembre 2024
 **Versión**: 1.0.1
 **URL Producción**: https://theceo.web.app
+

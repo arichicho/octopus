@@ -1,321 +1,409 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Sidebar } from '@/components/common/Sidebar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { useTaskStore } from '@/lib/store/useTaskStore';
+import { Task } from '@/types/task';
+import { TaskStatus, TaskPriority } from '@/types/task';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  CheckSquare, 
-  Plus,
-  Search,
-  Filter,
-  Calendar,
-  Users,
-  CalendarIcon
-} from 'lucide-react';
-import { TaskFormData } from '@/types/task';
-import { useCompanyStore } from '@/lib/store/useCompanyStore';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Edit, Trash2, CheckCircle, Clock, AlertTriangle, Calendar, User, Building2, Tag, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { firestoreDateToDate } from '@/lib/utils/dateUtils';
 
 export default function TasksPage() {
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [testModal, setTestModal] = useState(false);
-  const [currentTime, setCurrentTime] = useState('');
-  const { companies, currentCompany } = useCompanyStore();
+  const { user } = useAuth();
+  const { tasks, loading, loadTasks, createTask, updateTask, deleteTask } = useTaskStore();
+  const [showForm, setShowForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    status: 'pending' as TaskStatus,
+    priority: 'medium' as TaskPriority,
+    dueDate: '',
+    assignedTo: '',
+    tags: '',
+    companyId: ''
+  });
 
-  // Actualizar la hora solo en el cliente
-  React.useEffect(() => {
-    const updateTime = () => {
-      setCurrentTime(new Date().toLocaleTimeString());
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  useEffect(() => {
+    if (user) {
+      loadTasks(user.email);
+    }
+  }, [user, loadTasks]);
 
-  // No auto-load sample data - companies will be loaded from Firebase
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
 
-  // Datos de ejemplo para usuarios
-  const users = [
-    { id: '1', name: 'Juan Pérez', email: 'juan@example.com' },
-    { id: '2', name: 'María García', email: 'maria@example.com' },
-    { id: '3', name: 'Carlos López', email: 'carlos@example.com' },
-    { id: '4', name: 'Ana Rodríguez', email: 'ana@example.com' },
-    { id: '5', name: 'Luis Martínez', email: 'luis@example.com' },
-    { id: '6', name: 'Sofía Torres', email: 'sofia@example.com' },
-  ];
-
-  const handleCreateTask = async (data: TaskFormData) => {
-    setLoading(true);
     try {
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Cerrar modal y mostrar mensaje de éxito
-      setShowCreateModal(false);
+      const taskData = {
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
+        priority: formData.priority,
+        dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
+        assignedTo: formData.assignedTo ? [formData.assignedTo] : [],
+        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+        companyId: formData.companyId || 'default',
+        createdBy: user.email,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        progress: 0
+      };
+
+      if (editingTask) {
+        await updateTask(editingTask.id, {
+          ...taskData,
+          updatedAt: new Date()
+        });
+      } else {
+        await createTask(taskData);
+      }
+
+      setFormData({
+        title: '',
+        description: '',
+        status: 'pending',
+        priority: 'medium',
+        dueDate: '',
+        assignedTo: '',
+        tags: '',
+        companyId: ''
+      });
+      setShowForm(false);
+      setEditingTask(null);
     } catch (error) {
-      console.error('Error al crear tarea:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error saving task:', error);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar />
-      
-      {/* Main Content */}
-      <div className="lg:ml-64">
-        {/* Header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Gestión de Tareas
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Administra y organiza todas tus tareas en un solo lugar
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtros
-              </Button>
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nueva Tarea
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setTestModal(true)}
-              >
-                Probar Modal
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={() => {
-                  alert('¡Cambios aplicados correctamente!');
-                  setShowCreateModal(true);
-                }}
-              >
-                🚀 Modal Nuevo
-              </Button>
-            </div>
-          </div>
-        </header>
+  const handleEdit = (task: Task) => {
+    setEditingTask(task);
+    setFormData({
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate ? format(firestoreDateToDate(task.dueDate) || new Date(), 'yyyy-MM-dd') : '',
+      assignedTo: task.assignedTo?.[0] || '',
+      tags: task.tags?.join(', ') || '',
+      companyId: task.companyId || ''
+    });
+    setShowForm(true);
+  };
 
-        {/* Main Content Area */}
-        <main className="p-6">
-          {/* Search and Filters */}
-          <div className="mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+  const handleDelete = async (taskId: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+      try {
+        await deleteTask(taskId);
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
+    }
+  };
+
+  const getStatusIcon = (status: TaskStatus) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'in_progress':
+        return <Clock className="h-4 w-4 text-blue-600" />;
+      case 'cancelled':
+        return <AlertTriangle className="h-4 w-4 text-red-600" />;
+      default:
+        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+    }
+  };
+
+  const getPriorityColor = (priority: TaskPriority) => {
+    switch (priority) {
+      case 'urgent':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+      case 'high':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      default:
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+    }
+  };
+
+  const getStatusColor = (status: TaskStatus) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+      default:
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+    }
+  };
+
+  const getStatusText = (status: TaskStatus) => {
+    switch (status) {
+      case 'completed':
+        return 'Completada';
+      case 'in_progress':
+        return 'En Progreso';
+      case 'cancelled':
+        return 'Cancelada';
+      default:
+        return 'Pendiente';
+    }
+  };
+
+  const getPriorityText = (priority: TaskPriority) => {
+    switch (priority) {
+      case 'urgent':
+        return 'Urgente';
+      case 'high':
+        return 'Alta';
+      case 'medium':
+        return 'Media';
+      default:
+        return 'Baja';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link href="/dashboard">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver al Dashboard
+              </Button>
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Tareas</h1>
+          </div>
+          <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Nueva Tarea
+          </Button>
+        </div>
+      </div>
+
+      {showForm && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>{editingTask ? 'Editar Tarea' : 'Nueva Tarea'}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Título</label>
                 <Input
-                  placeholder="Buscar tareas..."
-                  className="pl-10"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="Título de la tarea"
+                  required
                 />
               </div>
-              <Button variant="outline" size="sm">
-                <Calendar className="h-4 w-4 mr-2" />
-                Fecha
-              </Button>
-              <Button variant="outline" size="sm">
-                <Users className="h-4 w-4 mr-2" />
-                Asignado
-              </Button>
-            </div>
-          </div>
-
-          {/* Tasks Grid - Empty State */}
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="text-center max-w-md">
-              <CheckSquare className="h-16 w-16 text-gray-400 mx-auto mb-6" />
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                No hay tareas aún
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
-                Comienza creando tu primera tarea para gestionar tu trabajo de manera eficiente.
-              </p>
-              <Button onClick={() => setShowCreateModal(true)} size="lg">
-                <Plus className="h-5 w-5 mr-2" />
-                Crear Primera Tarea
-              </Button>
-            </div>
-          </div>
-        </main>
-
-        {/* Modal de creación de tarea */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-red-600">🎉 MODAL ACTUALIZADO 🎉</h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Crear nueva tarea
-                    </p>
-                    <p className="text-xs text-blue-600 mt-1">Versión actualizada - {currentTime || 'Cargando...'}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowCreateModal(false)}
-                  >
-                    ✕
-                  </Button>
-                </div>
-
-                <form className="space-y-4">
-                  {/* Título */}
-                  <div>
-                    <Label htmlFor="title" className="text-sm font-medium">
-                      Título *
-                    </Label>
-                    <Input
-                      id="title"
-                      placeholder="Ingresa el título de la tarea"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  {/* Descripción */}
-                  <div>
-                    <Label htmlFor="description" className="text-sm font-medium">
-                      Descripción
-                    </Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Describe la tarea..."
-                      rows={3}
-                      className="mt-1"
-                    />
-                  </div>
-
-                  {/* Prioridad */}
-                  <div>
-                    <Label htmlFor="priority" className="text-sm font-medium">
-                      Prioridad
-                    </Label>
-                    <Select defaultValue="medium">
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="urgent">Urgente</SelectItem>
-                        <SelectItem value="high">Alta</SelectItem>
-                        <SelectItem value="medium">Media</SelectItem>
-                        <SelectItem value="low">Baja</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Estado */}
-                  <div>
-                    <Label htmlFor="status" className="text-sm font-medium">
-                      Estado
-                    </Label>
-                    <Select defaultValue="pending">
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="in_progress">En Progreso</SelectItem>
-                        <SelectItem value="completed">Completada</SelectItem>
-                        <SelectItem value="cancelled">Cancelada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Fecha de vencimiento */}
-                  <div>
-                    <Label htmlFor="dueDate" className="text-sm font-medium">
-                      Fecha de Vencimiento
-                    </Label>
-                    <div className="relative mt-1">
-                      <Input
-                        id="dueDate"
-                        placeholder="Seleccionar fecha"
-                        className="pl-10"
-                      />
-                      <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
-
-                  {/* Etiquetas */}
-                  <div>
-                    <Label htmlFor="tags" className="text-sm font-medium">
-                      Etiquetas
-                    </Label>
-                    <div className="flex gap-2 mt-1">
-                      <Input
-                        id="tags"
-                        placeholder="Agregar etiqueta y presionar Enter o coma"
-                        className="flex-1"
-                      />
-                      <Button type="button" variant="outline" size="sm">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Botones */}
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setShowCreateModal(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button 
-                      type="submit"
-                      onClick={() => {
-                        handleCreateTask({
-                          title: 'Tarea de prueba',
-                          description: 'Esta es una tarea de prueba',
-                          companyId: companies[0]?.id || '',
-                          priority: 'medium',
-                          assignedTo: [],
-                          tags: ['#prueba']
-                        });
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Crear Tarea
-                    </Button>
-                  </div>
-                </form>
+              <div>
+                <label className="block text-sm font-medium mb-2">Descripción</label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Descripción de la tarea"
+                />
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal de prueba simple */}
-        {testModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">Modal de Prueba</h3>
-              <p className="text-gray-600 mb-4">Este es un modal simple para probar que funciona.</p>
-              <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setTestModal(false)}
-                >
-                  Cerrar
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Estado</label>
+                  <Select value={formData.status} onValueChange={(value: TaskStatus) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="in_progress">En Progreso</SelectItem>
+                      <SelectItem value="completed">Completada</SelectItem>
+                      <SelectItem value="cancelled">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Prioridad</label>
+                  <Select value={formData.priority} onValueChange={(value: TaskPriority) => setFormData({ ...formData, priority: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baja</SelectItem>
+                      <SelectItem value="medium">Media</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                      <SelectItem value="urgent">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Fecha de Vencimiento</label>
+                  <Input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Asignado a (email)</label>
+                  <Input
+                    value={formData.assignedTo}
+                    onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                    placeholder="email@ejemplo.com"
+                    type="email"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Tags (separados por comas)</label>
+                <Input
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  placeholder="tag1, tag2, tag3"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit">
+                  {editingTask ? 'Actualizar' : 'Crear'} Tarea
+                </Button>
+                <Button type="button" variant="outline" onClick={() => {
+                  setShowForm(false);
+                  setEditingTask(null);
+                  setFormData({
+                    title: '',
+                    description: '',
+                    status: 'pending',
+                    priority: 'medium',
+                    dueDate: '',
+                    assignedTo: '',
+                    tags: '',
+                    companyId: ''
+                  });
+                }}>
+                  Cancelar
                 </Button>
               </div>
-            </div>
-          </div>
-        )}
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex-1 overflow-auto">
+        <div className="grid gap-4">
+          {tasks.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-gray-500 dark:text-gray-400">No tienes tareas asignadas</p>
+                <Button onClick={() => setShowForm(true)} className="mt-4">
+                  Crear tu primera tarea
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            tasks.map((task) => {
+              const dueDate = firestoreDateToDate(task.dueDate);
+              return (
+                <Card key={task.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {getStatusIcon(task.status)}
+                          <h3 className="font-semibold text-lg">{task.title}</h3>
+                          <Badge className={getPriorityColor(task.priority)}>
+                            {getPriorityText(task.priority)}
+                          </Badge>
+                          <Badge className={getStatusColor(task.status)}>
+                            {getStatusText(task.status)}
+                          </Badge>
+                        </div>
+                        {task.description && (
+                          <p className="text-gray-600 dark:text-gray-400 mb-3">{task.description}</p>
+                        )}
+                        
+                        <div className="space-y-2">
+                          {/* Asignado a */}
+                          {task.assignedTo && task.assignedTo.length > 0 && (
+                            <div className="flex items-center space-x-2 text-sm">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Asignado a:</span>
+                              <span className="font-medium">{task.assignedTo.join(', ')}</span>
+                            </div>
+                          )}
+
+                          {/* Fecha de vencimiento */}
+                          {dueDate && (
+                            <div className="flex items-center space-x-2 text-sm">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Vence:</span>
+                              <span className="font-medium">
+                                {format(dueDate, 'dd/MM/yyyy', { locale: es })}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Tags */}
+                          {task.tags && task.tags.length > 0 && (
+                            <div className="flex items-center space-x-2 text-sm">
+                              <Tag className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Tags:</span>
+                              <div className="flex flex-wrap gap-1">
+                                {task.tags.map((tag, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(task)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(task.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );

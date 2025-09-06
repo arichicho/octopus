@@ -59,6 +59,10 @@ export const Sidebar = () => {
   };
 
   const handleNavigation = (href: string) => {
+    if (!mounted) return;
+    // Evitar navegación redundante que puede disparar efectos
+    const current = pathname + (typeof window !== 'undefined' ? window.location.hash : '');
+    if (current === href) return;
     console.log('🔗 Sidebar - Navegando a:', href);
     router.push(href);
   };
@@ -80,14 +84,8 @@ export const Sidebar = () => {
           badge: '5'
         },
         {
-          title: 'Tareas',
-          href: '/dashboard/tasks',
-          icon: CheckSquare,
-          badge: '12'
-        },
-        {
           title: 'Historial',
-          href: '/dashboard#history',
+          href: '/dashboard/history',
           icon: History,
           badge: null
         },
@@ -205,8 +203,8 @@ export const Sidebar = () => {
     if (href === '/dashboard') {
       return pathname === '/dashboard';
     }
-    if (href === '/dashboard#history') {
-      return pathname === '/dashboard' && typeof window !== 'undefined' && window.location.hash === '#history';
+    if (href === '/dashboard/history') {
+      return pathname === '/dashboard/history';
     }
     return pathname.startsWith(href);
   };
@@ -214,7 +212,7 @@ export const Sidebar = () => {
   return (
     <div 
       className={cn(
-        "h-full flex flex-col transition-all duration-300 ease-in-out bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700",
+        "h-full flex flex-col transition-all duration-300 ease-in-out bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 overflow-y-auto",
         mounted ? (collapsed ? "w-16" : "w-64") : "w-64"
       )}
     >

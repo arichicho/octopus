@@ -6,20 +6,25 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, ExternalLink, Settings, Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 
 export default function HomePage() {
   const { isAuthenticated, loading, user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const redirectedRef = useRef(false);
 
   useEffect(() => {
     console.log('🏠 HomePage - Auth state:', { isAuthenticated, loading, user: user?.email });
-    if (!loading && isAuthenticated) {
-      console.log('🔄 Redirecting to dashboard...');
-      router.push('/dashboard');
+    if (!loading && isAuthenticated && !redirectedRef.current) {
+      if (pathname !== '/dashboard') {
+        redirectedRef.current = true;
+        console.log('🔄 Redirecting to dashboard...');
+        router.push('/dashboard');
+      }
     }
-  }, [isAuthenticated, loading, router, user]);
+  }, [isAuthenticated, loading, router, user, pathname]);
 
   // Verificar si Firebase está configurado
   const isFirebaseConfigured = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
