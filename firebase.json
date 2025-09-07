@@ -27,10 +27,16 @@
           ]
         }
       ],
-      "rewrites": [
+      "redirects": [
+        {
+          "source": "/",
+          "destination": "https://octopus-theceo.vercel.app/",
+          "type": 302
+        },
         {
           "source": "**",
-          "destination": "/index.html"
+          "destination": "https://octopus-theceo.vercel.app/",
+          "type": 302
         }
       ]
     },

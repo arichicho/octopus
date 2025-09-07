@@ -92,21 +92,27 @@ export const INTEGRATIONS_CONFIG = {
 // Validar configuración
 export function validateIntegrationsConfig() {
   const errors: string[] = [];
+  const isServer = typeof window === 'undefined';
 
   // Validar Google OAuth
   if (!INTEGRATIONS_CONFIG.google.clientId) {
     errors.push('NEXT_PUBLIC_GOOGLE_CLIENT_ID no está configurado');
   }
-  if (!INTEGRATIONS_CONFIG.google.clientSecret) {
-    errors.push('GOOGLE_CLIENT_SECRET no está configurado');
+  // Solo validar secretos en el servidor; en el cliente no están disponibles
+  if (isServer) {
+    if (!INTEGRATIONS_CONFIG.google.clientSecret) {
+      errors.push('GOOGLE_CLIENT_SECRET no está configurado');
+    }
   }
   if (!process.env.NEXT_PUBLIC_APP_URL) {
     errors.push('NEXT_PUBLIC_APP_URL no está configurado');
   }
 
   // Validar Claude
-  if (!INTEGRATIONS_CONFIG.claude.apiKey) {
-    errors.push('CLAUDE_API_KEY no está configurado');
+  if (isServer) {
+    if (!INTEGRATIONS_CONFIG.claude.apiKey) {
+      errors.push('CLAUDE_API_KEY no está configurado');
+    }
   }
 
   return {
@@ -128,6 +134,10 @@ export function getClaudeConfig() {
 export function isIntegrationEnabled(type: 'google' | 'claude'): boolean {
   switch (type) {
     case 'google':
+      // En cliente sólo necesitamos clientId; el secret vive en el servidor
+      if (typeof window !== 'undefined') {
+        return !!INTEGRATIONS_CONFIG.google.clientId;
+      }
       return !!(INTEGRATIONS_CONFIG.google.clientId && INTEGRATIONS_CONFIG.google.clientSecret);
     case 'claude':
       return !!INTEGRATIONS_CONFIG.claude.apiKey;

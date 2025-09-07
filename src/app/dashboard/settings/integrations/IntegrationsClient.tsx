@@ -5,6 +5,7 @@ import GoogleIntegrationCard from '@/components/integrations/GoogleIntegrationCa
 import ClaudeIntegrationCard from '@/components/integrations/ClaudeIntegrationCard';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { GoogleIntegrationService } from '@/lib/services/google-integrations';
 import { Badge } from '@/components/ui/badge';
 import { ENABLE_GOOGLE_INTEGRATIONS } from '@/lib/config/flags';
@@ -59,6 +60,38 @@ function IntegrationsOverview() {
 }
 
 export default function IntegrationsClient() {
+  const search = useSearchParams();
+  const router = useRouter();
+  const { user } = useAuthStore();
+
+  // Handle OAuth callback (code+state)
+  useEffect(() => {
+    const code = search.get('code');
+    const state = search.get('state');
+    if (!code || !state || !user?.uid) return;
+    let parsed: any = null;
+    try { parsed = JSON.parse(decodeURIComponent(state)); } catch { parsed = null; }
+    const type = parsed?.type as 'gmail' | 'calendar' | 'drive' | undefined;
+    if (!type) return;
+    // Exchange code via backend using Firebase auth
+    GoogleIntegrationService.connectIntegration(user.uid, type, code)
+      .then(() => {
+        // Fuerza recarga para que las cards vuelvan a consultar el estado
+        const url = new URL(window.location.href);
+        url.searchParams.delete('code');
+        url.searchParams.delete('state');
+        router.replace(url.pathname + (url.searchParams.size ? `?${url.searchParams}` : ''));
+        window.location.reload();
+      })
+      .catch(() => {
+        // Si falla, al menos limpiamos la URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete('code');
+        url.searchParams.delete('state');
+        router.replace(url.pathname + (url.searchParams.size ? `?${url.searchParams}` : ''));
+      });
+  }, [search, router, user?.uid]);
+
   return (
     <div className="space-y-6">
       <div>

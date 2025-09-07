@@ -48,7 +48,8 @@ export class GoogleIntegrationService {
       });
 
       if (!response.ok) {
-        throw new Error('Error al conectar la integración');
+        const text = await response.text();
+        throw new Error(`Error al conectar la integración: ${response.status} ${text}`);
       }
 
       return await response.json();
@@ -73,7 +74,8 @@ export class GoogleIntegrationService {
       });
 
       if (!response.ok) {
-        throw new Error('Error al desconectar la integración');
+        const text = await response.text();
+        throw new Error(`Error al desconectar la integración: ${response.status} ${text}`);
       }
     } catch (error) {
       console.error('Error desconectando integración:', error);
