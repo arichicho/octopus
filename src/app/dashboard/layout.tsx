@@ -1,12 +1,38 @@
 "use client";
 
 import { Sidebar } from '@/components/common/Sidebar';
-import { SidebarProvider } from '@/lib/context/SidebarContext';
+import { SidebarProvider, useSidebar } from '@/lib/context/SidebarContext';
 import { ModalProvider } from '@/lib/context/ModalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
+import { Menu, X } from 'lucide-react';
+
+// Mobile Header Component
+function MobileHeader() {
+  const { mobileOpen, setMobileOpen } = useSidebar();
+  
+  return (
+    <div className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <span className="text-white font-bold text-lg">🐙</span>
+        </div>
+        <span className="font-bold text-lg text-gray-900 dark:text-gray-100">Octopus</span>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="h-8 w-8 p-0"
+        aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+      >
+        {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+      </Button>
+    </div>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -57,8 +83,10 @@ export default function DashboardLayout({
           <Sidebar />
           
           {/* Main Content */}
-          <div className="flex-1 flex flex-col">
-
+          <div className="flex-1 flex flex-col lg:ml-0">
+            {/* Mobile Header */}
+            <MobileHeader />
+            
             {/* Main Content Area */}
             <main className="flex-1 overflow-auto p-4 sm:p-6">
               <div className="h-full mx-auto w-full max-w-6xl">

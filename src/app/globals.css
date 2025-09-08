@@ -159,3 +159,33 @@
   overflow: visible !important;
   text-overflow: unset !important;
 }
+
+/* Mobile responsive improvements */
+@media (max-width: 1023px) {
+  /* Ensure mobile sidebar doesn't interfere with content */
+  .mobile-sidebar-open {
+    overflow: hidden;
+  }
+  
+  /* Improve touch targets on mobile */
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better spacing for mobile */
+  .mobile-padding {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Smooth transitions for mobile sidebar */
+.sidebar-transition {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Prevent body scroll when mobile menu is open */
+body.mobile-menu-open {
+  overflow: hidden;
+}

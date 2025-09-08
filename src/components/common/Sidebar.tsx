@@ -38,7 +38,7 @@ import { useModal } from '@/lib/context/ModalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
 
 export const Sidebar = () => {
-  const { collapsed, setCollapsed } = useSidebar();
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const { openCompanyModal } = useModal();
   const { user, signOut } = useAuth();
   const pathname = usePathname();
@@ -65,6 +65,8 @@ export const Sidebar = () => {
     if (current === href) return;
     console.log('🔗 Sidebar - Navegando a:', href);
     router.push(href);
+    // Close mobile menu on navigation
+    setMobileOpen(false);
   };
 
   const navigation = [
@@ -210,12 +212,27 @@ export const Sidebar = () => {
   };
 
   return (
-    <div 
-      className={cn(
-        "h-full flex flex-col transition-all duration-300 ease-in-out bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 overflow-y-auto",
-        mounted ? (collapsed ? "w-16" : "w-64") : "w-64"
+    <>
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
       )}
-    >
+      
+      {/* Sidebar */}
+      <div 
+        className={cn(
+          "h-full flex flex-col transition-all duration-300 ease-in-out bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 overflow-y-auto",
+          // Desktop behavior
+          "lg:relative lg:translate-x-0",
+          mounted ? (collapsed ? "lg:w-16" : "lg:w-64") : "lg:w-64",
+          // Mobile behavior
+          "fixed inset-y-0 left-0 z-50 w-64 transform",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         {!collapsed && (
@@ -239,7 +256,7 @@ export const Sidebar = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => setMobileOpen(false)}
             className="h-8 w-8 p-0 lg:hidden"
             aria-label="Cerrar menú"
           >
@@ -366,6 +383,7 @@ export const Sidebar = () => {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
