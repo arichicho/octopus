@@ -8,7 +8,20 @@ export async function GET(request: NextRequest) {
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const db = getFirestore();
-  if (!db) return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
+  if (!db) {
+    // Fallback to ephemeral config if Firestore isn't available (dev without emulator)
+    const cfg = getClaudeConfig();
+    return NextResponse.json({
+      id: `${auth.uid}_claude_config`,
+      userId: auth.uid,
+      enabled: !!cfg.apiKey,
+      model: cfg.defaultModel,
+      maxTokens: cfg.maxTokens,
+      createdAt: null,
+      updatedAt: null,
+      _warning: 'Firestore not available; returning default (ephemeral) config',
+    });
+  }
 
   try {
     const id = `${auth.uid}_claude_config`;
@@ -32,7 +45,19 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(snap.data());
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Failed to load config' }, { status: 500 });
+    // If Firestore connection fails (e.g., emulator down), return defaults
+    const cfg = getClaudeConfig();
+    return NextResponse.json({
+      id: `${auth.uid}_claude_config`,
+      userId: auth.uid,
+      enabled: !!cfg.apiKey,
+      model: cfg.defaultModel,
+      maxTokens: cfg.maxTokens,
+      createdAt: null,
+      updatedAt: null,
+      _warning: 'Firestore error; returning default (ephemeral) config',
+      _error: e?.message || String(e),
+    });
   }
 }
 
@@ -64,4 +89,3 @@ export async function PUT(request: NextRequest) {
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-

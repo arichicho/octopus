@@ -6,11 +6,15 @@ export async function GET(request: NextRequest) {
   const auth = await verifyAuth(request);
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const db = getFirestore();
-  if (!db) return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
-  const id = `${auth.uid}_drive_config`;
-  const snap = await db.collection('integrations_google_config').doc(id).get();
-  if (!snap.exists) return NextResponse.json({}, { status: 204 });
-  return NextResponse.json(snap.data());
+  if (!db) return new NextResponse(null, { status: 204 });
+  try {
+    const id = `${auth.uid}_drive_config`;
+    const snap = await db.collection('integrations_google_config').doc(id).get();
+    if (!snap.exists) return new NextResponse(null, { status: 204 });
+    return NextResponse.json(snap.data());
+  } catch {
+    return new NextResponse(null, { status: 204 });
+  }
 }
 
 export async function PUT(request: NextRequest) {

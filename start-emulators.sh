@@ -15,9 +15,9 @@ if [ ! -f "firebase.json" ]; then
 fi
 
 echo "✅ Iniciando emuladores..."
-echo "📊 UI del emulador: http://localhost:4000"
-echo "🔐 Auth emulator: localhost:9099"
-echo "🗄️  Firestore emulator: localhost:8080"
+echo "📊 UI del emulador: http://localhost:4001"
+echo "🔐 Auth emulator: localhost:9098"
+echo "🗄️  Firestore emulator: localhost:8081"
 echo "⚡ Functions emulator: localhost:5001"
 echo ""
 echo "Presiona Ctrl+C para detener los emuladores"

@@ -1,0 +1,114 @@
+   ▲ Next.js 15.5.2 (Turbopack)
+   - Local:        http://localhost:4000
+   - Network:      http://192.168.0.223:4000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Compiled middleware in 100ms
+ ✓ Ready in 976ms
+ ○ Compiling /api/debug/auth ...
+ ✓ Compiled /api/debug/auth in 663ms
+Error parsing FIREBASE_SERVICE_ACCOUNT: SyntaxError: Bad control character in string literal in JSON at position 154 (line 1 column 155)
+    at JSON.parse (<anonymous>)
+    at getServiceAccountFromEnv (src/lib/server/firebaseAdmin.ts:8:25)
+    at getAdminApp (src/lib/server/firebaseAdmin.ts:56:16)
+    at getAuth (src/lib/server/firebaseAdmin.ts:83:13)
+    at GET (src/app/api/debug/auth/route.ts:13:28)
+   6 |   try {
+   7 |     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+>  8 |       const json = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+     |                         ^
+   9 |       // private_key may contain escaped newlines
+  10 |       if (json.private_key && typeof json.private_key === 'string') {
+  11 |         json.private_key = json.private_key.replace(/\\n/g, '\n');
+ GET /api/debug/auth 401 in 1146ms
+ ✓ Compiled /api/v1/integrations/status in 60ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+ GET /api/v1/integrations/status 200 in 41548ms
+ ✓ Compiled /api/v1/integrations/claude/config in 114ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+ GET /api/v1/integrations/claude/config 500 in 40000ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+Error parsing FIREBASE_SERVICE_ACCOUNT: SyntaxError: Bad control character in string literal in JSON at position 154 (line 1 column 155)
+    at JSON.parse (<anonymous>)
+    at getServiceAccountFromEnv (src/lib/server/firebaseAdmin.ts:8:25)
+    at getAdminApp (src/lib/server/firebaseAdmin.ts:56:16)
+    at getFirestore (src/lib/server/firebaseAdmin.ts:89:13)
+    at GET (src/app/api/v1/integrations/claude/config/route.ts:10:26)
+   6 |   try {
+   7 |     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+>  8 |       const json = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+     |                         ^
+   9 |       // private_key may contain escaped newlines
+  10 |       if (json.private_key && typeof json.private_key === 'string') {
+  11 |         json.private_key = json.private_key.replace(/\\n/g, '\n');
+ GET /api/v1/integrations/claude/config 200 in 42175ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+ GET /api/v1/integrations/claude/config 200 in 42798ms
+ ✓ Compiled /api/v1/integrations/claude/usage in 118ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+ GET /api/v1/integrations/claude/usage 200 in 46049ms
+ ✓ Compiled /api/v1/integrations/gmail/config in 171ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+TypeError: Response constructor: Invalid response status code 204
+    at GET (src/app/api/v1/integrations/gmail/config/route.ts:17:25)
+  15 |     return NextResponse.json(snap.data());
+  16 |   } catch (e) {
+> 17 |     return NextResponse.json({}, { status: 204 });
+     |                         ^
+  18 |   }
+  19 | }
+  20 |
+ GET /api/v1/integrations/gmail/config 500 in 45267ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+Error parsing FIREBASE_SERVICE_ACCOUNT: SyntaxError: Bad control character in string literal in JSON at position 154 (line 1 column 155)
+    at JSON.parse (<anonymous>)
+    at getServiceAccountFromEnv (src/lib/server/firebaseAdmin.ts:8:25)
+    at getAdminApp (src/lib/server/firebaseAdmin.ts:56:16)
+    at getFirestore (src/lib/server/firebaseAdmin.ts:89:13)
+    at GET (src/app/api/v1/integrations/gmail/config/route.ts:8:26)
+   6 |   try {
+   7 |     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+>  8 |       const json = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+     |                         ^
+   9 |       // private_key may contain escaped newlines
+  10 |       if (json.private_key && typeof json.private_key === 'string') {
+  11 |         json.private_key = json.private_key.replace(/\\n/g, '\n');
+ GET /api/v1/integrations/gmail/config 204 in 41256ms
+ ✓ Compiled /api/v1/integrations/calendar/config in 126ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+Error: 14 UNAVAILABLE: No connection established. Last error: Error: connect ECONNREFUSED 127.0.0.1:8081
+    at <unknown> (Error: 14 UNAVAILABLE: No connection established. Last error: Error: connect ECONNREFUSED 127.0.0.1:8081)
+    at GET (src/app/api/v1/integrations/calendar/config/route.ts:11:74)
+   9 |   if (!db) return new NextResponse(null, { status: 204 });
+  10 |   const id = `${auth.uid}_calendar_config`;
+> 11 |   const snap = await db.collection('integrations_google_config').doc(id).get();
+     |                                                                          ^
+  12 |   if (!snap.exists) return new NextResponse(null, { status: 204 });
+  13 |   return NextResponse.json(snap.data());
+  14 | } {
+  code: 14,
+  details: 'No connection established. Last error: Error: connect ECONNREFUSED 127.0.0.1:8081',
+  metadata: [Metadata]
+}
+ GET /api/v1/integrations/calendar/config 500 in 43773ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+Error parsing FIREBASE_SERVICE_ACCOUNT: SyntaxError: Bad control character in string literal in JSON at position 154 (line 1 column 155)
+    at JSON.parse (<anonymous>)
+    at getServiceAccountFromEnv (src/lib/server/firebaseAdmin.ts:8:25)
+    at getAdminApp (src/lib/server/firebaseAdmin.ts:56:16)
+    at getFirestore (src/lib/server/firebaseAdmin.ts:89:13)
+    at GET (src/app/api/v1/integrations/calendar/config/route.ts:8:26)
+   6 |   try {
+   7 |     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+>  8 |       const json = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+     |                         ^
+   9 |       // private_key may contain escaped newlines
+  10 |       if (json.private_key && typeof json.private_key === 'string') {
+  11 |         json.private_key = json.private_key.replace(/\\n/g, '\n');
+ GET /api/v1/integrations/calendar/config 204 in 45773ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+ GET /api/v1/integrations/calendar/config 204 in 46044ms
+ ✓ Compiled /api/v1/integrations/drive/config in 172ms
+⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
+ GET /api/v1/integrations/drive/config 204 in 47409ms

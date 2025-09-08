@@ -32,17 +32,18 @@ export async function POST(request: NextRequest) {
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
 
     const res = NextResponse.json({ ok: true });
+    const isProd = process.env.NODE_ENV === 'production';
     // Set both names for flexibility; __session is special on Firebase Hosting
     res.cookies.set('__session', sessionCookie, {
       httpOnly: true,
-      secure: true,
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: Math.floor(expiresIn / 1000),
     });
     res.cookies.set('session', sessionCookie, {
       httpOnly: true,
-      secure: true,
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: Math.floor(expiresIn / 1000),

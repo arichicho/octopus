@@ -9,7 +9,9 @@ export interface AuthContext {
 export async function verifyAuth(request: NextRequest): Promise<AuthContext | null> {
   try {
     // Optional bypass for troubleshooting in controlled environments (never in production)
-    const allowBypass = process.env.SERVER_BYPASS_AUTH === 'true' && process.env.NODE_ENV !== 'production';
+    const allowBypass =
+      (process.env.SERVER_BYPASS_AUTH === 'true' || process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true') &&
+      process.env.NODE_ENV !== 'production';
     if (allowBypass) {
       console.warn('⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification');
       return { uid: 'bypass-uid', email: 'bypass@example.com' };

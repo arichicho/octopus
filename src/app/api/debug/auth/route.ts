@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from '@/lib/server/firebaseAdmin';
 
 export async function GET(request: NextRequest) {
-  // Hide this endpoint in production unless explicitly enabled
-  if (process.env.NODE_ENV === 'production' && process.env.DEBUG_ENDPOINTS_ENABLED !== 'true') {
+  // Hide this endpoint in production unless explicitly enabled (robust truthy check)
+  const debugEnabled = (process.env.DEBUG_ENDPOINTS_ENABLED || '').trim().toLowerCase();
+  const allowDebug = debugEnabled === 'true' || debugEnabled === '1' || debugEnabled === 'yes';
+  if (process.env.NODE_ENV === 'production' && !allowDebug) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
   const header = request.headers.get('authorization') || request.headers.get('Authorization');
