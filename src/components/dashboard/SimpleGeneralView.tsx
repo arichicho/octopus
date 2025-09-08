@@ -96,18 +96,18 @@ export function SimpleGeneralView({
   }, {} as Record<string, Task[]>);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
             Vista General
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Tabla con empresas en columnas y tareas en filas
           </p>
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
           {activeTasks.length} tareas activas en {companies.length} empresas
         </div>
       </div>
@@ -135,18 +135,18 @@ export function SimpleGeneralView({
       ) : (
         <div className="space-y-4">
           {/* Companies Header */}
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800">
             {companies.map((company) => (
               <div key={company.id} className="flex-shrink-0">
-                <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4 min-w-[200px]">
+                <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-3 sm:p-4 min-w-[180px] sm:min-w-[200px]">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span 
-                        className="w-4 h-4 rounded-full" 
+                        className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0" 
                         style={{ backgroundColor: company.color || '#3b82f6' }}
                       />
                       <h3 
-                        className="font-medium text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600"
+                        className="font-medium text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 text-sm sm:text-base truncate"
                         onClick={() => onCompanyClick?.(company)}
                       >
                         {company.name}
@@ -155,18 +155,18 @@ export function SimpleGeneralView({
                     <Button
                       size="sm"
                       onClick={() => handleCreateTask(company)}
-                      className="h-6 w-6 p-0"
+                      className="h-6 w-6 p-0 flex-shrink-0 touch-manipulation"
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
                   
-                  <div className="text-sm text-gray-500 mb-2">
+                  <div className="text-xs sm:text-sm text-gray-500 mb-2">
                     {tasksByCompany[company.id]?.length || 0} tareas
                   </div>
                   
                   {/* Tasks for this company */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     {(tasksByCompany[company.id] || []).slice(0, 3).map((task) => {
                       const dueDate = firestoreDateToDate(task.dueDate);
                       const isOverdue = dueDate && dueDate < new Date();
@@ -174,27 +174,27 @@ export function SimpleGeneralView({
                       return (
                         <div
                           key={task.id}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors touch-manipulation"
                           onClick={() => onTaskClick?.(task)}
                         >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
                             {getStatusIcon(task.status)}
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                               {task.title}
                             </span>
                           </div>
                           
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 flex-shrink-0">
                             {/* Priority */}
                             {task.priority && (
-                              <Badge className={`text-xs px-1.5 py-0.5 ${getPriorityColor(task.priority)}`}>
+                              <Badge className={`text-xs px-1 sm:px-1.5 py-0.5 ${getPriorityColor(task.priority)}`}>
                                 {task.priority === 'urgent' ? 'U' : task.priority === 'high' ? 'A' : task.priority === 'medium' ? 'M' : 'B'}
                               </Badge>
                             )}
                             
                             {/* Due date */}
                             {dueDate && (
-                              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                              <span className={`text-xs px-1 sm:px-1.5 py-0.5 rounded-full ${
                                 isOverdue 
                                   ? 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300' 
                                   : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
@@ -210,7 +210,7 @@ export function SimpleGeneralView({
                                   e.stopPropagation();
                                   onCompleteTask(e, task);
                                 }}
-                                className="p-1 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors"
+                                className="p-1 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors touch-manipulation"
                                 title="Marcar como completada"
                               >
                                 <CheckCircle className="h-3 w-3 text-gray-400 hover:text-green-600" />

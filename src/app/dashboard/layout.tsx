@@ -14,18 +14,18 @@ function MobileHeader() {
   const { mobileOpen, setMobileOpen } = useSidebar();
   
   return (
-    <div className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <div className="lg:hidden flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
       <div className="flex items-center space-x-2">
         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-lg">🐙</span>
+          <span className="text-white font-bold text-sm sm:text-base">🐙</span>
         </div>
-        <span className="font-bold text-lg text-gray-900 dark:text-gray-100">Octopus</span>
+        <span className="font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">Octopus</span>
       </div>
       <Button
         variant="ghost"
         size="sm"
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="h-8 w-8 p-0"
+        className="h-9 w-9 p-0 touch-manipulation"
         aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
       >
         {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -88,7 +88,7 @@ export default function DashboardLayout({
             <MobileHeader />
             
             {/* Main Content Area */}
-            <main className="flex-1 overflow-auto p-4 sm:p-6">
+            <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
               <div className="h-full mx-auto w-full max-w-6xl">
                 {children}
               </div>

@@ -3,9 +3,30 @@ import { getGoogleConfig, isIntegrationEnabled } from '@/lib/config/integrations
 import { auth } from '@/lib/firebase/config';
 
 async function authHeader() {
-  const user = auth.currentUser;
-  const token = user ? await user.getIdToken() : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  console.log('🚀 authHeader() llamado');
+  
+  try {
+    const user = auth.currentUser;
+    console.log('👤 Usuario actual:', user ? `${user.email} (${user.uid})` : 'NO AUTHENTICATED');
+    
+    if (!user) {
+      console.warn('⚠️ No hay usuario autenticado para enviar token');
+      console.log('🔍 Estado de auth:', auth);
+      return {};
+    }
+    
+    console.log('🔄 Obteniendo token...');
+    const token = await user.getIdToken(true); // Force refresh
+    console.log('🔑 Token obtenido para petición API:', token ? `YES (${token.length} chars)` : 'NO');
+    console.log('🔑 Token preview:', token ? `${token.substring(0, 20)}...` : 'NONE');
+    
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    console.log('📤 Headers que se enviarán:', headers);
+    return headers;
+  } catch (error) {
+    console.error('❌ Error obteniendo token de autenticación:', error);
+    return {};
+  }
 }
 
 export class GoogleIntegrationService {
@@ -86,15 +107,24 @@ export class GoogleIntegrationService {
   // Obtener estado de integraciones
   static async getIntegrationStatus(userId: string): Promise<IntegrationStatus> {
     try {
-      const response = await fetch(`/api/v1/integrations/status`, { headers: await authHeader() });
+      const headers = await authHeader();
+      console.log('📡 Enviando petición a /api/v1/integrations/status con headers:', headers);
+      
+      const response = await fetch(`/api/v1/integrations/status`, { headers });
+      
+      console.log('📡 Respuesta del servidor:', response.status, response.statusText);
       
       if (!response.ok) {
-        throw new Error('Error al obtener el estado de las integraciones');
+        const errorText = await response.text();
+        console.error('❌ Error del servidor:', response.status, errorText);
+        throw new Error(`Error al obtener el estado de las integraciones: ${response.status} ${errorText}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log('✅ Estado de integraciones obtenido:', result);
+      return result;
     } catch (error) {
-      console.error('Error obteniendo estado de integraciones:', error);
+      console.error('❌ Error obteniendo estado de integraciones:', error);
       return {
         gmail: false,
         calendar: false,

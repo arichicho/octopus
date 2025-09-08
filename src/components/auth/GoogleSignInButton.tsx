@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { signInWithCustom } from '@/lib/firebase/auth';
+import { getAuthorizedEmails } from '@/lib/auth/authorization';
 import { checkAuthorization } from '@/lib/auth/authorization';
 const BYPASS_AUTH = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
 import { Chrome } from 'lucide-react';
@@ -32,6 +34,26 @@ export const GoogleSignInButton = ({ className, children }: GoogleSignInButtonPr
       }
     } catch (error) {
       console.error('Error signing in with Google:', error);
+
+      // Fallback Dev Login (custom token) — gated by env flag
+      const enableDev = process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === 'true';
+      if (enableDev) {
+        try {
+          const list = getAuthorizedEmails();
+          const email = list[0] || 'dev@example.com';
+          const headers: Record<string,string> = { 'Content-Type': 'application/json' };
+          const devSecret = process.env.NEXT_PUBLIC_DEV_LOGIN_TOKEN;
+          if (devSecret) headers['x-dev-login-secret'] = devSecret;
+          const res = await fetch('/api/auth/dev-login', { method: 'POST', headers, body: JSON.stringify({ email }) });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data?.error || 'Dev login failed');
+          const { user: devUser, error: devErr } = await signInWithCustom(data.customToken);
+          if (devErr) throw devErr;
+          console.log('✅ Signed in via Dev Login as', devUser?.email || email);
+        } catch (e) {
+          console.error('Dev login failed:', e);
+        }
+      }
     } finally {
       setIsLoading(false);
     }

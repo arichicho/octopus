@@ -3,6 +3,7 @@ import {
   GoogleAuthProvider, 
   signOut, 
   onAuthStateChanged,
+  signInWithCustomToken,
   User as FirebaseUser 
 } from 'firebase/auth';
 import { auth } from './config';
@@ -58,6 +59,17 @@ export const onAuthStateChange = (callback: (user: FirebaseUser | null) => void)
     console.error('Error setting up auth state listener:', error);
     setTimeout(() => callback(null), 0);
     return () => {};
+  }
+};
+
+export const signInWithCustom = async (customToken: string) => {
+  try {
+    if (!auth) throw new Error('Firebase Auth not configured properly');
+    const result = await signInWithCustomToken(auth, customToken);
+    return { user: result.user, error: null };
+  } catch (error) {
+    console.error('Error signing in with custom token:', error);
+    return { user: null, error: error as Error };
   }
 };
 

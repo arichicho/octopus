@@ -106,20 +106,20 @@ export default function GoogleStyleDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <GoogleHeader onQuickAdd={() => setQuickAddOpen(true)} />
-      <div className="mx-auto max-w-7xl px-4">
-        <main className="py-6">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4">
+        <main className="py-4 sm:py-6">
             {/* Summary strip */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4">
-                <div className="text-xs text-gray-500">Tareas activas</div>
-                <div className="text-3xl font-semibold mt-1">{activeTasks.length}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <div className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-3 sm:p-4">
+                <div className="text-xs sm:text-sm text-gray-500">Tareas activas</div>
+                <div className="text-2xl sm:text-3xl font-semibold mt-1">{activeTasks.length}</div>
               </div>
-              <div className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4">
-                <div className="text-xs text-gray-500">Empresas</div>
-                <div className="text-3xl font-semibold mt-1">{userCompanies.length}</div>
+              <div className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-3 sm:p-4">
+                <div className="text-xs sm:text-sm text-gray-500">Empresas</div>
+                <div className="text-2xl sm:text-3xl font-semibold mt-1">{userCompanies.length}</div>
               </div>
-              <div className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4">
-                <div className="text-xs text-gray-500">Usuario</div>
+              <div className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-3 sm:p-4 sm:col-span-2 lg:col-span-1">
+                <div className="text-xs sm:text-sm text-gray-500">Usuario</div>
                 <div className="text-sm mt-1 truncate">{user?.email}</div>
               </div>
             </div>

@@ -52,6 +52,15 @@ export const useAuth = () => {
         console.log('✅ Usuario autorizado:', firebaseUser.email);
 
         setUser(firebaseUser);
+
+        // Ensure a server session cookie exists for API routes
+        firebaseUser.getIdToken().then((token) => {
+          fetch('/api/auth/session/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ idToken: token, expiresInDays: 7 }),
+          }).catch((e) => console.warn('Failed to establish server session cookie', e));
+        }).catch(() => {});
         
         // Cargar perfil de usuario de forma asíncrona
         const loadUserProfile = async () => {
@@ -106,6 +115,8 @@ export const useAuth = () => {
         setUser(null);
         setUserProfile(null);
         setLoading(false);
+        // Clear server session
+        fetch('/api/auth/session/logout', { method: 'POST' }).catch(() => {});
       }
     });
 
