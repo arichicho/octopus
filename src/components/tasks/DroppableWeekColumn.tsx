@@ -36,6 +36,9 @@ interface DroppableWeekColumnProps {
   getDaysRemaining: (dueDate: Date) => number;
   isCurrentWeek?: boolean;
   isNoDateSection?: boolean;
+  showCompanyInfo?: boolean;
+  getCompanyName?: (companyId: string) => string;
+  getCompanyColor?: (companyId: string) => string;
 }
 
 export function DroppableWeekColumn({
@@ -51,7 +54,10 @@ export function DroppableWeekColumn({
   isOverdue,
   getDaysRemaining,
   isCurrentWeek = false,
-  isNoDateSection = false
+  isNoDateSection = false,
+  showCompanyInfo = false,
+  getCompanyName,
+  getCompanyColor
 }: DroppableWeekColumnProps) {
   const { dragState, setDropPreview, clearDropPreview } = useDragDrop();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -213,6 +219,9 @@ export function DroppableWeekColumn({
                   getPriorityColor={getPriorityColor}
                   formatDate={formatDate}
                   isOverdue={isOverdue}
+                  showCompanyInfo={showCompanyInfo}
+                  getCompanyName={getCompanyName}
+                  getCompanyColor={getCompanyColor}
                 />
               ))}
               

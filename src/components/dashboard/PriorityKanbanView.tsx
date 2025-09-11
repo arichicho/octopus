@@ -20,6 +20,9 @@ interface PriorityKanbanViewProps {
   getPriorityColor: (priority: string) => string;
   formatDate: (date: Date | any) => string;
   isOverdue: (dueDate: Date | null | undefined) => boolean;
+  showCompanyInfo?: boolean;
+  getCompanyName?: (companyId: string) => string;
+  getCompanyColor?: (companyId: string) => string;
 }
 
 const priorityConfigs = [
@@ -61,7 +64,10 @@ export function PriorityKanbanView({
   getStatusColor,
   getPriorityColor,
   formatDate,
-  isOverdue
+  isOverdue,
+  showCompanyInfo = false,
+  getCompanyName,
+  getCompanyColor
 }: PriorityKanbanViewProps) {
   const { changeTaskPriority } = useTaskStore();
   const [notification, setNotification] = useState<{
@@ -141,6 +147,9 @@ export function PriorityKanbanView({
                 formatDate={formatDate}
                 isOverdue={isOverdue}
                 getDaysRemaining={getDaysRemaining}
+                showCompanyInfo={showCompanyInfo}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             );
           })}

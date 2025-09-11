@@ -1,0 +1,1449 @@
+"use client";
+
+import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { useTaskStore } from '@/lib/store/useTaskStore';
+import { useAuthStore } from '@/lib/store/useAuthStore';
+import { useCompanyEnhancedStore } from '@/lib/store/useCompanyEnhancedStore';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MeetingPreferencesService } from '@/lib/services/meeting-preferences';
+import { DEFAULT_MY_DAY_SETTINGS } from '@/lib/config/my-day';
+import { MyDayService } from '@/lib/services/my-day';
+import type { DailyPlanResponse, ContextTask, ContextPack, MeetingPrep } from '@/types/daily-plan';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar, ChevronLeft, ChevronRight, History, Save, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PlanLearningInsights } from '@/components/dashboard/PlanLearningInsights';
+import { TimezoneSelectorCompact } from '@/components/common/TimezoneSelector';
+import { MyDaySettings } from '@/components/dashboard/MyDaySettings';
+import { TimezoneDebug } from '@/components/dashboard/TimezoneDebug';
+import { useTimezone } from '@/hooks/useTimezone';
+
+// Función para obtener colores de tags
+const getTagColor = (tag: string) => {
+  const colors = [
+    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
+    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+    'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
+    'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
+  ];
+  
+  // Usar hash del tag para asignar color consistente
+  let hash = 0;
+  for (let i = 0; i < tag.length; i++) {
+    hash = ((hash << 5) - hash + tag.charCodeAt(i)) & 0xffffffff;
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+export default function MyDayPage() {
+  const { user } = useAuthStore();
+  const { filteredTasks, loadTasks, changeTaskStatus } = useTaskStore();
+  const { activeCompanies, fetchActiveCompanies } = useCompanyEnhancedStore();
+  const { timezone, formatDateInTimezone } = useTimezone();
+  const [loading, setLoading] = useState(false);
+  const [plan, setPlan] = useState<DailyPlanResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [context, setContext] = useState<ContextPack | null>(null);
+  const [openPrepFor, setOpenPrepFor] = useState<string | null>(null);
+  const [prep, setPrep] = useState<MeetingPrep | null>(null);
+  const [prepLoading, setPrepLoading] = useState(false);
+  const [meetingPrepDecisions, setMeetingPrepDecisions] = useState<Record<string, {
+    needsPrep: boolean;
+    confidence: number;
+    userDecided: boolean;
+  }>>({});
+  
+  // New state for plan navigation and persistence
+  const [currentDate, setCurrentDate] = useState<string>(() => {
+    // Always use current date in YYYY-MM-DD format
+    const now = new Date();
+    return now.toISOString().split('T')[0];
+  });
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [planStats, setPlanStats] = useState<any>(null);
+
+  useEffect(() => {
+    if (user?.uid) {
+      console.log('🔍 Loading data for user:', user.uid);
+      loadTasks(user.uid);
+      fetchActiveCompanies(user.uid);
+      // Configurar el servicio de preferencias con el usuario actual
+      MeetingPreferencesService.setUserId(user.uid);
+      // Load available dates and today's plan
+      loadAvailableDates();
+      loadTodaysPlan();
+      loadPlanStats();
+    } else {
+      console.log('🔍 No user UID available');
+    }
+  }, [user?.uid, loadTasks, fetchActiveCompanies]);
+
+  // Update current date when timezone changes
+  useEffect(() => {
+    if (timezone && !loading) {
+      const now = new Date();
+      const userDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+      const todayStr = userDate.toISOString().split('T')[0];
+      console.log('🕐 Updating current date due to timezone change:', { timezone, todayStr });
+      setCurrentDate(todayStr);
+    }
+  }, [timezone, loading]);
+
+  // Load available dates with saved plans
+  const loadAvailableDates = async () => {
+    try {
+      const dates = await MyDayService.getAvailableDates();
+      setAvailableDates(dates);
+    } catch (error) {
+      console.error('Error loading available dates:', error);
+    }
+  };
+
+  // Load today's plan if it exists
+  const loadTodaysPlan = async () => {
+    try {
+      setLoadingPlan(true);
+      const today = new Date().toISOString().split('T')[0];
+      const savedPlan = await MyDayService.getPlanForDate(today);
+      if (savedPlan) {
+        setPlan(savedPlan.plan);
+        setContext(savedPlan.context);
+        console.log('✅ Loaded saved plan for today');
+      }
+    } catch (error) {
+      console.error('Error loading today\'s plan:', error);
+    } finally {
+      setLoadingPlan(false);
+    }
+  };
+
+  // Load plan for a specific date
+  const loadPlanForDate = async (date: string) => {
+    try {
+      setLoadingPlan(true);
+      setError(null);
+      const savedPlan = await MyDayService.getPlanForDate(date);
+      if (savedPlan) {
+        setPlan(savedPlan.plan);
+        setContext(savedPlan.context);
+        setCurrentDate(date);
+        console.log(`✅ Loaded saved plan for ${date}`);
+      } else {
+        // No saved plan for this date, clear current plan
+        setPlan(null);
+        setContext(null);
+        setCurrentDate(date);
+        console.log(`ℹ️ No saved plan found for ${date}`);
+      }
+    } catch (error) {
+      console.error('Error loading plan for date:', error);
+      setError('No se pudo cargar el plan para esta fecha');
+    } finally {
+      setLoadingPlan(false);
+    }
+  };
+
+  // Load plan statistics
+  const loadPlanStats = async () => {
+    try {
+      const stats = await MyDayService.getPlanStats();
+      setPlanStats(stats);
+    } catch (error) {
+      console.error('Error loading plan stats:', error);
+    }
+  };
+
+  // Debug: Log cuando las empresas se cargan
+  useEffect(() => {
+    console.log('Active companies loaded:', {
+      count: activeCompanies.length,
+      companies: activeCompanies.map(c => ({ id: c.id, name: c.name }))
+    });
+  }, [activeCompanies]);
+
+  const contextTasks: ContextTask[] = useMemo(() => {
+    const tasks = (filteredTasks || []).map((t) => ({
+      id: t.id!,
+      title: t.title,
+      priority: (t.priority === 'urgent' || t.priority === 'high' ? 'H' : t.priority === 'medium' ? 'M' : 'L') as 'H' | 'M' | 'L',
+      dueDate: t.dueDate ? new Date(t.dueDate as any).toISOString().slice(0, 10) : null,
+      estimateMinutes: (t as any).estimateMinutes || undefined,
+      tags: t.tags || [],
+      companyId: t.companyId || 'default-company', // Fallback para evitar empresa desconocida
+      personIds: t.assignedTo || [],
+      status: (t.status === 'completed' ? 'done' : t.status === 'cancelled' ? 'blocked' : 'open') as 'open' | 'blocked' | 'done',
+    }));
+    
+    // Debug: Log las tareas y sus companyIds
+    console.log('🔍 Context tasks with company IDs:', tasks.map(t => ({
+      title: t.title,
+      companyId: t.companyId,
+      originalCompanyId: (filteredTasks || []).find(ft => ft.id === t.id)?.companyId
+    })));
+    
+    return tasks;
+  }, [filteredTasks]);
+
+  async function handleGeneratePlan() {
+    try {
+      setLoading(true);
+      setError(null);
+      const todayISO = new Date().toISOString();
+      // Obtener contexto real desde integraciones
+      const context = await MyDayService.getContext(todayISO);
+      setContext(context);
+      // Mezclar tareas locales (por si el contexto no trajo todas)
+      const merged = {
+        ...context,
+        tasks: context.tasks?.length ? context.tasks : contextTasks,
+        // Actualizar configuración con la zona horaria del usuario
+        settings: {
+          ...context.settings,
+          timezone: timezone || 'UTC'
+        }
+      };
+      const res = await MyDayService.generatePlan(merged);
+      setPlan(res);
+      
+      // Save the plan automatically
+      await savePlan(res, merged);
+    } catch (e: any) {
+      setError(e?.message || 'No se pudo generar el plan');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Save plan function
+  const savePlan = async (planToSave: DailyPlanResponse, contextToSave?: any) => {
+    try {
+      setSaving(true);
+      await MyDayService.savePlan(planToSave, contextToSave);
+      // Refresh available dates
+      await loadAvailableDates();
+      // Refresh stats
+      await loadPlanStats();
+      console.log('✅ Plan saved successfully');
+    } catch (error) {
+      console.error('Error saving plan:', error);
+      setError('No se pudo guardar el plan');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Navigation functions
+  const navigateToDate = (date: string) => {
+    loadPlanForDate(date);
+  };
+
+  const navigateToPreviousDay = () => {
+    const current = new Date(currentDate + 'T00:00:00');
+    current.setDate(current.getDate() - 1);
+    const prevDate = current.toISOString().split('T')[0];
+    navigateToDate(prevDate);
+  };
+
+  const navigateToNextDay = () => {
+    const current = new Date(currentDate + 'T00:00:00');
+    current.setDate(current.getDate() + 1);
+    const nextDate = current.toISOString().split('T')[0];
+    navigateToDate(nextDate);
+  };
+
+  const navigateToToday = () => {
+    const now = new Date();
+    const userDate = timezone ? new Date(now.toLocaleString('en-US', { timeZone: timezone })) : now;
+    const today = userDate.toISOString().split('T')[0];
+    navigateToDate(today);
+  };
+
+  // Format date for display
+  const formatDateForDisplay = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const now = new Date();
+    const userToday = timezone ? new Date(now.toLocaleString('en-US', { timeZone: timezone })) : now;
+    const userYesterday = new Date(userToday);
+    userYesterday.setDate(userYesterday.getDate() - 1);
+    const userTomorrow = new Date(userToday);
+    userTomorrow.setDate(userTomorrow.getDate() + 1);
+
+    const todayStr = userToday.toISOString().split('T')[0];
+    const yesterdayStr = userYesterday.toISOString().split('T')[0];
+    const tomorrowStr = userTomorrow.toISOString().split('T')[0];
+
+    if (dateStr === todayStr) {
+      return 'Hoy';
+    } else if (dateStr === yesterdayStr) {
+      return 'Ayer';
+    } else if (dateStr === tomorrowStr) {
+      return 'Mañana';
+    } else {
+      return formatDateInTimezone(date, { 
+        weekday: 'short', 
+        day: 'numeric', 
+        month: 'short' 
+      });
+    }
+  };
+
+  async function handleTaskStatusChange(taskId: string, completed: boolean) {
+    try {
+      const newStatus = completed ? 'completed' : 'pending';
+      await changeTaskStatus(taskId, newStatus);
+      
+      // Actualizar el plan localmente para reflejar el cambio
+      if (plan) {
+        const updatedPlan = {
+          ...plan,
+          blocks: plan.blocks.map(block => {
+            if (block.relations?.taskId === taskId) {
+              return {
+                ...block,
+                status: (completed ? 'completed' : 'suggested') as 'suggested' | 'fixed' | 'accepted'
+              };
+            }
+            return block;
+          })
+        };
+        setPlan(updatedPlan);
+      }
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    }
+  }
+
+  // Función para obtener información de empresa
+  const getCompanyInfo = (companyId: string) => {
+    if (!companyId || companyId === 'default-company') {
+      return {
+        name: 'Sin empresa',
+        color: '#6b7280' // Color gris para tareas sin empresa
+      };
+    }
+    
+    const company = activeCompanies.find(c => c.id === companyId);
+    
+    // Debug: Log para ver qué está pasando
+    if (!company) {
+      console.log('Company not found:', {
+        companyId,
+        availableCompanies: activeCompanies.map(c => ({ id: c.id, name: c.name })),
+        totalCompanies: activeCompanies.length
+      });
+    }
+    
+    return {
+      name: company?.name || `Empresa no encontrada (ID: ${companyId})`,
+      color: company?.color || '#3b82f6'
+    };
+  };
+
+  // Filtrar tareas no completadas
+  const pendingTasks = useMemo(() => {
+    return contextTasks.filter(task => task.status !== 'done');
+  }, [contextTasks]);
+
+  // Filtrar tareas con tag "llamar"
+  const callTasks = useMemo(() => {
+    return contextTasks.filter(task => 
+      task.status !== 'done' && 
+      task.tags && 
+      task.tags.some(tag => tag.toLowerCase().includes('llamar'))
+    );
+  }, [contextTasks]);
+
+  // Función para detectar huecos de agenda y sugerir actividades
+  const getScheduleGaps = (blocks: any[]) => {
+    if (!blocks || blocks.length === 0) return [];
+    
+    const sortedBlocks = blocks
+      .filter(b => b.status !== 'completed')
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    
+    const gaps = [];
+    
+    for (let i = 0; i < sortedBlocks.length - 1; i++) {
+      const currentEnd = new Date(sortedBlocks[i].end);
+      const nextStart = new Date(sortedBlocks[i + 1].start);
+      const gapMinutes = (nextStart.getTime() - currentEnd.getTime()) / (1000 * 60);
+      
+      // Si hay un hueco de 30 minutos o más
+      if (gapMinutes >= 30) {
+        // Determinar qué tipo de actividades sugerir basado en la duración
+        let suggestedActivities = [];
+        let gapType = '';
+        
+        if (gapMinutes >= 90) {
+          // Hueco grande: ideal para trabajo profundo
+          gapType = 'deep-work';
+          suggestedActivities = [
+            {
+              type: 'focus',
+              title: 'Trabajo Profundo',
+              description: 'Perfecto para tareas que requieren concentración',
+              icon: '🧠',
+              minDuration: 90
+            },
+            {
+              type: 'calls',
+              title: 'Llamadas',
+              description: 'También puedes hacer llamadas en este tiempo',
+              icon: '📞',
+              tasks: callTasks.slice(0, 2)
+            }
+          ];
+        } else if (gapMinutes >= 60) {
+          // Hueco mediano: llamadas o tareas medianas
+          gapType = 'medium';
+          suggestedActivities = [
+            {
+              type: 'calls',
+              title: 'Llamadas',
+              description: 'Ideal para llamadas y seguimientos',
+              icon: '📞',
+              tasks: callTasks.slice(0, 2)
+            },
+            {
+              type: 'quick-tasks',
+              title: 'Tareas Rápidas',
+              description: 'Perfecto para tareas de 30-60 minutos',
+              icon: '⚡'
+            }
+          ];
+        } else {
+          // Hueco pequeño: solo llamadas rápidas
+          gapType = 'quick';
+          suggestedActivities = [
+            {
+              type: 'calls',
+              title: 'Llamadas Rápidas',
+              description: 'Ideal para llamadas cortas y seguimientos',
+              icon: '📞',
+              tasks: callTasks.slice(0, 1)
+            }
+          ];
+        }
+        
+        gaps.push({
+          start: sortedBlocks[i].end,
+          end: sortedBlocks[i + 1].start,
+          durationMinutes: gapMinutes,
+          gapType,
+          suggestedActivities
+        });
+      }
+    }
+    
+    return gaps;
+  };
+
+  // Función para obtener tareas relacionadas con un bloque
+  const getTasksForBlock = (block: any) => {
+    if (!block.relations?.taskId) return [];
+    return contextTasks.filter(task => task.id === block.relations.taskId);
+  };
+
+  // Función para verificar si hay participantes comunes entre tarea y reunión
+  const hasCommonParticipants = (task: ContextTask, meeting: any) => {
+    if (!task.personIds || !meeting.attendees) return false;
+    return task.personIds.some(personId => 
+      meeting.attendees.some((attendee: any) => attendee.id === personId)
+    );
+  };
+
+  // Función para manejar la decisión de preparación de reunión
+  const handleMeetingPrepDecision = async (meetingId: string, meetingTitle: string, needsPrep: boolean) => {
+    try {
+      // Aprender de la decisión del usuario en la base de datos
+      await MeetingPreferencesService.learnFromDecision(
+        meetingTitle,
+        needsPrep,
+        needsPrep ? 15 : 0
+      );
+
+      // Actualizar el estado local
+      setMeetingPrepDecisions(prev => ({
+        ...prev,
+        [meetingId]: {
+          needsPrep,
+          confidence: 1.0,
+          userDecided: true
+        }
+      }));
+
+      // Si no necesita prep, remover el bloque de preparación del plan
+      if (!needsPrep && plan) {
+        const updatedPlan = {
+          ...plan,
+          blocks: plan.blocks.filter(block => {
+            // Remover bloques de preparación que estén relacionados con esta reunión
+            if (block.type === 'prep' && block.relations?.meetingId === meetingId) {
+              console.log('Removing prep block for meeting:', meetingTitle);
+              return false;
+            }
+            return true;
+          })
+        };
+        setPlan(updatedPlan);
+      }
+
+      console.log('✅ Meeting prep decision saved to database:', { meetingTitle, needsPrep });
+    } catch (error) {
+      console.error('❌ Error saving meeting prep decision:', error);
+    }
+  };
+
+  // Función para verificar si una reunión necesita preparación
+  const checkMeetingPrepNeeded = async (meetingId: string, meetingTitle: string) => {
+    // Verificar si ya hay una decisión del usuario en el estado local
+    const userDecision = meetingPrepDecisions[meetingId];
+    if (userDecision && userDecision.userDecided) {
+      return {
+        needsPrep: userDecision.needsPrep,
+        shouldAsk: false,
+        confidence: userDecision.confidence,
+        userDecided: true
+      };
+    }
+
+    try {
+      const prediction = await MeetingPreferencesService.predictPrepNeeded(meetingTitle);
+      
+      // Si la confianza es baja, preguntar al usuario
+      if (prediction.confidence < 0.7) {
+        return {
+          needsPrep: prediction.needsPrep,
+          shouldAsk: true,
+          confidence: prediction.confidence,
+          userDecided: false
+        };
+      }
+
+      return {
+        needsPrep: prediction.needsPrep,
+        shouldAsk: false,
+        confidence: prediction.confidence,
+        userDecided: false
+      };
+    } catch (error) {
+      console.error('Error checking meeting prep needed:', error);
+      // Fallback en caso de error
+      return {
+        needsPrep: true,
+        shouldAsk: true,
+        confidence: 0.3,
+        userDecided: false
+      };
+    }
+  };
+
+  // Función para calcular la altura visual basada en la duración
+  const getVisualHeight = (startTime: string, endTime: string, minHeight: number = 80, maxHeight: number = 300) => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const durationMinutes = Math.max(5, (end.getTime() - start.getTime()) / (1000 * 60));
+    
+    let height;
+    
+    // Sistema proporcional mejorado:
+    // - Tareas de 30min o menos: altura mínima (mitad de la altura base)
+    // - Tareas de 1 hora o más: altura máxima
+    // - Entre 30min y 1 hora: escalado proporcional
+    if (durationMinutes <= 30) {
+      height = minHeight; // Altura mínima para tareas cortas
+    } else if (durationMinutes >= 60) {
+      height = maxHeight; // Altura máxima para tareas largas
+    } else {
+      // Escalado proporcional entre 30min y 1 hora
+      const ratio = (durationMinutes - 30) / 30; // 0 a 1
+      height = minHeight + (ratio * (maxHeight - minHeight));
+    }
+    
+    // Debug: Log para verificar que se está aplicando
+    console.log('Visual height calculation:', {
+      startTime,
+      endTime,
+      durationMinutes,
+      calculatedHeight: Math.round(height),
+      minHeight,
+      maxHeight,
+      category: durationMinutes <= 30 ? 'short' : durationMinutes >= 60 ? 'long' : 'medium'
+    });
+    
+    return Math.round(height);
+  };
+
+  // Función para obtener el color de fondo basado en el tipo de bloque
+  const getBlockBackgroundColor = (type: string, status: string) => {
+    if (status === 'completed') return 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800 shadow-lg';
+    
+    switch (type) {
+      case 'meeting':
+        return 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800 shadow-lg';
+      case 'event':
+        return 'bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-indigo-200 dark:border-indigo-800 shadow-lg';
+      case 'prep':
+        return 'bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-200 dark:border-yellow-800 shadow-lg';
+      case 'post':
+        return 'bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-orange-200 dark:border-orange-800 shadow-lg';
+      case 'focus':
+        return 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800 shadow-lg';
+      case 'quickwin':
+        return 'bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 border-green-200 dark:border-green-800 shadow-lg';
+      case 'followup':
+        return 'bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 border-teal-200 dark:border-teal-800 shadow-lg';
+      default:
+        return 'bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-800 dark:to-slate-800 border-gray-200 dark:border-gray-700 shadow-lg';
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Header mejorado */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg p-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
+                <Calendar className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Mi Día
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  Plan inteligente del día basado en tareas e integraciones
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <TimezoneSelectorCompact />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowHistory(!showHistory)}
+                className="bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm border-gray-300 dark:border-gray-600 hover:bg-white dark:hover:bg-gray-700"
+              >
+                <History className="w-4 h-4 mr-2" />
+                Historial
+              </Button>
+              <Button 
+                onClick={handleGeneratePlan} 
+                disabled={loading}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generando…
+                  </>
+                ) : (
+                  'Generar plan'
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Date Navigation mejorada */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={navigateToPreviousDay}
+                disabled={loadingPlan}
+                className="bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm border-gray-300 dark:border-gray-600 hover:bg-white dark:hover:bg-gray-700 transition-all duration-200"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 rounded-xl px-4 py-2">
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                  <Calendar className="w-4 h-4 text-white" />
+                </div>
+                <div className="text-center">
+                  <span className="font-semibold text-lg text-gray-800 dark:text-gray-200">
+                    {formatDateForDisplay(currentDate)}
+                  </span>
+                  {availableDates.includes(currentDate) && (
+                    <div className="mt-1">
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs">
+                        ✓ Guardado
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={navigateToNextDay}
+                disabled={loadingPlan}
+                className="bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm border-gray-300 dark:border-gray-600 hover:bg-white dark:hover:bg-gray-700 transition-all duration-200"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={navigateToToday}
+                disabled={loadingPlan}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                Hoy
+              </Button>
+              {plan && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => savePlan(plan, context)}
+                  disabled={saving}
+                  className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+
+        {/* History Panel mejorado */}
+        {showHistory && (
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg">
+                  <History className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Historial de Planes
+                </h3>
+              </div>
+            {availableDates.length > 0 ? (
+              <div className="space-y-2">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  {availableDates.length} planes guardados
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                  {availableDates.map((date) => (
+                    <Button
+                      key={date}
+                      variant={date === currentDate ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => navigateToDate(date)}
+                      className="justify-start"
+                      disabled={loadingPlan}
+                    >
+                      {formatDateForDisplay(date)}
+                    </Button>
+                  ))}
+                </div>
+                {planStats && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-sm font-medium mb-2">Estadísticas</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                      <div>
+                        <div className="text-gray-500">Total planes</div>
+                        <div className="font-medium">{planStats.totalPlans}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Bloques promedio</div>
+                        <div className="font-medium">{Math.round(planStats.averageBlocksPerPlan)}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Tasa completado</div>
+                        <div className="font-medium">{Math.round(planStats.averageCompletionRate * 100)}%</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Tipo más común</div>
+                        <div className="font-medium">
+                          {Object.keys(planStats.mostCommonBlockTypes).length > 0 
+                            ? Object.entries(planStats.mostCommonBlockTypes)
+                                .sort(([,a], [,b]) => (b as number) - (a as number))[0][0]
+                            : 'N/A'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-sm text-gray-500 mb-2">No hay planes guardados</div>
+                <div className="text-xs text-gray-400">Genera tu primer plan para comenzar</div>
+              </div>
+            )}
+            </div>
+          </div>
+        )}
+
+      {error && (
+        <div className="text-sm text-red-600 dark:text-red-400">{error}</div>
+      )}
+
+      {loadingPlan && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" />
+          <span className="text-sm text-gray-600">Cargando plan...</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 space-y-6">
+          <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Timeline del Día</CardTitle>
+            {plan?.warnings && plan.warnings.length > 0 && (
+              <Badge variant="secondary">{plan.warnings[0]}</Badge>
+            )}
+          </CardHeader>
+          <CardContent>
+            {plan ? (
+              <div className="space-y-4">
+                {(() => {
+                  const sortedBlocks = plan.blocks
+                    .slice()
+                    .sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+                  
+                  const gaps = getScheduleGaps(sortedBlocks);
+                  const allItems = [];
+                  
+                  // Combinar bloques y huecos en orden cronológico
+                  let blockIndex = 0;
+                  let gapIndex = 0;
+                  
+                  while (blockIndex < sortedBlocks.length || gapIndex < gaps.length) {
+                    const currentBlock = sortedBlocks[blockIndex];
+                    const currentGap = gaps[gapIndex];
+                    
+                    if (!currentBlock && currentGap) {
+                      // Solo queda un hueco
+                      allItems.push({ type: 'gap', data: currentGap });
+                      gapIndex++;
+                    } else if (!currentGap && currentBlock) {
+                      // Solo queda un bloque
+                      allItems.push({ type: 'block', data: currentBlock });
+                      blockIndex++;
+                    } else if (currentBlock && currentGap) {
+                      // Comparar tiempos
+                      const blockTime = new Date(currentBlock.start).getTime();
+                      const gapTime = new Date(currentGap.start).getTime();
+                      
+                      if (blockTime < gapTime) {
+                        allItems.push({ type: 'block', data: currentBlock });
+                        blockIndex++;
+                      } else {
+                        allItems.push({ type: 'gap', data: currentGap });
+                        gapIndex++;
+                      }
+                    }
+                  }
+                  
+                  return allItems.map((item, index) => {
+                    if (item.type === 'gap') {
+                      const gap = item.data;
+                      return (
+                        <div
+                          key={`gap-${index}`}
+                          className="flex w-full text-left items-start gap-4 p-6 rounded-2xl border-2 border-dashed border-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 dark:border-blue-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                        >
+                        <div className="w-28 shrink-0">
+                          <div className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                            {timezone ? new Date(gap.start).toLocaleTimeString('es-ES', { 
+                              timeZone: timezone, 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            }) : new Date(gap.start).toLocaleTimeString('es-ES', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                            <span className="mx-1">–</span>
+                            {timezone ? new Date(gap.end).toLocaleTimeString('es-ES', { 
+                              timeZone: timezone, 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            }) : new Date(gap.end).toLocaleTimeString('es-ES', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </div>
+                          <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            {Math.round(gap.durationMinutes)} min
+                          </div>
+                        </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Badge variant="outline" className={`${
+                                gap.gapType === 'deep-work' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+                                gap.gapType === 'medium' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                              }`}>
+                                {gap.gapType === 'deep-work' ? '🧠 Trabajo Profundo' :
+                                 gap.gapType === 'medium' ? '⚡ Tiempo Productivo' :
+                                 '💡 Hueco de agenda'}
+                              </Badge>
+                            </div>
+                            <div className="font-semibold text-lg mb-2 text-blue-800 dark:text-blue-200">
+                              {gap.gapType === 'deep-work' ? 'Tiempo para Trabajo Profundo' :
+                               gap.gapType === 'medium' ? 'Tiempo Productivo' :
+                               'Tiempo disponible'}
+                            </div>
+                            <div className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                              {gap.gapType === 'deep-work' ? 'Perfecto para tareas que requieren concentración profunda (mínimo 1:30h)' :
+                               gap.gapType === 'medium' ? 'Ideal para llamadas, seguimientos y tareas medianas' :
+                               'Perfecto para llamadas rápidas y tareas cortas'}
+                            </div>
+                            
+                            {/* Mostrar actividades sugeridas */}
+                            {gap.suggestedActivities.map((activity, activityIndex) => (
+                              <div key={activityIndex} className="space-y-2 mb-4">
+                                <div className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                                  {activity.icon} {activity.title}
+                                </div>
+                                <div className="text-xs text-blue-600 dark:text-blue-400 mb-2">
+                                  {activity.description}
+                                </div>
+                                
+                                {/* Mostrar tareas de llamada si las hay */}
+                                {activity.tasks && activity.tasks.length > 0 && (
+                                  <div className="space-y-2">
+                                    {activity.tasks.map((task) => {
+                                      const companyInfo = getCompanyInfo(task.companyId);
+                                      return (
+                                        <div 
+                                          key={task.id} 
+                                          className="flex items-start gap-3 p-3 bg-white dark:bg-blue-800 rounded-lg border border-blue-200 dark:border-blue-700 shadow-sm"
+                                        >
+                                          <Checkbox
+                                            checked={task.status === 'done'}
+                                            onCheckedChange={(checked) => 
+                                              handleTaskStatusChange(task.id, checked as boolean)
+                                            }
+                                            className="shrink-0 mt-1"
+                                          />
+                                          <div className="flex-1 min-w-0">
+                                            <div className={`text-sm font-medium ${task.status === 'done' ? 'line-through text-gray-500' : ''}`}>
+                                              {task.title}
+                                            </div>
+                                            <div className="flex items-center gap-1 mt-1">
+                                              <div
+                                                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                                style={{ backgroundColor: companyInfo.color }}
+                                              />
+                                              <span className="text-xs text-gray-500">
+                                                {companyInfo.name}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      const b = item.data;
+                      const blockTasks = getTasksForBlock(b);
+                      const isCompleted = b.status === 'completed';
+                      const visualHeight = getVisualHeight(b.start, b.end);
+                      const backgroundColor = getBlockBackgroundColor(b.type, b.status);
+                      const durationMinutes = Math.round((new Date(b.end).getTime() - new Date(b.start).getTime()) / (1000 * 60));
+                    
+                    return (
+                      <div
+                        key={b.id}
+                        className={`flex w-full text-left items-start gap-4 p-6 rounded-2xl border transition-all duration-200 hover:shadow-xl ${
+                          isCompleted 
+                            ? 'opacity-75' 
+                            : 'hover:scale-[1.02]'
+                        } ${backgroundColor}`}
+                        style={{ minHeight: `${visualHeight}px` }}
+                      >
+                        <div className="w-28 shrink-0">
+                          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {timezone ? new Date(b.start).toLocaleTimeString('es-ES', { 
+                              timeZone: timezone, 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            }) : new Date(b.start).toLocaleTimeString('es-ES', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                            <span className="mx-1">–</span>
+                            {timezone ? new Date(b.end).toLocaleTimeString('es-ES', { 
+                              timeZone: timezone, 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            }) : new Date(b.end).toLocaleTimeString('es-ES', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {durationMinutes} min
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge 
+                              variant={b.type === 'meeting' || b.type === 'event' ? 'default' : 'outline'}
+                              className={`${
+                                b.type === 'meeting' ? 'bg-blue-600' :
+                                b.type === 'event' ? 'bg-indigo-600' :
+                                b.type === 'prep' ? 'bg-yellow-600' :
+                                b.type === 'post' ? 'bg-orange-600' :
+                                b.type === 'focus' ? 'bg-purple-600' :
+                                b.type === 'quickwin' ? 'bg-green-600' :
+                                b.type === 'followup' ? 'bg-teal-600' :
+                                'bg-gray-600'
+                              } text-white`}
+                            >
+                              {b.type === 'meeting' ? 'Reunión' :
+                               b.type === 'event' ? 'Evento' :
+                               b.type === 'prep' ? 'Preparación' :
+                               b.type === 'post' ? 'Seguimiento' :
+                               b.type === 'focus' ? 'Trabajo Profundo' :
+                               b.type === 'quickwin' ? 'Quick Win' :
+                               b.type === 'followup' ? 'Seguimiento' :
+                               b.type}
+                            </Badge>
+                            {b.status !== 'fixed' && b.status !== 'completed' && (
+                              <Badge variant="secondary">sugerido</Badge>
+                            )}
+                            {isCompleted && (
+                              <Badge variant="default" className="bg-green-600">completado</Badge>
+                            )}
+                          </div>
+                          <div className="font-semibold text-lg mb-2">{b.title}</div>
+                          {b.reason && (
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">{b.reason}</div>
+                          )}
+                          
+                          {/* Mostrar tareas relacionadas con checkboxes */}
+                          {blockTasks.length > 0 && (
+                            <div className="space-y-3 mt-4">
+                              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Tareas asociadas:
+                              </div>
+                              {blockTasks.map((task) => {
+                                const companyInfo = getCompanyInfo(task.companyId);
+                                const taskDuration = task.estimateMinutes || 30;
+                                const taskHeight = Math.max(40, Math.min(80, (taskDuration / 60) * 40 + 40));
+                                
+                                return (
+                                  <div 
+                                    key={task.id} 
+                                    className="flex items-start gap-3 p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm"
+                                    style={{ minHeight: `${taskHeight}px` }}
+                                  >
+                                    <Checkbox
+                                      checked={task.status === 'done'}
+                                      onCheckedChange={(checked) => 
+                                        handleTaskStatusChange(task.id, checked as boolean)
+                                      }
+                                      className="shrink-0 mt-1"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <div className={`text-sm font-medium ${task.status === 'done' ? 'line-through text-gray-500' : ''}`}>
+                                        {task.title}
+                                      </div>
+                                      
+                                      {/* Información de empresa y duración */}
+                                      <div className="flex items-center gap-3 mt-2">
+                                        <div className="flex items-center gap-1">
+                                          <div
+                                            className="w-2 h-2 rounded-full flex-shrink-0"
+                                            style={{ backgroundColor: companyInfo.color }}
+                                          />
+                                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                                            {companyInfo.name}
+                                          </span>
+                                        </div>
+                                        {task.estimateMinutes && (
+                                          <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-600 px-2 py-0.5 rounded">
+                                            {task.estimateMinutes} min
+                                          </span>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Tags */}
+                                      {task.tags && task.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-2">
+                                          {task.tags.map((tag, index) => (
+                                            <span
+                                              key={index}
+                                              className={`px-2 py-0.5 text-xs rounded-full ${getTagColor(tag)}`}
+                                            >
+                                              {tag}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          
+                          {/* Mostrar tareas relacionadas por participantes comunes (para reuniones) */}
+                          {(b.type === 'meeting' || b.type === 'event') && context && (
+                            <div className="mt-3">
+                              {(() => {
+                                const meeting = context.events.find(e => e.id === (b.relations?.meetingId || b.id));
+                                if (!meeting) return null;
+                                
+                                const relatedTasks = contextTasks.filter(task => 
+                                  hasCommonParticipants(task, meeting) && 
+                                  !blockTasks.some(bt => bt.id === task.id)
+                                );
+                                
+                                if (relatedTasks.length === 0) return null;
+                                
+                                return (
+                                  <div className="space-y-2">
+                                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                      Tareas relacionadas por participantes:
+                                    </div>
+                                    {relatedTasks.map((task) => {
+                                      const companyInfo = getCompanyInfo(task.companyId);
+                                      return (
+                                        <div key={task.id} className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                                          <Checkbox
+                                            checked={task.status === 'done'}
+                                            onCheckedChange={(checked) => 
+                                              handleTaskStatusChange(task.id, checked as boolean)
+                                            }
+                                            className="shrink-0 mt-0.5"
+                                          />
+                                          <div className="flex-1 min-w-0">
+                                            <div className={`text-xs font-medium ${task.status === 'done' ? 'line-through text-gray-500' : ''}`}>
+                                              {task.title}
+                                            </div>
+                                            <div className="flex items-center gap-1 mt-1">
+                                              <div
+                                                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                                style={{ backgroundColor: companyInfo.color }}
+                                              />
+                                              <span className="text-xs text-gray-500">
+                                                {companyInfo.name}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
+                          
+                          {/* Botones para reunión */}
+                          {(b.type === 'meeting' || b.type === 'event') && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setOpenPrepFor(b.relations?.meetingId || b.id)}
+                                className="text-blue-600 hover:text-blue-700"
+                              >
+                                Ver preparación →
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                    }
+                  });
+                })()}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">Aún no hay un plan. Presiona “Generar plan”.</div>
+            )}
+          </CardContent>
+        </Card>
+
+          {/* Sección de Tareas Pendientes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Tareas Pendientes</CardTitle>
+              <p className="text-sm text-gray-500">Tareas activas para hoy</p>
+            </CardHeader>
+            <CardContent>
+              {pendingTasks.length > 0 ? (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {pendingTasks.map((task) => {
+                    const companyInfo = getCompanyInfo(task.companyId);
+                    return (
+                      <div key={task.id} className="flex items-start gap-3 p-4 border rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md">
+                        <Checkbox
+                          checked={task.status === 'done'}
+                          onCheckedChange={(checked) => 
+                            handleTaskStatusChange(task.id, checked as boolean)
+                          }
+                          className="shrink-0 mt-0.5"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm mb-2">
+                            {task.title}
+                          </div>
+                          
+                          {/* Información de empresa */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <div
+                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: companyInfo.color }}
+                            />
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
+                              {companyInfo.name}
+                            </span>
+                          </div>
+                          
+                          {/* Prioridad y fecha */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${
+                                task.priority === 'H' ? 'border-red-500 text-red-700 dark:text-red-400' :
+                                task.priority === 'M' ? 'border-yellow-500 text-yellow-700 dark:text-yellow-400' :
+                                'border-gray-500 text-gray-700 dark:text-gray-400'
+                              }`}
+                            >
+                              {task.priority === 'H' ? 'Alta' : task.priority === 'M' ? 'Media' : 'Baja'}
+                            </Badge>
+                            {task.dueDate && (
+                              <span className="text-xs text-gray-500">
+                                Vence: {new Date(task.dueDate as any).toLocaleDateString()}
+                              </span>
+                            )}
+                            {task.estimateMinutes && (
+                              <span className="text-xs text-gray-500">
+                                {task.estimateMinutes} min
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Tags */}
+                          {task.tags && task.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {task.tags.map((tag, index) => (
+                                <span
+                                  key={index}
+                                  className={`px-2 py-0.5 text-xs rounded-full ${getTagColor(tag)}`}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-sm text-gray-500 mb-2">¡Excelente!</div>
+                  <div className="text-xs text-gray-400">No tienes tareas pendientes para hoy</div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Columna derecha - Resumen */}
+        <div className="xl:col-span-1 space-y-6">
+          <Card>
+            <CardHeader>
+                <CardTitle>Resumen del Día</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {plan ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Reuniones</span>
+                    <span className="font-medium">{plan.summary.meetingsCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Minutos libres</span>
+                    <span className="font-medium">{plan.summary.freeMinutes}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Críticos</span>
+                    <span className="font-medium">{plan.summary.criticalCount}</span>
+                  </div>
+                  {plan.summary.notes && (
+                    <div className="text-xs text-gray-500">{plan.summary.notes}</div>
+                  )}
+                  <Separator />
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">Follow-ups</div>
+                    {plan.followUps && plan.followUps.length > 0 ? (
+                      plan.followUps.slice(0, 5).map((f, i) => (
+                        <div key={i} className="text-xs p-2 rounded border">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{f.channel.toUpperCase()} • {f.subject}</span>
+                            <Badge variant="outline">{f.urgency}/5</Badge>
+                          </div>
+                          <div className="text-gray-500 mt-1">{f.reason}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-xs text-gray-500">Sin follow-ups por ahora</div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500">Genera un plan para ver el resumen.</div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Configuración de Mi Día */}
+          <MyDaySettings />
+
+          {/* Debug de Zona Horaria */}
+          <TimezoneDebug />
+
+          {/* Insights de Aprendizaje */}
+          <PlanLearningInsights />
+        </div>
+      </div>
+
+      <Dialog open={!!openPrepFor} onOpenChange={(o) => { if (!o) { setOpenPrepFor(null); setPrep(null);} }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Prep de reunión</DialogTitle>
+          </DialogHeader>
+          {prepLoading ? (
+            <div className="text-sm text-gray-500">Generando insights…</div>
+          ) : prep ? (
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm text-gray-500">Resumen</div>
+                <div className="text-sm mt-1">{prep.contextSummary}</div>
+              </div>
+              {prep.talkingPoints && prep.talkingPoints.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium">Puntos clave</div>
+                  <ul className="mt-2 space-y-1 list-disc pl-5 text-sm">
+                    {prep.talkingPoints.map((p, i) => (<li key={i}>{p}</li>))}
+                  </ul>
+                </div>
+              )}
+              <div>
+                <div className="text-sm font-medium">Checklist</div>
+                <ul className="mt-2 space-y-1 list-disc pl-5 text-sm">
+                  {prep.checklists.map((c, i) => (
+                    <li key={i}>{c.title}</li>
+                  ))}
+                </ul>
+              </div>
+              {prep.links && prep.links.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium">Links</div>
+                  <div className="mt-2 flex flex-col gap-2">
+                    {prep.links.map((l, i) => (
+                      <a key={i} href={l.url} target="_blank" className="text-sm text-blue-600 hover:underline">{l.label}</a>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm font-medium">Tareas relacionadas</div>
+                  <ul className="mt-2 text-sm space-y-1">
+                    {prep.relatedTasks?.length ? prep.relatedTasks.map((t) => (
+                      <li key={t.id} className="truncate">• {t.title}</li>
+                    )) : <li className="text-gray-500">Sin tareas relacionadas</li>}
+                  </ul>
+                </div>
+                <div>
+                  <div className="text-sm font-medium">Emails recientes</div>
+                  <ul className="mt-2 text-sm space-y-1">
+                    {prep.relatedEmails?.length ? prep.relatedEmails.map((e) => (
+                      <li key={e.threadId} className="truncate">• {e.subject} — {new Date(e.lastMessageAt).toLocaleDateString()}</li>
+                    )) : <li className="text-gray-500">Sin emails relacionados</li>}
+                  </ul>
+                </div>
+              </div>
+              {prep.relatedDocs?.length ? (
+                <div>
+                  <div className="text-sm font-medium">Documentos</div>
+                  <ul className="mt-2 text-sm space-y-1">
+                    {prep.relatedDocs.map((d) => (
+                      <li key={d.docId} className="truncate">• {d.title}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {(prep.decisions?.length || prep.risks?.length || prep.openQuestions?.length) && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {prep.decisions?.length ? (
+                    <div>
+                      <div className="text-sm font-medium">Decisiones</div>
+                      <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
+                        {prep.decisions.map((d, i) => (<li key={i}>{d}</li>))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {prep.risks?.length ? (
+                    <div>
+                      <div className="text-sm font-medium">Riesgos</div>
+                      <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
+                        {prep.risks.map((d, i) => (<li key={i}>{d}</li>))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {prep.openQuestions?.length ? (
+                    <div>
+                      <div className="text-sm font-medium">Preguntas abiertas</div>
+                      <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
+                        {prep.openQuestions.map((d, i) => (<li key={i}>{d}</li>))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+              {prep.warnings?.length ? (
+                <div className="text-xs text-amber-600">{prep.warnings[0]}</div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">Selecciona una reunión para ver los insights.</div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      </div>
+    </div>
+  );
+}

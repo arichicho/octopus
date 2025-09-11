@@ -112,3 +112,11 @@ Error parsing FIREBASE_SERVICE_ACCOUNT: SyntaxError: Bad control character in st
  ✓ Compiled /api/v1/integrations/drive/config in 172ms
 ⚠️ SERVER_BYPASS_AUTH enabled (non-production) — skipping token verification
  GET /api/v1/integrations/drive/config 204 in 47409ms
+ ✓ Compiled middleware in 5ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled middleware in 1ms
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 1680ms
+ ✓ Compiled middleware in 7ms
+ ✓ Compiled middleware in 3ms
+[?25h

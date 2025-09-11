@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import GoogleHeader from "@/components/dashboard/GoogleHeader";
 import { CompanyTasksView } from "@/components/dashboard/CompanyTasksView";
-import { SimpleGeneralView } from "@/components/dashboard/SimpleGeneralView";
+import { GeneralKanbanView } from "@/components/dashboard/GeneralKanbanView";
 import { useHashNavigation } from "@/lib/hooks/useHashNavigation";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useTaskStore } from "@/lib/store/useTaskStore";
@@ -125,7 +125,7 @@ export default function GoogleStyleDashboardPage() {
             </div>
 
             {/* General Overview - Default View */}
-            <SimpleGeneralView
+            <GeneralKanbanView
               companies={userCompanies}
               tasks={activeTasks}
               onTaskClick={(task) => {

@@ -16,11 +16,18 @@ export async function GET(request: NextRequest) {
       base.where('userId', '==', auth.uid).where('type', '==', 'drive').limit(1).get(),
     ]);
 
+    // Claude connected if user has an entry or if server has a global API key
+    const claudeSnap = await db
+      .collection('claudeIntegrations')
+      .where('userId', '==', auth.uid)
+      .limit(1)
+      .get();
+    const claude = !claudeSnap.empty || !!process.env.CLAUDE_API_KEY;
     return NextResponse.json({
       gmail: !gmailSnap.empty,
       calendar: !calSnap.empty,
       drive: !driveSnap.empty,
-      claude: false,
+      claude,
     });
   } catch (e) {
     return NextResponse.json({ gmail: false, calendar: false, drive: false, claude: false });

@@ -26,7 +26,7 @@ export const INTEGRATIONS_CONFIG = {
     maxTokens: parseInt(process.env.CLAUDE_MAX_TOKENS || '4000'),
     models: [
       {
-        id: 'claude-3-5-sonnet-20241022',
+        id: 'claude-3-5-sonnet-20240620',
         name: 'Claude 3.5 Sonnet',
         description: 'El modelo más avanzado y versátil de Claude',
         maxTokens: 200000,
@@ -140,6 +140,10 @@ export function isIntegrationEnabled(type: 'google' | 'claude'): boolean {
       }
       return !!(INTEGRATIONS_CONFIG.google.clientId && INTEGRATIONS_CONFIG.google.clientSecret);
     case 'claude':
+      // En servidor, depende de la API key. En cliente, habilitamos la UI aunque no se exponga la key.
+      if (typeof window !== 'undefined') {
+        return true; // permite seleccionar modelo y ver la tarjeta sin filtrar por secreto
+      }
       return !!INTEGRATIONS_CONFIG.claude.apiKey;
     default:
       return false;

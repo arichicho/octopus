@@ -51,6 +51,22 @@
         { "fieldPath": "companyId", "mode": "ASCENDING" },
         { "fieldPath": "createdAt", "mode": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "meeting_preferences",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "mode": "ASCENDING" },
+        { "fieldPath": "lastUsed", "mode": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "meeting_preferences",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "mode": "ASCENDING" },
+        { "fieldPath": "meetingTitle", "mode": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

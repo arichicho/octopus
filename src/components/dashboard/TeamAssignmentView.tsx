@@ -24,7 +24,10 @@ interface TeamAssignmentViewProps {
   getPriorityColor: (priority: string) => string;
   formatDate: (date: Date | any) => string;
   isOverdue: (dueDate: Date | null | undefined) => boolean;
-  companyId: string;
+  companyId?: string;
+  showCompanyInfo?: boolean;
+  getCompanyName?: (companyId: string) => string;
+  getCompanyColor?: (companyId: string) => string;
 }
 
 interface TeamMember {

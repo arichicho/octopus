@@ -26,6 +26,9 @@ interface DraggableTaskCardProps {
   priorityId?: string;
   statusId?: string;
   userId?: string;
+  showCompanyInfo?: boolean;
+  getCompanyName?: (companyId: string) => string;
+  getCompanyColor?: (companyId: string) => string;
 }
 
 export function DraggableTaskCard({
@@ -40,7 +43,10 @@ export function DraggableTaskCard({
   weekId,
   priorityId,
   statusId,
-  userId
+  userId,
+  showCompanyInfo = false,
+  getCompanyName,
+  getCompanyColor
 }: DraggableTaskCardProps) {
   const { dragState, startDrag, stopDrag } = useDragDrop();
   const [isBeingDragged, setIsBeingDragged] = useState(false);
@@ -138,6 +144,19 @@ export function DraggableTaskCard({
             </Button>
           )}
         </div>
+        
+        {/* Company Info */}
+        {showCompanyInfo && (
+          <div className="flex items-center space-x-1">
+            <div 
+              className="w-2 h-2 rounded-full flex-shrink-0" 
+              style={{ backgroundColor: getCompanyColor?.(task.companyId) || '#3b82f6' }}
+            />
+            <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
+              {getCompanyName?.(task.companyId) || 'Empresa desconocida'}
+            </span>
+          </div>
+        )}
         
         <div className="flex items-center justify-between">
           <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>

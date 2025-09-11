@@ -187,41 +187,14 @@ export const getCompanies = async (userId?: string): Promise<CompanyEnhanced[]> 
 // Get active companies only
 export const getActiveCompanies = async (userId?: string): Promise<CompanyEnhanced[]> => {
   try {
-    if (isMockMode()) {
-      console.log('🔄 Modo demo: usando datos mock para empresas activas');
-      if (userId) {
-        const mockCompanies = getMockStorageForUser(userId);
-        const companies = Array.from(mockCompanies.values());
-        return companies.filter(c => 
-          c.status === 'active' && 
-          !c.isDeleted && 
-          (!userId || c.createdBy === userId)
-        );
-      } else {
-        return [];
-      }
-    }
+    // Unify logic by reusing getCompanies, which already
+    // contains robust fallbacks (e.g., 'current-user').
+    const companies = await getCompanies(userId);
 
-    let q;
-    if (userId) {
-      q = query(
-        collection(db as any, COLLECTION_NAME),
-        where('createdBy', '==', userId),
-        where('status', '==', 'active'),
-        where('isDeleted', '==', false),
-        orderBy('name', 'asc')
-      );
-    } else {
-      q = query(
-        collection(db as any, COLLECTION_NAME),
-        where('status', '==', 'active'),
-        where('isDeleted', '==', false),
-        orderBy('name', 'asc')
-      );
-    }
-
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(documentToCompany);
+    // Filter only active and not deleted
+    const active = companies.filter(c => c.status === 'active' && !c.isDeleted);
+    console.log('✅ getActiveCompanies resolved via getCompanies:', active.length);
+    return active;
   } catch (error) {
     console.error('Error getting active companies:', error);
     return [];

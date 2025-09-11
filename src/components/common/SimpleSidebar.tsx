@@ -14,6 +14,7 @@ import {
   Home,
   CheckSquare,
   Calendar,
+  Bot,
   BarChart3,
   Users,
   Settings,
@@ -62,6 +63,12 @@ export const SimpleSidebar = () => {
           href: '/dashboard/my-day',
           icon: Target,
           badge: null
+        },
+        {
+          title: 'Mi dAI',
+          href: '/dashboard/mi-dai',
+          icon: Bot,
+          badge: 'Beta'
         },
         {
           title: 'Tareas',

@@ -28,6 +28,9 @@ interface DroppablePriorityColumnProps {
   formatDate: (date: Date | any) => string;
   isOverdue: (dueDate: Date | null | undefined) => boolean;
   getDaysRemaining: (dueDate: Date) => number;
+  showCompanyInfo?: boolean;
+  getCompanyName?: (companyId: string) => string;
+  getCompanyColor?: (companyId: string) => string;
 }
 
 export function DroppablePriorityColumn({
@@ -41,7 +44,10 @@ export function DroppablePriorityColumn({
   getPriorityColor,
   formatDate,
   isOverdue,
-  getDaysRemaining
+  getDaysRemaining,
+  showCompanyInfo = false,
+  getCompanyName,
+  getCompanyColor
 }: DroppablePriorityColumnProps) {
   const { dragState, setDropPreview, clearDropPreview } = useDragDrop();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -164,6 +170,9 @@ export function DroppablePriorityColumn({
                   getPriorityColor={getPriorityColor}
                   formatDate={formatDate}
                   isOverdue={isOverdue}
+                  showCompanyInfo={showCompanyInfo}
+                  getCompanyName={getCompanyName}
+                  getCompanyColor={getCompanyColor}
                 />
               ))}
               

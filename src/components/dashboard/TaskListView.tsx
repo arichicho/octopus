@@ -19,6 +19,9 @@ interface TaskListViewProps {
   getPriorityColor: (priority: string) => string;
   formatDate: (date: Date | any) => string;
   isOverdue: (dueDate: Date | null | undefined) => boolean;
+  showCompanyInfo?: boolean;
+  getCompanyName?: (companyId: string) => string;
+  getCompanyColor?: (companyId: string) => string;
 }
 
 type SortField = 'title' | 'priority' | 'status' | 'dueDate' | 'createdAt';
@@ -32,7 +35,10 @@ export function TaskListView({
   getStatusColor,
   getPriorityColor,
   formatDate,
-  isOverdue
+  isOverdue,
+  showCompanyInfo = false,
+  getCompanyName,
+  getCompanyColor
 }: TaskListViewProps) {
   const [sortField, setSortField] = React.useState<SortField>('dueDate');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
@@ -114,6 +120,11 @@ export function TaskListView({
                     {getSortIcon('title')}
                   </Button>
                 </th>
+                {showCompanyInfo && (
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
+                    Empresa
+                  </th>
+                )}
                 <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
                   <Button
                     variant="ghost"
@@ -169,7 +180,7 @@ export function TaskListView({
             <tbody>
               {sortedTasks.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-500">
+                  <td colSpan={showCompanyInfo ? 8 : 7} className="text-center py-12 text-gray-500">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                       <CheckCircle className="h-8 w-8 text-gray-400" />
                     </div>
@@ -212,6 +223,19 @@ export function TaskListView({
                           </div>
                         </div>
                       </td>
+                      {showCompanyInfo && (
+                        <td className="py-3 px-4">
+                          <div className="flex items-center space-x-2">
+                            <div 
+                              className="w-3 h-3 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: getCompanyColor?.(task.companyId) || '#3b82f6' }}
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                              {getCompanyName?.(task.companyId) || 'Empresa desconocida'}
+                            </span>
+                          </div>
+                        </td>
+                      )}
                       <td className="py-3 px-4">
                         <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
                           {task.priority === 'urgent' ? 'Urgente' :

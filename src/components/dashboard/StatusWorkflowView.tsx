@@ -20,6 +20,9 @@ interface StatusWorkflowViewProps {
   getPriorityColor: (priority: string) => string;
   formatDate: (date: Date | any) => string;
   isOverdue: (dueDate: Date | null | undefined) => boolean;
+  showCompanyInfo?: boolean;
+  getCompanyName?: (companyId: string) => string;
+  getCompanyColor?: (companyId: string) => string;
 }
 
 const statusConfigs = [
@@ -69,7 +72,10 @@ export function StatusWorkflowView({
   getStatusColor,
   getPriorityColor,
   formatDate,
-  isOverdue
+  isOverdue,
+  showCompanyInfo = false,
+  getCompanyName,
+  getCompanyColor
 }: StatusWorkflowViewProps) {
   const { changeTaskStatus } = useTaskStore();
   const [notification, setNotification] = useState<{
@@ -149,6 +155,9 @@ export function StatusWorkflowView({
                 formatDate={formatDate}
                 isOverdue={isOverdue}
                 getDaysRemaining={getDaysRemaining}
+                showCompanyInfo={showCompanyInfo}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             );
           })}

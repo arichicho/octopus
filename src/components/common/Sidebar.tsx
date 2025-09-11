@@ -12,6 +12,7 @@ import {
   Home,
   CheckSquare,
   Calendar,
+  Bot,
   BarChart3,
   Users,
   Settings,
@@ -75,8 +76,14 @@ export const Sidebar = () => {
       items: [
         {
           title: 'Vista General',
-          href: '/dashboard',
+          href: '/dashboard/general',
           icon: Home,
+          badge: null
+        },
+        {
+          title: 'Vista por Empresa',
+          href: '/dashboard',
+          icon: Building2,
           badge: null
         },
         {
@@ -84,6 +91,12 @@ export const Sidebar = () => {
           href: '/dashboard/my-day',
           icon: Target,
           badge: '5'
+        },
+        {
+          title: 'Mi dAI',
+          href: '/dashboard/mi-dai',
+          icon: Bot,
+          badge: 'Beta'
         },
         {
           title: 'Historial',
@@ -204,6 +217,9 @@ export const Sidebar = () => {
     if (!mounted) return false;
     if (href === '/dashboard') {
       return pathname === '/dashboard';
+    }
+    if (href === '/dashboard/general') {
+      return pathname === '/dashboard/general';
     }
     if (href === '/dashboard/history') {
       return pathname === '/dashboard/history';

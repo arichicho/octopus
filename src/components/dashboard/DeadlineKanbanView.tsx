@@ -25,6 +25,9 @@ interface DeadlineKanbanViewProps {
   getPriorityColor: (priority: string) => string;
   formatDate: (date: Date | any) => string;
   isOverdue: (dueDate: Date | null | undefined) => boolean;
+  showCompanyInfo?: boolean;
+  getCompanyName?: (companyId: string) => string;
+  getCompanyColor?: (companyId: string) => string;
 }
 
 interface DeadlineWeek {
@@ -47,7 +50,10 @@ export function DeadlineKanbanView({
   getStatusColor,
   getPriorityColor,
   formatDate,
-  isOverdue
+  isOverdue,
+  showCompanyInfo = false,
+  getCompanyName,
+  getCompanyColor
 }: DeadlineKanbanViewProps) {
   const { updateTask } = useTaskStore();
   const [notification, setNotification] = useState<{
@@ -196,6 +202,9 @@ export function DeadlineKanbanView({
                 isOverdue={isOverdue}
                 getDaysRemaining={getDaysRemaining}
                 isCurrentWeek={true}
+                showCompanyInfo={showCompanyInfo}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             </div>
           ) : null;
@@ -209,20 +218,23 @@ export function DeadlineKanbanView({
               const weekTasks = getTasksByWeek(week);
               
               return (
-                <DroppableWeekColumn
-                  key={week.id}
-                  week={week}
-                  tasks={weekTasks}
-                  onTaskClick={onTaskClick}
-                  onCompleteTask={onCompleteTask}
-                  onTaskDrop={handleTaskDrop}
-                  getStatusIcon={getStatusIcon}
-                  getStatusColor={getStatusColor}
-                  getPriorityColor={getPriorityColor}
-                  formatDate={formatDate}
-                  isOverdue={isOverdue}
-                  getDaysRemaining={getDaysRemaining}
-                />
+              <DroppableWeekColumn
+                key={week.id}
+                week={week}
+                tasks={weekTasks}
+                onTaskClick={onTaskClick}
+                onCompleteTask={onCompleteTask}
+                onTaskDrop={handleTaskDrop}
+                getStatusIcon={getStatusIcon}
+                getStatusColor={getStatusColor}
+                getPriorityColor={getPriorityColor}
+                formatDate={formatDate}
+                isOverdue={isOverdue}
+                getDaysRemaining={getDaysRemaining}
+                showCompanyInfo={showCompanyInfo}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
+              />
               );
             })}
         </div>
@@ -248,6 +260,9 @@ export function DeadlineKanbanView({
                 isOverdue={isOverdue}
                 getDaysRemaining={getDaysRemaining}
                 isNoDateSection={true}
+                showCompanyInfo={showCompanyInfo}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             </div>
           ) : null;
