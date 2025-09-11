@@ -52,6 +52,8 @@ export function GeneralKanbanView({
     tasksCount: tasks.length,
     activeTasksCount: activeTasks.length,
     selectedCompanyId,
+    activeView,
+    showCompanyInfo: true,
     companies: companies.map(c => ({ id: c.id, name: c.name })),
     activeTasks: filteredTasks.map(t => ({ id: t.id, title: t.title, companyId: t.companyId, status: t.status }))
   });
