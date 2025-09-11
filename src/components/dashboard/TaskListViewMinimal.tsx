@@ -28,28 +28,28 @@ export default function TaskListViewMinimal({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="p-4 bg-green-100 border-2 border-green-500">
+        <div className="p-4 bg-green-100 border-2 border-green-500 overflow-x-auto">
           <h3 className="font-bold text-green-600">MINIMAL TABLE - Should show all columns:</h3>
-          <table className="w-full border-collapse border border-black">
+          <table className="w-full min-w-[900px] border-collapse border border-black">
             <thead>
               <tr>
-                <th className="border border-black p-2 bg-gray-200">Tarea</th>
-                <th className="border border-black p-2 bg-blue-200">🏢 Empresa</th>
-                <th className="border border-black p-2 bg-green-200">Prioridad</th>
-                <th className="border border-black p-2 bg-purple-200">Estado</th>
-                <th className="border border-black p-2 bg-orange-200">Vence</th>
+                <th className="border border-black p-2 bg-gray-200 whitespace-nowrap">Tarea</th>
+                <th className="border border-black p-2 bg-blue-200 whitespace-nowrap">🏢 Empresa</th>
+                <th className="border border-black p-2 bg-green-200 whitespace-nowrap">Prioridad</th>
+                <th className="border border-black p-2 bg-purple-200 whitespace-nowrap">Estado</th>
+                <th className="border border-black p-2 bg-orange-200 whitespace-nowrap">Vence</th>
               </tr>
             </thead>
             <tbody>
               {tasks.slice(0, 3).map((task) => (
                 <tr key={task.id}>
-                  <td className="border border-black p-2">{task.title}</td>
-                  <td className="border border-black p-2">
+                  <td className="border border-black p-2 whitespace-nowrap">{task.title}</td>
+                  <td className="border border-black p-2 whitespace-nowrap">
                     {getCompanyName ? getCompanyName(task.companyId) : 'Unknown Company'}
                   </td>
-                  <td className="border border-black p-2">{task.priority}</td>
-                  <td className="border border-black p-2">{task.status}</td>
-                  <td className="border border-black p-2">
+                  <td className="border border-black p-2 whitespace-nowrap">{task.priority}</td>
+                  <td className="border border-black p-2 whitespace-nowrap">{task.status}</td>
+                  <td className="border border-black p-2 whitespace-nowrap">
                     {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}
                   </td>
                 </tr>

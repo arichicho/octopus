@@ -15,8 +15,6 @@ import { PriorityKanbanView } from '@/components/dashboard/PriorityKanbanView';
 import { StatusWorkflowView } from '@/components/dashboard/StatusWorkflowView';
 import { DeadlineKanbanView } from '@/components/dashboard/DeadlineKanbanView';
 import { TaskListView } from '@/components/dashboard/TaskListView';
-import TaskListViewSimple from '@/components/dashboard/TaskListViewSimple';
-import TaskListViewMinimal from '@/components/dashboard/TaskListViewMinimal';
 import { TeamAssignmentView } from '@/components/dashboard/TeamAssignmentView';
 import { CalendarTimelineView } from '@/components/dashboard/CalendarTimelineView';
 import { CompanyIcon } from '@/components/companies/CompanyIcon';
@@ -38,7 +36,7 @@ export function GeneralKanbanView({
 }: GeneralKanbanViewProps) {
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [selectedCompanyForTask, setSelectedCompanyForTask] = useState<CompanyEnhanced | null>(null);
-  const [activeView, setActiveView] = useState<'priority' | 'status' | 'deadlines' | 'calendar' | 'team' | 'list'>('priority');
+  const [activeView, setActiveView] = useState<'priority' | 'status' | 'deadlines' | 'calendar' | 'team' | 'list'>('list');
   // Filtro de empresa (chip selector)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
@@ -300,14 +298,10 @@ export function GeneralKanbanView({
         </div>
       )}
 
-      {/* Debug Info */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <h3 className="font-medium text-yellow-800 mb-2">Debug Info:</h3>
-        <p className="text-sm text-yellow-700">
-          Empresas: {companies.length} | Tareas activas: {activeTasks.length}
-        </p>
-        <p className="text-xs text-yellow-600 mt-1">
-          Empresas: {companies.map(c => c.name).join(', ')}
+      {/* Summary Info */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          Empresas: {companies.length} • Tareas activas: {activeTasks.length}
         </p>
       </div>
 
@@ -414,8 +408,15 @@ export function GeneralKanbanView({
       )}
       
       {activeView === 'list' && (
-        <TaskListViewMinimal
+        <TaskListView
           tasks={filteredTasks}
+          onTaskClick={onTaskClick || (() => {})}
+          onCompleteTask={onCompleteTask || ((e) => e.stopPropagation())}
+          getStatusIcon={getStatusIcon}
+          getStatusColor={getStatusColor}
+          getPriorityColor={getPriorityColor}
+          formatDate={formatDate}
+          isOverdue={isOverdue}
           showCompanyInfo={true}
           getCompanyName={getCompanyName}
           getCompanyColor={getCompanyColor}

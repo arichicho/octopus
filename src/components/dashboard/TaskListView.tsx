@@ -99,54 +99,19 @@ export function TaskListView({
 
   const sortedTasks = getSortedTasks();
 
-  // Debug logs
-  console.log('🔍 TaskListView Debug:');
-  console.log('  - tasksCount:', tasks.length);
-  console.log('  - showCompanyInfo:', showCompanyInfo);
-  console.log('  - hasGetCompanyName:', !!getCompanyName);
-  console.log('  - hasGetCompanyColor:', !!getCompanyColor);
-  console.log('  - sampleTask:', tasks[0] ? { id: tasks[0].id, title: tasks[0].title, companyId: tasks[0].companyId } : null);
-  console.log('  - RENDERING COLUMNS - showCompanyInfo is:', showCompanyInfo, 'so company column should be visible');
+  //
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Lista de Tareas ({tasks.length})</CardTitle>
-        <div className="text-sm text-red-500 font-bold">
-          DEBUG: showCompanyInfo = {showCompanyInfo ? 'TRUE' : 'FALSE'} - Columna Empresa debería estar {showCompanyInfo ? 'VISIBLE' : 'OCULTA'}
-        </div>
       </CardHeader>
       <CardContent>
-        {/* TEST TABLE - Simple version to debug */}
-        <div className="mb-4 p-4 bg-yellow-100 border-2 border-yellow-500">
-          <h3 className="font-bold text-red-600">TEST TABLE - Should show all columns:</h3>
-          <table className="w-full border-collapse border border-black">
-            <thead>
-              <tr>
-                <th className="border border-black p-2 bg-gray-200">Tarea</th>
-                <th className="border border-black p-2 bg-blue-200">🏢 Empresa</th>
-                <th className="border border-black p-2 bg-green-200">Prioridad</th>
-                <th className="border border-black p-2 bg-purple-200">Estado</th>
-                <th className="border border-black p-2 bg-orange-200">Vence</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="border border-black p-2">Test Task 1</td>
-                <td className="border border-black p-2">Test Company 1</td>
-                <td className="border border-black p-2">High</td>
-                <td className="border border-black p-2">Active</td>
-                <td className="border border-black p-2">2025-01-15</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-black">
+          <table className="w-full min-w-[1000px] border-collapse border border-black">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -157,10 +122,12 @@ export function TaskListView({
                     {getSortIcon('title')}
                   </Button>
                 </th>
-                <th className="border border-black p-2 bg-blue-200">
-                  🏢 Empresa (FORCED - showCompanyInfo: {showCompanyInfo ? 'TRUE' : 'FALSE'})
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
+                {showCompanyInfo && (
+                  <th className="border border-black p-2 bg-blue-200 whitespace-nowrap">
+                    🏢 Empresa
+                  </th>
+                )}
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -171,7 +138,7 @@ export function TaskListView({
                     {getSortIcon('priority')}
                   </Button>
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -182,7 +149,7 @@ export function TaskListView({
                     {getSortIcon('status')}
                   </Button>
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -193,7 +160,7 @@ export function TaskListView({
                     {getSortIcon('dueDate')}
                   </Button>
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -204,10 +171,10 @@ export function TaskListView({
                     {getSortIcon('createdAt')}
                   </Button>
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                   Tags
                 </th>
-                <th className="text-center py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
+                <th className="text-center py-3 px-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                   Acciones
                 </th>
               </tr>

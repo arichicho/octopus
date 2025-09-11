@@ -412,12 +412,6 @@ export function CompanyTasksView() {
           </div>
                 ) : (
           <div className="w-full">
-            {/* Debug info */}
-            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                🔍 Debug: Mostrando menú de vistas para {company.name} ({pendingTasks.length} tareas pendientes)
-              </p>
-            </div>
             
             {/* Menú de vistas mejorado */}
             <div className="mb-6">
