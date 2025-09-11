@@ -106,6 +106,7 @@ export function TaskListView({
   console.log('  - hasGetCompanyName:', !!getCompanyName);
   console.log('  - hasGetCompanyColor:', !!getCompanyColor);
   console.log('  - sampleTask:', tasks[0] ? { id: tasks[0].id, title: tasks[0].title, companyId: tasks[0].companyId } : null);
+  console.log('  - RENDERING COLUMNS - showCompanyInfo is:', showCompanyInfo, 'so company column should be visible');
 
   return (
     <Card>
@@ -114,7 +115,7 @@ export function TaskListView({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-max">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
