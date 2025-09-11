@@ -100,13 +100,12 @@ export function TaskListView({
   const sortedTasks = getSortedTasks();
 
   // Debug logs
-  console.log('🔍 TaskListView Debug:', {
-    tasksCount: tasks.length,
-    showCompanyInfo,
-    hasGetCompanyName: !!getCompanyName,
-    hasGetCompanyColor: !!getCompanyColor,
-    sampleTask: tasks[0] ? { id: tasks[0].id, title: tasks[0].title, companyId: tasks[0].companyId } : null
-  });
+  console.log('🔍 TaskListView Debug:');
+  console.log('  - tasksCount:', tasks.length);
+  console.log('  - showCompanyInfo:', showCompanyInfo);
+  console.log('  - hasGetCompanyName:', !!getCompanyName);
+  console.log('  - hasGetCompanyColor:', !!getCompanyColor);
+  console.log('  - sampleTask:', tasks[0] ? { id: tasks[0].id, title: tasks[0].title, companyId: tasks[0].companyId } : null);
 
   return (
     <Card>

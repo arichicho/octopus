@@ -46,17 +46,16 @@ export function GeneralKanbanView({
     ? activeTasks.filter(t => t.companyId === selectedCompanyId)
     : activeTasks;
 
-  // Debug logs
-  console.log('🔍 GeneralKanbanView Debug:', {
-    companiesCount: companies.length,
-    tasksCount: tasks.length,
-    activeTasksCount: activeTasks.length,
-    selectedCompanyId,
-    activeView,
-    showCompanyInfo: true,
-    companies: companies.map(c => ({ id: c.id, name: c.name })),
-    activeTasks: filteredTasks.map(t => ({ id: t.id, title: t.title, companyId: t.companyId, status: t.status }))
-  });
+    // Debug logs
+    console.log('🔍 GeneralKanbanView Debug:');
+    console.log('  - companiesCount:', companies.length);
+    console.log('  - tasksCount:', tasks.length);
+    console.log('  - activeTasksCount:', activeTasks.length);
+    console.log('  - selectedCompanyId:', selectedCompanyId);
+    console.log('  - activeView:', activeView);
+    console.log('  - showCompanyInfo:', true);
+    console.log('  - companies:', companies.map(c => ({ id: c.id, name: c.name })));
+    console.log('  - filteredTasks:', filteredTasks.map(t => ({ id: t.id, title: t.title, companyId: t.companyId, status: t.status })));
 
   // Configuración de las vistas disponibles
   const viewConfigs = [
