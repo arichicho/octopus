@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, Clock, AlertTriangle, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Building2 } from 'lucide-react';
 import { TaskStatus } from '@/types/task';
 import { Task } from '@/lib/firebase/firestore';
 import { firestoreDateToDate } from '@/lib/utils/dateUtils';
@@ -123,8 +123,17 @@ export function TaskListView({
                   </Button>
                 </th>
                 {showCompanyInfo && (
-                  <th className="border border-black p-2 bg-blue-200 whitespace-nowrap">
-                    🏢 Empresa
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 bg-blue-100 whitespace-nowrap">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 font-medium hover:bg-transparent"
+                      onClick={() => handleSort('companyId')}
+                    >
+                      <Building2 className="h-4 w-4 mr-1 inline" />
+                      Empresa
+                      {getSortIcon('companyId')}
+                    </Button>
                   </th>
                 )}
                 <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
