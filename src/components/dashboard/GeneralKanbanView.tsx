@@ -16,6 +16,7 @@ import { StatusWorkflowView } from '@/components/dashboard/StatusWorkflowView';
 import { DeadlineKanbanView } from '@/components/dashboard/DeadlineKanbanView';
 import { TaskListView } from '@/components/dashboard/TaskListView';
 import TaskListViewSimple from '@/components/dashboard/TaskListViewSimple';
+import TaskListViewMinimal from '@/components/dashboard/TaskListViewMinimal';
 import { TeamAssignmentView } from '@/components/dashboard/TeamAssignmentView';
 import { CalendarTimelineView } from '@/components/dashboard/CalendarTimelineView';
 import { CompanyIcon } from '@/components/companies/CompanyIcon';
@@ -413,7 +414,7 @@ export function GeneralKanbanView({
       )}
       
       {activeView === 'list' && (
-        <TaskListViewSimple
+        <TaskListViewMinimal
           tasks={filteredTasks}
           showCompanyInfo={true}
           getCompanyName={getCompanyName}
