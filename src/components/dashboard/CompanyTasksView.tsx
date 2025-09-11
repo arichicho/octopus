@@ -33,6 +33,7 @@ export function CompanyTasksView() {
   const [selectedTask, setSelectedTask] = useState<Task | undefined>();
   const [activeView, setActiveView] = useState<'priority' | 'status' | 'deadlines' | 'calendar' | 'team' | 'list'>('list');
   const [isLoading, setIsLoading] = useState(true);
+  const [showAllCompanies, setShowAllCompanies] = useState(false);
 
   const { user } = useAuth();
   const { companies, fetchCompanies, loading: companiesLoading, selectedCompany } = useCompanyEnhancedStore();
@@ -40,7 +41,9 @@ export function CompanyTasksView() {
   const { companyId, clearHash } = useHashNavigation();
 
   const company = selectedCompany || companies.find(c => c.id === companyId);
-  const companyTasks = tasks.filter(task => task.companyId === company?.id);
+  const companyTasks = showAllCompanies 
+    ? tasks 
+    : tasks.filter(task => task.companyId === company?.id);
   const pendingTasks = companyTasks.filter(task => task.status !== 'completed' && task.status !== 'cancelled');
 
   // Configuración de las vistas disponibles
@@ -183,6 +186,17 @@ export function CompanyTasksView() {
     return diffDays;
   };
 
+  // Helper functions for company info
+  const getCompanyName = (companyId: string) => {
+    const company = companies.find(c => c.id === companyId);
+    return company ? company.name : 'Empresa desconocida';
+  };
+
+  const getCompanyColor = (companyId: string) => {
+    const company = companies.find(c => c.id === companyId);
+    return company ? company.color : '#6b7280';
+  };
+
   const handleCompleteTask = async (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
     try {
@@ -283,17 +297,23 @@ export function CompanyTasksView() {
               <span>Volver al Dashboard</span>
             </Button>
             <div className="flex items-center space-x-3">
-              <CompanyIcon
-                logoUrl={company.logoUrl}
-                defaultIcon={company.defaultIcon}
-                name={company.name}
-                size="lg"
-                color={company.color}
-                className="flex-shrink-0"
-              />
+              {showAllCompanies ? (
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-white" />
+                </div>
+              ) : (
+                <CompanyIcon
+                  logoUrl={company.logoUrl}
+                  defaultIcon={company.defaultIcon}
+                  name={company.name}
+                  size="lg"
+                  color={company.color}
+                  className="flex-shrink-0"
+                />
+              )}
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  {company.name}
+                  {showAllCompanies ? 'Todas las Empresas' : company.name}
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
                   {pendingTasks.length} tareas pendientes
@@ -311,6 +331,52 @@ export function CompanyTasksView() {
           </Button>
         </div>
       </div>
+
+      {/* Company Selector */}
+      {companies.length > 0 && (
+        <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Empresas</h3>
+            <span className="text-xs text-gray-500">Filtra por empresa</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto py-1">
+            <button
+              onClick={() => setShowAllCompanies(true)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap ${
+                showAllCompanies
+                  ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+              title="Mostrar todas las tareas"
+            >
+              <span className="text-sm">Todas</span>
+              <Badge variant="secondary" className="text-xs">{tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled').length}</Badge>
+            </button>
+            {companies.map((c) => {
+              const count = tasks.filter(t => t.companyId === c.id && t.status !== 'completed' && t.status !== 'cancelled').length;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setShowAllCompanies(false)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap ${
+                    !showAllCompanies && company?.id === c.id
+                      ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                  title={`Mostrar tareas de ${c.name}`}
+                >
+                  <div 
+                    className="w-3 h-3 rounded-full flex-shrink-0" 
+                    style={{ backgroundColor: c.color || '#3b82f6' }}
+                  />
+                  <span className="text-sm">{c.name}</span>
+                  <Badge variant="secondary" className="text-xs">{count}</Badge>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
@@ -411,6 +477,9 @@ export function CompanyTasksView() {
                 getPriorityColor={getPriorityColor}
                 formatDate={formatDate}
                 isOverdue={isOverdue}
+                showCompanyInfo={showAllCompanies}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             )}
             
@@ -424,6 +493,9 @@ export function CompanyTasksView() {
                 getPriorityColor={getPriorityColor}
                 formatDate={formatDate}
                 isOverdue={isOverdue}
+                showCompanyInfo={showAllCompanies}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             )}
             
@@ -437,6 +509,9 @@ export function CompanyTasksView() {
                 getPriorityColor={getPriorityColor}
                 formatDate={formatDate}
                 isOverdue={isOverdue}
+                showCompanyInfo={showAllCompanies}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             )}
             
@@ -450,6 +525,9 @@ export function CompanyTasksView() {
                 getPriorityColor={getPriorityColor}
                 formatDate={formatDate}
                 isOverdue={isOverdue}
+                showCompanyInfo={showAllCompanies}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             )}
             
@@ -464,6 +542,9 @@ export function CompanyTasksView() {
                 formatDate={formatDate}
                 isOverdue={isOverdue}
                 companyId={company.id}
+                showCompanyInfo={showAllCompanies}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             )}
             
@@ -477,6 +558,9 @@ export function CompanyTasksView() {
                 getPriorityColor={getPriorityColor}
                 formatDate={formatDate}
                 isOverdue={isOverdue}
+                showCompanyInfo={showAllCompanies}
+                getCompanyName={getCompanyName}
+                getCompanyColor={getCompanyColor}
               />
             )}
           </div>

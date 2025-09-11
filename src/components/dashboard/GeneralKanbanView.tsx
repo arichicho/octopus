@@ -17,6 +17,7 @@ import { DeadlineKanbanView } from '@/components/dashboard/DeadlineKanbanView';
 import { TaskListView } from '@/components/dashboard/TaskListView';
 import { TeamAssignmentView } from '@/components/dashboard/TeamAssignmentView';
 import { CalendarTimelineView } from '@/components/dashboard/CalendarTimelineView';
+import { CompanyIcon } from '@/components/companies/CompanyIcon';
 
 interface GeneralKanbanViewProps {
   companies: CompanyEnhanced[];
@@ -36,17 +37,23 @@ export function GeneralKanbanView({
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [selectedCompanyForTask, setSelectedCompanyForTask] = useState<CompanyEnhanced | null>(null);
   const [activeView, setActiveView] = useState<'priority' | 'status' | 'deadlines' | 'calendar' | 'team' | 'list'>('priority');
+  // Filtro de empresa (chip selector)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
   // Filter only active tasks
   const activeTasks = tasks.filter(task => task.status !== 'completed' && task.status !== 'cancelled');
+  const filteredTasks = selectedCompanyId
+    ? activeTasks.filter(t => t.companyId === selectedCompanyId)
+    : activeTasks;
 
   // Debug logs
   console.log('🔍 GeneralKanbanView Debug:', {
     companiesCount: companies.length,
     tasksCount: tasks.length,
     activeTasksCount: activeTasks.length,
+    selectedCompanyId,
     companies: companies.map(c => ({ id: c.id, name: c.name })),
-    activeTasks: activeTasks.map(t => ({ id: t.id, title: t.title, companyId: t.companyId, status: t.status }))
+    activeTasks: filteredTasks.map(t => ({ id: t.id, title: t.title, companyId: t.companyId, status: t.status }))
   });
 
   // Configuración de las vistas disponibles
@@ -155,6 +162,18 @@ export function GeneralKanbanView({
     setCreateTaskModalOpen(true);
   };
 
+  // Abrir modal de creación usando el filtro activo o un ID explícito
+  const openCreateForCompany = (companyId?: string | null) => {
+    const id = companyId ?? selectedCompanyId;
+    if (id) {
+      const company = companies.find(c => c.id === id) || null;
+      setSelectedCompanyForTask(company);
+    } else {
+      setSelectedCompanyForTask(null);
+    }
+    setCreateTaskModalOpen(true);
+  };
+
   const handleCloseCreateModal = () => {
     setCreateTaskModalOpen(false);
     setSelectedCompanyForTask(null);
@@ -172,11 +191,11 @@ export function GeneralKanbanView({
   };
 
   // Calculate stats
-  const totalTasks = activeTasks.length;
-  const pendingTasks = activeTasks.filter(t => t.status === 'pending').length;
-  const inProgressTasks = activeTasks.filter(t => t.status === 'in_progress').length;
+  const totalTasks = filteredTasks.length;
+  const pendingTasks = filteredTasks.filter(t => t.status === 'pending').length;
+  const inProgressTasks = filteredTasks.filter(t => t.status === 'in_progress').length;
   const companiesWithTasks = companies.filter(company => 
-    activeTasks.some(task => task.companyId === company.id)
+    filteredTasks.some(task => task.companyId === company.id)
   ).length;
 
   return (
@@ -192,7 +211,7 @@ export function GeneralKanbanView({
           </p>
         </div>
         <Button 
-          onClick={() => setCreateTaskModalOpen(true)}
+          onClick={() => openCreateForCompany(null)}
           size="lg" 
           className="flex items-center space-x-2 px-6 py-3"
         >
@@ -220,6 +239,63 @@ export function GeneralKanbanView({
           <div className="text-sm text-gray-600 dark:text-gray-400">Pendientes</div>
         </div>
       </div>
+
+      {/* Company Selector (filtro) */}
+      {companies.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Empresas</h3>
+            <span className="text-xs text-gray-500">Filtra por empresa</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto py-1">
+            <button
+              onClick={() => setSelectedCompanyId(null)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap ${
+                selectedCompanyId === null
+                  ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+              title="Mostrar todas las tareas"
+            >
+              <span className="text-sm">Todas</span>
+              <Badge variant="secondary" className="text-xs">{activeTasks.length}</Badge>
+            </button>
+            {companies.map((c) => {
+              const count = activeTasks.filter(t => t.companyId === c.id).length;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedCompanyId(prev => prev === c.id ? null : c.id)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap ${
+                    selectedCompanyId === c.id
+                      ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                  title={`Filtrar por ${c.name}`}
+                >
+                  <CompanyIcon
+                    logoUrl={c.logoUrl}
+                    defaultIcon={c.defaultIcon}
+                    name={c.name}
+                    size="sm"
+                    color={c.color}
+                  />
+                  <span className="text-sm max-w-[160px] truncate">{c.name}</span>
+                  <Badge variant="secondary" className="text-xs">{count}</Badge>
+                  {/* Crear tarea directamente para esta empresa */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); openCreateForCompany(c.id); }}
+                    className="ml-1 inline-flex items-center justify-center h-6 w-6 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    title={`Crear tarea en ${c.name}`}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Debug Info */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -256,7 +332,7 @@ export function GeneralKanbanView({
       {/* Content Views */}
       {activeView === 'priority' && (
         <PriorityKanbanView
-          tasks={activeTasks}
+          tasks={filteredTasks}
           onTaskClick={onTaskClick}
           onCompleteTask={onCompleteTask}
           getStatusIcon={getStatusIcon}
@@ -272,7 +348,7 @@ export function GeneralKanbanView({
       
       {activeView === 'status' && (
         <StatusWorkflowView
-          tasks={activeTasks}
+          tasks={filteredTasks}
           onTaskClick={onTaskClick}
           onCompleteTask={onCompleteTask}
           getStatusIcon={getStatusIcon}
@@ -288,7 +364,7 @@ export function GeneralKanbanView({
       
       {activeView === 'deadlines' && (
         <DeadlineKanbanView
-          tasks={activeTasks}
+          tasks={filteredTasks}
           onTaskClick={onTaskClick}
           onCompleteTask={onCompleteTask}
           getStatusIcon={getStatusIcon}
@@ -304,7 +380,7 @@ export function GeneralKanbanView({
       
       {activeView === 'calendar' && (
         <CalendarTimelineView
-          tasks={activeTasks}
+          tasks={filteredTasks}
           onTaskClick={onTaskClick}
           onCompleteTask={onCompleteTask}
           getStatusIcon={getStatusIcon}
@@ -320,7 +396,7 @@ export function GeneralKanbanView({
       
       {activeView === 'team' && (
         <TeamAssignmentView
-          tasks={activeTasks}
+          tasks={filteredTasks}
           onTaskClick={onTaskClick}
           onCompleteTask={onCompleteTask}
           getStatusIcon={getStatusIcon}
@@ -336,7 +412,7 @@ export function GeneralKanbanView({
       
       {activeView === 'list' && (
         <TaskListView
-          tasks={activeTasks}
+          tasks={filteredTasks}
           onTaskClick={onTaskClick}
           onCompleteTask={onCompleteTask}
           getStatusIcon={getStatusIcon}
@@ -354,7 +430,7 @@ export function GeneralKanbanView({
       <CreateTaskModal
         isOpen={createTaskModalOpen}
         onClose={handleCloseCreateModal}
-        initialCompanyId={selectedCompanyForTask?.id}
+        initialCompanyId={selectedCompanyForTask?.id || selectedCompanyId || undefined}
         onTaskCreated={() => {
           handleCloseCreateModal();
           // The parent component should reload tasks

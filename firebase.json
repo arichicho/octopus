@@ -66,13 +66,13 @@
       "rewrites": [
         {
           "source": "**",
-          "destination": "https://octopus-8fnm6olbz-arichicho1-gmailcoms-projects.vercel.app"
+          "destination": "https://octopus-theceo.vercel.app"
         }
       ],
       "redirects": [
         {
           "source": "/",
-          "destination": "https://octopus-8fnm6olbz-arichicho1-gmailcoms-projects.vercel.app",
+          "destination": "https://octopus-theceo.vercel.app",
           "type": 302
         }
       ]

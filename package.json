@@ -2,12 +2,16 @@
   "name": "octopus-app",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "clean": "rm -rf .next",
     "start": "next start",
     "lint": "eslint",
+    "sync:minutes": "node scripts/sync-gemini-minutes.js --client client_secret_511546212594-2n67bqufe9h562fl41bfe0a7c37k98q6.apps.googleusercontent.com.json --out data/meetings --days 30",
     "deploy": "npm run build && firebase deploy --only apphosting:theceo",
     "deploy:all": "npm run build && firebase deploy"
   },
@@ -47,7 +51,10 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.1.4",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "@google-cloud/local-auth": "^3.0.0",
+    "googleapis": "^144.0.0",
+    "sanitize-filename": "^1.6.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

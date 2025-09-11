@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Task, TaskStatus } from "@/types/task";
 import { CompanyEnhanced } from "@/types/company-enhanced";
+import { getCompany } from "@/lib/firebase/companies";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { firestoreDateToDate } from "@/lib/utils/dateUtils";
@@ -42,6 +43,8 @@ export default function GeneralViewPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | undefined>();
   const [activeView, setActiveView] = useState<'priority' | 'status' | 'deadlines' | 'calendar' | 'team' | 'list'>('list');
+  // Local cache for companies referenced by tasks but not in user filter
+  const [extraCompanies, setExtraCompanies] = useState<CompanyEnhanced[]>([]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -65,6 +68,13 @@ export default function GeneralViewPage() {
     return filtered;
   }, [companies, user?.uid, user?.email]);
 
+  // Companies available in the General view (union of filtered + fetched extras)
+  const companiesForView = useMemo(() => {
+    const map = new Map<string, CompanyEnhanced>();
+    [...userCompanies, ...extraCompanies].forEach(c => c?.id && map.set(c.id, c));
+    return Array.from(map.values());
+  }, [userCompanies, extraCompanies]);
+
   // All active tasks from all companies
   const allActiveTasks = useMemo(() => {
     const filtered = tasks.filter((t) => t.status !== "completed" && t.status !== "cancelled");
@@ -75,6 +85,26 @@ export default function GeneralViewPage() {
     });
     return filtered;
   }, [tasks]);
+
+  // Ensure we have company info for all tasks shown
+  useEffect(() => {
+    const ensureCompanies = async () => {
+      const ids = Array.from(new Set(allActiveTasks.map((t) => t.companyId).filter(Boolean)));
+      const existing = new Set(companiesForView.map((c) => c.id));
+      const missing = ids.filter((id) => !existing.has(id));
+      if (missing.length === 0) return;
+      const fetched = await Promise.all(missing.map((id) => getCompany(id)));
+      const valid = (fetched.filter(Boolean) as CompanyEnhanced[]);
+      if (valid.length > 0) {
+        setExtraCompanies(prev => {
+          const map = new Map<string, CompanyEnhanced>();
+          [...prev, ...valid].forEach(c => c?.id && map.set(c.id, c));
+          return Array.from(map.values());
+        });
+      }
+    };
+    if (allActiveTasks.length > 0) ensureCompanies();
+  }, [allActiveTasks, companiesForView]);
 
   // Configuración de las vistas disponibles
   const viewConfigs = [
@@ -210,13 +240,13 @@ export default function GeneralViewPage() {
 
   // Get company name for a task
   const getCompanyName = (companyId: string) => {
-    const company = userCompanies.find(c => c.id === companyId);
+    const company = companiesForView.find(c => c.id === companyId);
     return company?.name || 'Empresa desconocida';
   };
 
   // Get company color for a task
   const getCompanyColor = (companyId: string) => {
-    const company = userCompanies.find(c => c.id === companyId);
+    const company = companiesForView.find(c => c.id === companyId);
     return company?.color || '#3b82f6';
   };
 

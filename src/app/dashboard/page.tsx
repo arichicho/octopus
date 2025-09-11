@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useTaskStore } from "@/lib/store/useTaskStore";
 import { useCompanyEnhancedStore } from "@/lib/store/useCompanyEnhancedStore";
 import { getCompany } from "@/lib/firebase/companies";
+import type { CompanyEnhanced } from "@/types/company-enhanced";
 import { CreateTaskModal } from "@/components/modals/CreateTaskModal";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +19,8 @@ export default function GoogleStyleDashboardPage() {
   const { companies, fetchCompanies, setSelectedCompany, selectedCompany } = useCompanyEnhancedStore();
   const { companyId, navigateToCompany } = useHashNavigation();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  // Local cache for companies that don't pass the user filter
+  const [extraCompanies, setExtraCompanies] = useState<CompanyEnhanced[]>([]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -86,22 +89,37 @@ export default function GoogleStyleDashboardPage() {
     return filtered;
   }, [companies, user]);
 
+  // Merged list used by the General view (ensures all task companies are present)
+  const companiesForView = useMemo(() => {
+    const map = new Map<string, CompanyEnhanced>();
+    [...userCompanies, ...extraCompanies].forEach((c) => {
+      if (c?.id) map.set(c.id, c);
+    });
+    return Array.from(map.values());
+  }, [userCompanies, extraCompanies]);
+
   // Ensure companies referenced by tasks exist (by id)
   useEffect(() => {
     const ensureCompanies = async () => {
       const ids = Array.from(new Set(activeTasks.map((t: any) => t.companyId).filter(Boolean)));
-      const existing = new Set((userCompanies as any[]).map((c: any) => c.id));
+      const existing = new Set((companiesForView as any[]).map((c: any) => c.id));
       const missing = ids.filter((id) => !existing.has(id));
       if (missing.length === 0) return;
       const fetched = await Promise.all(missing.map((id) => getCompany(id)));
-      const valid = (fetched.filter(Boolean) as any[]);
+      const valid = (fetched.filter(Boolean) as CompanyEnhanced[]);
       if (valid.length > 0) {
-        // Select first if none selected
-        setSelectedCompany?.(valid[0] as any);
+        // Merge into local cache so the General view can resolve names/colors
+        setExtraCompanies((prev) => {
+          const map = new Map<string, CompanyEnhanced>();
+          [...prev, ...valid].forEach((c) => c?.id && map.set(c.id, c));
+          return Array.from(map.values());
+        });
+        // Select first as a sensible default for follow-up navigation
+        setSelectedCompany?.(valid[0]);
       }
     };
     if (activeTasks.length > 0) ensureCompanies();
-  }, [activeTasks, userCompanies, setSelectedCompany]);
+  }, [activeTasks, companiesForView, setSelectedCompany]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -126,7 +144,7 @@ export default function GoogleStyleDashboardPage() {
 
             {/* General Overview - Default View */}
             <GeneralKanbanView
-              companies={userCompanies}
+              companies={companiesForView}
               tasks={activeTasks}
               onTaskClick={(task) => {
                 // Navigate to company view with task selected
