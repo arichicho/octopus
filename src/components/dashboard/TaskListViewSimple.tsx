@@ -35,9 +35,7 @@ export default function TaskListViewSimple({
             <thead>
               <tr>
                 <th className="border border-black p-2 bg-gray-200">Tarea</th>
-                {showCompanyInfo && (
-                  <th className="border border-black p-2 bg-blue-200">🏢 Empresa</th>
-                )}
+                <th className="border border-black p-2 bg-blue-200">🏢 Empresa (FORCED)</th>
                 <th className="border border-black p-2 bg-green-200">Prioridad</th>
                 <th className="border border-black p-2 bg-purple-200">Estado</th>
                 <th className="border border-black p-2 bg-orange-200">Vence</th>
@@ -47,11 +45,9 @@ export default function TaskListViewSimple({
               {tasks.map((task) => (
                 <tr key={task.id}>
                   <td className="border border-black p-2">{task.title}</td>
-                  {showCompanyInfo && (
-                    <td className="border border-black p-2">
-                      {getCompanyName ? getCompanyName(task.companyId) : 'Unknown Company'}
-                    </td>
-                  )}
+                  <td className="border border-black p-2">
+                    {getCompanyName ? getCompanyName(task.companyId) : 'Unknown Company'}
+                  </td>
                   <td className="border border-black p-2">{task.priority}</td>
                   <td className="border border-black p-2">{task.status}</td>
                   <td className="border border-black p-2">
