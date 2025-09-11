@@ -112,6 +112,9 @@ export function TaskListView({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Lista de Tareas ({tasks.length})</CardTitle>
+        <div className="text-sm text-red-500 font-bold">
+          DEBUG: showCompanyInfo = {showCompanyInfo ? 'TRUE' : 'FALSE'} - Columna Empresa debería estar {showCompanyInfo ? 'VISIBLE' : 'OCULTA'}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -130,8 +133,8 @@ export function TaskListView({
                   </Button>
                 </th>
                 {showCompanyInfo && (
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
-                    Empresa
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 bg-blue-200 border-2 border-blue-500">
+                    🏢 Empresa (DEBUG)
                   </th>
                 )}
                 <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
