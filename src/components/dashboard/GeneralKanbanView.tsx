@@ -15,6 +15,7 @@ import { PriorityKanbanView } from '@/components/dashboard/PriorityKanbanView';
 import { StatusWorkflowView } from '@/components/dashboard/StatusWorkflowView';
 import { DeadlineKanbanView } from '@/components/dashboard/DeadlineKanbanView';
 import { TaskListView } from '@/components/dashboard/TaskListView';
+import TaskListViewSimple from '@/components/dashboard/TaskListViewSimple';
 import { TeamAssignmentView } from '@/components/dashboard/TeamAssignmentView';
 import { CalendarTimelineView } from '@/components/dashboard/CalendarTimelineView';
 import { CompanyIcon } from '@/components/companies/CompanyIcon';
@@ -412,15 +413,8 @@ export function GeneralKanbanView({
       )}
       
       {activeView === 'list' && (
-        <TaskListView
+        <TaskListViewSimple
           tasks={filteredTasks}
-          onTaskClick={onTaskClick}
-          onCompleteTask={onCompleteTask}
-          getStatusIcon={getStatusIcon}
-          getStatusColor={getStatusColor}
-          getPriorityColor={getPriorityColor}
-          formatDate={formatDate}
-          isOverdue={isOverdue}
           showCompanyInfo={true}
           getCompanyName={getCompanyName}
           getCompanyColor={getCompanyColor}
