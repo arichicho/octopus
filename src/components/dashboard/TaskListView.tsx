@@ -217,9 +217,16 @@ export function TaskListView({
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate cursor-pointer">
-                                    {task.title}
-                                  </h4>
+                                  <div className="flex items-center space-x-2">
+                                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate cursor-pointer">
+                                      {task.title}
+                                    </h4>
+                                    {task.description && (
+                                      <span className="text-xs text-blue-500 dark:text-blue-400 cursor-help" title="Tiene descripción">
+                                        📝
+                                      </span>
+                                    )}
+                                  </div>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="max-w-xs">
                                   <div>
