@@ -132,11 +132,9 @@ export function TaskListView({
                     {getSortIcon('title')}
                   </Button>
                 </th>
-                {showCompanyInfo && (
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 bg-blue-200 border-2 border-blue-500">
-                    🏢 Empresa (DEBUG)
-                  </th>
-                )}
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 bg-blue-200 border-2 border-blue-500">
+                  🏢 Empresa (FORCED - showCompanyInfo: {showCompanyInfo ? 'TRUE' : 'FALSE'})
+                </th>
                 <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
                   <Button
                     variant="ghost"
