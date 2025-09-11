@@ -143,7 +143,7 @@ export function TaskListView({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-max">
+          <table className="w-full border-collapse border border-black">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
@@ -157,7 +157,7 @@ export function TaskListView({
                     {getSortIcon('title')}
                   </Button>
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 bg-blue-200 border-2 border-blue-500">
+                <th className="border border-black p-2 bg-blue-200">
                   🏢 Empresa (FORCED - showCompanyInfo: {showCompanyInfo ? 'TRUE' : 'FALSE'})
                 </th>
                 <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">
