@@ -117,6 +117,31 @@ export function TaskListView({
         </div>
       </CardHeader>
       <CardContent>
+        {/* TEST TABLE - Simple version to debug */}
+        <div className="mb-4 p-4 bg-yellow-100 border-2 border-yellow-500">
+          <h3 className="font-bold text-red-600">TEST TABLE - Should show all columns:</h3>
+          <table className="w-full border-collapse border border-black">
+            <thead>
+              <tr>
+                <th className="border border-black p-2 bg-gray-200">Tarea</th>
+                <th className="border border-black p-2 bg-blue-200">🏢 Empresa</th>
+                <th className="border border-black p-2 bg-green-200">Prioridad</th>
+                <th className="border border-black p-2 bg-purple-200">Estado</th>
+                <th className="border border-black p-2 bg-orange-200">Vence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-black p-2">Test Task 1</td>
+                <td className="border border-black p-2">Test Company 1</td>
+                <td className="border border-black p-2">High</td>
+                <td className="border border-black p-2">Active</td>
+                <td className="border border-black p-2">2025-01-15</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-max">
             <thead>
