@@ -222,15 +222,15 @@ export function TaskListView({
                                   </h4>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="max-w-xs">
-                                  <p className="text-sm">{task.title}</p>
+                                  <div>
+                                    <p className="text-sm font-medium">{task.title}</p>
+                                    {task.description && (
+                                      <p className="text-xs text-gray-600 mt-1">{task.description}</p>
+                                    )}
+                                  </div>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                            {task.description && (
-                              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                                {task.description}
-                              </p>
-                            )}
                           </div>
                         </div>
                       </td>
