@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, Clock, AlertTriangle, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Building2 } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Building2, Star, Zap, AlertCircle } from 'lucide-react';
 import { TaskStatus } from '@/types/task';
 import { Task } from '@/lib/firebase/firestore';
 import { firestoreDateToDate } from '@/lib/utils/dateUtils';
@@ -95,6 +95,88 @@ export function TaskListView({
       return <ArrowUpDown className="h-4 w-4" />;
     }
     return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
+
+  // Helper functions for improved UI
+  const getPriorityBadge = (priority: string) => {
+    const priorityConfig = {
+      high: { 
+        label: 'Alta', 
+        className: 'bg-red-100 text-red-800 border-red-200', 
+        icon: <AlertCircle className="h-3 w-3 mr-1" />
+      },
+      medium: { 
+        label: 'Media', 
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200', 
+        icon: <Clock className="h-3 w-3 mr-1" />
+      },
+      low: { 
+        label: 'Baja', 
+        className: 'bg-green-100 text-green-800 border-green-200', 
+        icon: <CheckCircle className="h-3 w-3 mr-1" />
+      }
+    };
+    
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.medium;
+    
+    return (
+      <Badge variant="outline" className={`${config.className} text-xs font-medium`}>
+        {config.icon}
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { 
+        label: 'Pendiente', 
+        className: 'bg-gray-100 text-gray-800 border-gray-200', 
+        icon: <Clock className="h-3 w-3 mr-1" />
+      },
+      in_progress: { 
+        label: 'En Progreso', 
+        className: 'bg-blue-100 text-blue-800 border-blue-200', 
+        icon: <Zap className="h-3 w-3 mr-1" />
+      },
+      completed: { 
+        label: 'Completada', 
+        className: 'bg-green-100 text-green-800 border-green-200', 
+        icon: <CheckCircle className="h-3 w-3 mr-1" />
+      },
+      cancelled: { 
+        label: 'Cancelada', 
+        className: 'bg-red-100 text-red-800 border-red-200', 
+        icon: <AlertTriangle className="h-3 w-3 mr-1" />
+      }
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    
+    return (
+      <Badge variant="outline" className={`${config.className} text-xs font-medium`}>
+        {config.icon}
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const getDaysUntilDue = (dueDate: Date | null) => {
+    if (!dueDate) return null;
+    
+    const today = new Date();
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return { text: `Vencida hace ${Math.abs(diffDays)} días`, className: 'text-red-600 font-semibold' };
+    } else if (diffDays === 0) {
+      return { text: 'Vence hoy', className: 'text-orange-600 font-semibold' };
+    } else if (diffDays <= 3) {
+      return { text: `Vence en ${diffDays} días`, className: 'text-yellow-600 font-medium' };
+    } else {
+      return { text: `Vence en ${diffDays} días`, className: 'text-gray-600' };
+    }
   };
 
   const sortedTasks = getSortedTasks();
@@ -208,7 +290,7 @@ export function TaskListView({
                     <tr
                       key={task.id}
                       onClick={() => onTaskClick(task)}
-                      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+                      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-800/50 dark:hover:to-gray-700/50 cursor-pointer transition-all duration-200 hover:shadow-sm group"
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center space-x-3">
@@ -218,21 +300,40 @@ export function TaskListView({
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <div className="flex items-center space-x-2">
-                                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate cursor-pointer">
+                                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate cursor-pointer group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
                                       {task.title}
                                     </h4>
-                                    {task.description && (
-                                      <span className="text-xs text-blue-500 dark:text-blue-400 cursor-help" title="Tiene descripción">
-                                        📝
-                                      </span>
-                                    )}
+                                    <div className="flex items-center space-x-1">
+                                      {task.description && (
+                                        <span className="text-xs text-blue-500 dark:text-blue-400 cursor-help" title="Tiene descripción">
+                                          📝
+                                        </span>
+                                      )}
+                                      {task.progress && task.progress > 0 && (
+                                        <span className="text-xs text-green-500 dark:text-green-400 cursor-help" title={`Progreso: ${task.progress}%`}>
+                                          📊
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="max-w-xs">
-                                  <div>
+                                  <div className="space-y-2">
                                     <p className="text-sm font-medium">{task.title}</p>
                                     {task.description && (
-                                      <p className="text-xs text-gray-600 mt-1">{task.description}</p>
+                                      <p className="text-xs text-gray-600">{task.description}</p>
+                                    )}
+                                    {task.progress && task.progress > 0 && (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="text-xs text-gray-500">Progreso:</span>
+                                        <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                                          <div 
+                                            className="bg-green-500 h-1.5 rounded-full transition-all duration-300" 
+                                            style={{ width: `${task.progress}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-xs text-gray-500">{task.progress}%</span>
+                                      </div>
                                     )}
                                   </div>
                                 </TooltipContent>
@@ -255,27 +356,28 @@ export function TaskListView({
                         </td>
                       )}
                       <td className="py-3 px-4">
-                        <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
-                          {task.priority === 'urgent' ? 'Urgente' :
-                           task.priority === 'high' ? 'Alta' :
-                           task.priority === 'medium' ? 'Media' : 'Baja'}
-                        </Badge>
+                        {getPriorityBadge(task.priority)}
                       </td>
                       <td className="py-3 px-4">
-                        <Badge className={`text-xs ${getStatusColor(task.status)}`}>
-                          {task.status === 'pending' ? 'Pendiente' :
-                           task.status === 'in_progress' ? 'En Progreso' :
-                           task.status === 'completed' ? 'Completada' :
-                           task.status === 'cancelled' ? 'Cancelada' : 'Desconocido'}
-                        </Badge>
+                        {getStatusBadge(task.status)}
                       </td>
                       <td className="py-3 px-4">
                         {dueDate ? (
-                          <div className="flex items-center space-x-1 text-sm">
-                            <Calendar className="h-4 w-4 text-gray-500" />
-                            <span className={isOverdue(dueDate) ? 'text-red-600 font-medium' : 'text-gray-700 dark:text-gray-300'}>
-                              {formatDate(dueDate)}
-                            </span>
+                          <div className="flex flex-col space-y-1">
+                            <div className="flex items-center space-x-1 text-sm">
+                              <Calendar className="h-4 w-4 text-gray-500" />
+                              <span className="text-gray-700 dark:text-gray-300">
+                                {formatDate(dueDate)}
+                              </span>
+                            </div>
+                            {(() => {
+                              const daysInfo = getDaysUntilDue(dueDate);
+                              return daysInfo ? (
+                                <span className={`text-xs ${daysInfo.className}`}>
+                                  {daysInfo.text}
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                         ) : (
                           <span className="text-sm text-gray-500">Sin fecha</span>
