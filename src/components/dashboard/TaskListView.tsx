@@ -441,7 +441,7 @@ export function TaskListView({
         </div>
 
         {/* Mobile cards */}
-        <div className="block sm:hidden space-y-3 touch-scroll iphone16-scroll-fix">
+        <div className="block sm:hidden space-y-3">
           {sortedTasks.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
