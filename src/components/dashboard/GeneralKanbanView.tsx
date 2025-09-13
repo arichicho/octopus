@@ -205,7 +205,7 @@ export function GeneralKanbanView({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Vista General
+            Vista General - Mobile Optimized
           </h1>
           <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400">
             Todas las tareas de todas las empresas
