@@ -137,7 +137,7 @@ export function StatusWorkflowView({
         </div>
         
         {/* Columnas de Estado */}
-        <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">
+        <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto horizontal-scroll-container scrollbar-hide">
           {statusConfigs.map((status) => {
             const statusTasks = getTasksByStatus(status.id);
             

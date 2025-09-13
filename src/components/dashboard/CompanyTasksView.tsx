@@ -340,7 +340,7 @@ export function CompanyTasksView() {
             <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Empresas</h3>
             <span className="text-xs text-gray-500 hidden sm:inline">Filtra por empresa</span>
           </div>
-          <div className="flex gap-2 overflow-x-auto py-1 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto py-1 horizontal-scroll-container scrollbar-hide">
             <button
               onClick={() => setShowAllCompanies(true)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap flex-shrink-0 ${
@@ -380,7 +380,7 @@ export function CompanyTasksView() {
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 touch-scroll iphone16-scroll-fix">
         {isLoading ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center animate-spin">
@@ -427,7 +427,7 @@ export function CompanyTasksView() {
               </div>
               
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm">
-                <div className="flex sm:grid sm:grid-cols-6 gap-1 overflow-x-auto scrollbar-hide">
+                <div className="flex sm:grid sm:grid-cols-6 gap-1 overflow-x-auto horizontal-scroll-container scrollbar-hide">
                   {viewConfigs.map((view) => (
                     <button
                       key={view.id}

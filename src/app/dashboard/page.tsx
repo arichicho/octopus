@@ -122,10 +122,10 @@ export default function GoogleStyleDashboardPage() {
   }, [activeTasks, companiesForView, setSelectedCompany]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 dashboard-container">
       <GoogleHeader onQuickAdd={() => setQuickAddOpen(true)} />
       <div className="mx-auto max-w-7xl px-3 sm:px-4">
-        <main className="py-4 sm:py-6">
+        <main className="py-4 sm:py-6 main-content touch-scroll iphone16-scroll-fix">
             {/* Summary strip */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-3 sm:p-4">
