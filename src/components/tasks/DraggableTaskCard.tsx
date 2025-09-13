@@ -104,7 +104,7 @@ export function DraggableTaskCard({
       onClick={() => onTaskClick(task)}
       onMouseDown={handleMouseDown}
       className={`
-        group relative p-3 rounded-xl border cursor-grab active:cursor-grabbing transition-all
+        group relative p-3 sm:p-4 rounded-xl border cursor-grab active:cursor-grabbing transition-all
         ${isBeingDragged 
           ? 'opacity-50 scale-95 shadow-lg border-blue-300 bg-blue-50 dark:bg-blue-900/20' 
           : 'hover:shadow-lg hover:scale-[1.02]'

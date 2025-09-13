@@ -38,3 +38,5 @@ vercel --prod
 echo "🎉 ¡Despliegue completado!"
 echo "🌐 URL: https://octopus-byh0hk7ri-arichicho1-gmailcoms-projects.vercel.app"
 echo "📱 Mi Día: https://octopus-byh0hk7ri-arichicho1-gmailcoms-projects.vercel.app/dashboard/my-day"
+
+

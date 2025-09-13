@@ -14,3 +14,5 @@ export async function GET() {
     firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY ? 'SET' : 'NOT_SET'
   });
 }
+
+

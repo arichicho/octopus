@@ -149,7 +149,7 @@ export function DroppableWeekColumn({
 
   return (
     <Card 
-      className={`
+      className={`min-w-[280px] sm:min-w-0
         ${week.color} border-2 shadow-sm hover:shadow-md transition-all duration-200
         ${isCurrentWeek ? 'border-red-300 shadow-lg' : ''}
         ${isNoDateSection ? 'border-gray-300 shadow-md' : ''}

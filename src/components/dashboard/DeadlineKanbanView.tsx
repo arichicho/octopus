@@ -211,30 +211,31 @@ export function DeadlineKanbanView({
         })()}
         
         {/* Semanas futuras - en columnas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">
           {deadlineWeeks
             .filter(week => week.id !== 'this-week' && week.id !== 'no-date')
             .map((week) => {
               const weekTasks = getTasksByWeek(week);
               
               return (
-              <DroppableWeekColumn
-                key={week.id}
-                week={week}
-                tasks={weekTasks}
-                onTaskClick={onTaskClick}
-                onCompleteTask={onCompleteTask}
-                onTaskDrop={handleTaskDrop}
-                getStatusIcon={getStatusIcon}
-                getStatusColor={getStatusColor}
-                getPriorityColor={getPriorityColor}
-                formatDate={formatDate}
-                isOverdue={isOverdue}
-                getDaysRemaining={getDaysRemaining}
-                showCompanyInfo={showCompanyInfo}
-                getCompanyName={getCompanyName}
-                getCompanyColor={getCompanyColor}
-              />
+                <div key={week.id} className="min-w-[280px] sm:min-w-0">
+                  <DroppableWeekColumn
+                    week={week}
+                    tasks={weekTasks}
+                    onTaskClick={onTaskClick}
+                    onCompleteTask={onCompleteTask}
+                    onTaskDrop={handleTaskDrop}
+                    getStatusIcon={getStatusIcon}
+                    getStatusColor={getStatusColor}
+                    getPriorityColor={getPriorityColor}
+                    formatDate={formatDate}
+                    isOverdue={isOverdue}
+                    getDaysRemaining={getDaysRemaining}
+                    showCompanyInfo={showCompanyInfo}
+                    getCompanyName={getCompanyName}
+                    getCompanyColor={getCompanyColor}
+                  />
+                </div>
               );
             })}
         </div>

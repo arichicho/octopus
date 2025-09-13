@@ -189,7 +189,8 @@ export function TaskListView({
         <CardTitle className="text-lg">Lista de Tareas ({tasks.length})</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="hidden sm:block">
+          <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px] border-collapse border border-black">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -436,6 +437,106 @@ export function TaskListView({
               )}
             </tbody>
           </table>
+          </div>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="block sm:hidden space-y-3">
+          {sortedTasks.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-gray-400" />
+              </div>
+              <p className="text-lg font-medium">No hay tareas</p>
+              <p className="text-sm">¡Excelente trabajo!</p>
+            </div>
+          ) : (
+            sortedTasks.map((task) => {
+              const dueDate = firestoreDateToDate(task.dueDate);
+              const createdDate = firestoreDateToDate(task.createdAt);
+              return (
+                <div
+                  key={task.id}
+                  onClick={() => onTaskClick(task)}
+                  className="p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {getStatusIcon(task.status)}
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
+                        {task.title}
+                      </h4>
+                    </div>
+                    {task.status !== 'completed' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-green-100 hover:text-green-600"
+                        onClick={(e) => onCompleteTask(e, task)}
+                        title="Marcar como completada"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {showCompanyInfo && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <div 
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
+                        style={{ backgroundColor: getCompanyColor?.(task.companyId) || '#3b82f6' }}
+                      />
+                      <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
+                        {getCompanyName?.(task.companyId) || 'Empresa desconocida'}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="mt-2 flex items-center justify-between">
+                    <Badge className={`text-[10px] ${getPriorityColor(task.priority)}`}>
+                      {task.priority === 'urgent' ? 'Urgente' :
+                       task.priority === 'high' ? 'Alta' :
+                       task.priority === 'medium' ? 'Media' : 'Baja'}
+                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        {createdDate ? formatDate(createdDate) : '-'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-1 flex items-center gap-1 text-xs">
+                    <Calendar className={`h-3 w-3 ${isOverdue(dueDate) ? 'text-red-500' : 'text-gray-500'}`} />
+                    <span className={isOverdue(dueDate) ? 'text-red-600 font-medium' : 'text-gray-600'}>
+                      {dueDate ? formatDate(dueDate) : 'Sin fecha'}
+                    </span>
+                  </div>
+
+                  {task.tags && task.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {task.tags.slice(0, 3).map((tag: string) => (
+                        <Badge 
+                          key={tag} 
+                          variant="outline" 
+                          className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                      {task.tags.length > 3 && (
+                        <Badge 
+                          variant="outline" 
+                          className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                        >
+                          +{task.tags.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </CardContent>
     </Card>

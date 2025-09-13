@@ -137,28 +137,29 @@ export function StatusWorkflowView({
         </div>
         
         {/* Columnas de Estado */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">
           {statusConfigs.map((status) => {
             const statusTasks = getTasksByStatus(status.id);
             
             return (
-              <DroppableStatusColumn
-                key={status.id}
-                status={status}
-                tasks={statusTasks}
-                onTaskClick={onTaskClick}
-                onCompleteTask={onCompleteTask}
-                onTaskDrop={handleTaskDrop}
-                getStatusIcon={getStatusIcon}
-                getStatusColor={getStatusColor}
-                getPriorityColor={getPriorityColor}
-                formatDate={formatDate}
-                isOverdue={isOverdue}
-                getDaysRemaining={getDaysRemaining}
-                showCompanyInfo={showCompanyInfo}
-                getCompanyName={getCompanyName}
-                getCompanyColor={getCompanyColor}
-              />
+              <div key={status.id} className="min-w-[280px] sm:min-w-0">
+                <DroppableStatusColumn
+                  status={status}
+                  tasks={statusTasks}
+                  onTaskClick={onTaskClick}
+                  onCompleteTask={onCompleteTask}
+                  onTaskDrop={handleTaskDrop}
+                  getStatusIcon={getStatusIcon}
+                  getStatusColor={getStatusColor}
+                  getPriorityColor={getPriorityColor}
+                  formatDate={formatDate}
+                  isOverdue={isOverdue}
+                  getDaysRemaining={getDaysRemaining}
+                  showCompanyInfo={showCompanyInfo}
+                  getCompanyName={getCompanyName}
+                  getCompanyColor={getCompanyColor}
+                />
+              </div>
             );
           })}
         </div>

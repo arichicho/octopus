@@ -193,3 +193,5 @@ const changeTimezone = (newTimezone: string) => {
 - ✅ **Despliegue exitoso** en producción
 
 El sistema ahora muestra todos los horarios en la zona horaria correcta del usuario, mejorando significativamente la experiencia de uso de "Mi Día".
+
+

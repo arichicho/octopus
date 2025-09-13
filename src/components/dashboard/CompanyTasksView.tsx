@@ -285,37 +285,38 @@ export function CompanyTasksView() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <Button 
               onClick={handleBackToBoard} 
               variant="ghost" 
-              className="flex items-center space-x-2"
+              size="sm"
+              className="flex items-center space-x-2 p-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Volver al Dashboard</span>
+              <span className="hidden sm:inline">Volver al Dashboard</span>
             </Button>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               {showAllCompanies ? (
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-white" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <Building2 className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                 </div>
               ) : (
                 <CompanyIcon
                   logoUrl={company.logoUrl}
                   defaultIcon={company.defaultIcon}
                   name={company.name}
-                  size="lg"
+                  size="md"
                   color={company.color}
                   className="flex-shrink-0"
                 />
               )}
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {showAllCompanies ? 'Todas las Empresas' : company.name}
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                   {pendingTasks.length} tareas pendientes
                 </p>
               </div>
@@ -323,26 +324,26 @@ export function CompanyTasksView() {
           </div>
           <Button 
             onClick={handleOpenCreateModal} 
-            size="lg" 
-            className="flex items-center space-x-2 px-6 py-3"
+            size="sm"
+            className="flex items-center space-x-2 px-4 py-2 w-full sm:w-auto"
           >
-            <Plus className="h-5 w-5" />
-            <span>Nueva Tarea</span>
+            <Plus className="h-4 w-4" />
+            <span className="text-sm">Nueva Tarea</span>
           </Button>
         </div>
       </div>
 
       {/* Company Selector */}
       {companies.length > 0 && (
-        <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Empresas</h3>
-            <span className="text-xs text-gray-500">Filtra por empresa</span>
+            <span className="text-xs text-gray-500 hidden sm:inline">Filtra por empresa</span>
           </div>
-          <div className="flex gap-2 overflow-x-auto py-1">
+          <div className="flex gap-2 overflow-x-auto py-1 scrollbar-hide">
             <button
               onClick={() => setShowAllCompanies(true)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap flex-shrink-0 ${
                 showAllCompanies
                   ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20'
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -358,7 +359,7 @@ export function CompanyTasksView() {
                 <button
                   key={c.id}
                   onClick={() => setShowAllCompanies(false)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap flex-shrink-0 ${
                     !showAllCompanies && company?.id === c.id
                       ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20'
                       : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -379,7 +380,7 @@ export function CompanyTasksView() {
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {isLoading ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center animate-spin">
@@ -426,12 +427,12 @@ export function CompanyTasksView() {
               </div>
               
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm">
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
+                <div className="flex sm:grid sm:grid-cols-6 gap-1 overflow-x-auto scrollbar-hide">
                   {viewConfigs.map((view) => (
                     <button
                       key={view.id}
                       onClick={() => setActiveView(view.id)}
-                      className={`flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2 p-3 rounded-lg transition-all duration-200 group relative ${
+                      className={`flex flex-col items-center justify-center space-y-1 p-2 sm:p-3 rounded-lg transition-all duration-200 group relative flex-shrink-0 min-w-[80px] sm:min-w-0 ${
                         activeView === view.id 
                           ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 shadow-sm border border-blue-200 dark:border-blue-800' 
                           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
@@ -439,13 +440,7 @@ export function CompanyTasksView() {
                       title={view.description}
                     >
                       <view.icon className="h-4 w-4" />
-                      <span className="text-xs font-medium text-center">{view.title}</span>
-                      
-                      {/* Tooltip para pantallas pequeñas */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 sm:hidden">
-                        {view.description}
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                      </div>
+                      <span className="text-xs font-medium text-center leading-tight">{view.title}</span>
                     </button>
                   ))}
                 </div>

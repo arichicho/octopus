@@ -129,28 +129,29 @@ export function PriorityKanbanView({
         </div>
         
         {/* Columnas de Prioridad */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">
           {priorityConfigs.map((priority) => {
             const priorityTasks = getTasksByPriority(priority.id);
             
             return (
-              <DroppablePriorityColumn
-                key={priority.id}
-                priority={priority}
-                tasks={priorityTasks}
-                onTaskClick={onTaskClick}
-                onCompleteTask={onCompleteTask}
-                onTaskDrop={handleTaskDrop}
-                getStatusIcon={getStatusIcon}
-                getStatusColor={getStatusColor}
-                getPriorityColor={getPriorityColor}
-                formatDate={formatDate}
-                isOverdue={isOverdue}
-                getDaysRemaining={getDaysRemaining}
-                showCompanyInfo={showCompanyInfo}
-                getCompanyName={getCompanyName}
-                getCompanyColor={getCompanyColor}
-              />
+              <div key={priority.id} className="min-w-[280px] sm:min-w-0">
+                <DroppablePriorityColumn
+                  priority={priority}
+                  tasks={priorityTasks}
+                  onTaskClick={onTaskClick}
+                  onCompleteTask={onCompleteTask}
+                  onTaskDrop={handleTaskDrop}
+                  getStatusIcon={getStatusIcon}
+                  getStatusColor={getStatusColor}
+                  getPriorityColor={getPriorityColor}
+                  formatDate={formatDate}
+                  isOverdue={isOverdue}
+                  getDaysRemaining={getDaysRemaining}
+                  showCompanyInfo={showCompanyInfo}
+                  getCompanyName={getCompanyName}
+                  getCompanyColor={getCompanyColor}
+                />
+              </div>
             );
           })}
         </div>

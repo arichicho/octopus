@@ -106,7 +106,7 @@ export function DroppableStatusColumn({
 
   return (
     <Card 
-      className={`
+      className={`min-w-[280px] sm:min-w-0
         ${status.color} border-2 shadow-sm hover:shadow-md transition-all duration-200
         ${isDragOver ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-lg scale-[1.02]' : ''}
         ${showDropPreview ? 'ring-2 ring-blue-300 ring-opacity-50' : ''}
