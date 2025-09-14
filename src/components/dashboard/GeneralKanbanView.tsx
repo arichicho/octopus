@@ -248,7 +248,7 @@ export function GeneralKanbanView({
             <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Empresas</h3>
             <span className="text-xs text-gray-500 hidden sm:inline">Filtra por empresa</span>
           </div>
-          <div className="flex gap-2 overflow-x-auto py-1 scrollbar-hide">
+          <div className="flex gap-2 py-1 horizontal-scroll scrollbar-hide">
             <button
               onClick={() => setSelectedCompanyId(null)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap flex-shrink-0 ${
@@ -307,7 +307,7 @@ export function GeneralKanbanView({
 
       {/* View Tabs */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm">
-        <div className="flex sm:grid sm:grid-cols-6 gap-1 overflow-x-auto scrollbar-hide">
+        <div className="flex sm:grid sm:grid-cols-6 gap-1 horizontal-scroll scrollbar-hide">
           {viewConfigs.map((view) => (
             <button
               key={view.id}

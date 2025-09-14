@@ -122,9 +122,9 @@ export default function GoogleStyleDashboardPage() {
   }, [activeTasks, companiesForView, setSelectedCompany]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 content-width-fix">
       <GoogleHeader onQuickAdd={() => setQuickAddOpen(true)} />
-      <div className="mx-auto max-w-7xl px-3 sm:px-4">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 safe-area-padding">
         <main className="py-4 sm:py-6">
             {/* Summary strip */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
