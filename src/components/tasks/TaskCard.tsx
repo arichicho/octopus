@@ -52,6 +52,8 @@ export function TaskCard({ task, onEdit, onComplete }: TaskCardProps) {
         return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default:
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     }
@@ -67,8 +69,10 @@ export function TaskCard({ task, onEdit, onComplete }: TaskCardProps) {
         return 'Esperando Respuesta';
       case 'cancelled':
         return 'Cancelada';
-      default:
+      case 'pending':
         return 'Pendiente';
+      default:
+        return 'Pendiente'; // Fallback para cualquier caso inesperado
     }
   };
 

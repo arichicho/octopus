@@ -99,6 +99,8 @@ export default function HistoryPage() {
         return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
       default:
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
     }
@@ -114,8 +116,10 @@ export default function HistoryPage() {
         return 'Esperando Respuesta';
       case 'cancelled':
         return 'Cancelada';
-      default:
+      case 'pending':
         return 'Pendiente';
+      default:
+        return 'Pendiente'; // Fallback para cualquier caso inesperado
     }
   };
 
