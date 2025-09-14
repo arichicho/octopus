@@ -6,7 +6,7 @@ export interface TaskFormData {
   description?: string;
   companyId: string;
   priority: 'urgent' | 'high' | 'medium' | 'low';
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
   dueDate?: Date;
   assignedTo: string[];
   tags: string[];
@@ -37,7 +37,7 @@ export const taskFormSchema = z.object({
     errorMap: () => ({ message: 'Debe seleccionar una prioridad válida' }),
   }),
   
-  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled'], {
+  status: z.enum(['pending', 'in_progress', 'review', 'completed', 'cancelled'], {
     errorMap: () => ({ message: 'Debe seleccionar un estado válido' }),
   }),
   

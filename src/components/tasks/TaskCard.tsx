@@ -13,7 +13,7 @@ interface TaskCardProps {
     title: string;
     description: string;
     priority: 'urgent' | 'high' | 'medium' | 'low';
-    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+    status: 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
     assignee?: string;
     dueDate?: Date;
     tags: string[];
@@ -48,6 +48,8 @@ export function TaskCard({ task, onEdit, onComplete }: TaskCardProps) {
         return 'bg-green-100 text-green-800 border-green-200';
       case 'in_progress':
         return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'review':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
@@ -61,6 +63,8 @@ export function TaskCard({ task, onEdit, onComplete }: TaskCardProps) {
         return 'Completada';
       case 'in_progress':
         return 'En Progreso';
+      case 'review':
+        return 'Esperando Respuesta';
       case 'cancelled':
         return 'Cancelada';
       default:

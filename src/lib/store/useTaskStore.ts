@@ -23,7 +23,7 @@ interface TaskState {
   setLoading: (loading: boolean) => void;
   applyFilters: () => void;
   changeTaskPriority: (taskId: string, newPriority: "urgent" | "high" | "medium" | "low") => Promise<{ success: boolean; taskTitle: string; newPriority: string; oldPriority: string }>;
-  changeTaskStatus: (taskId: string, newStatus: "pending" | "in_progress" | "completed" | "cancelled") => Promise<{ success: boolean; taskTitle: string; newStatus: string; oldStatus: string }>;
+  changeTaskStatus: (taskId: string, newStatus: "pending" | "in_progress" | "review" | "completed" | "cancelled") => Promise<{ success: boolean; taskTitle: string; newStatus: string; oldStatus: string }>;
   changeTaskAssignment: (taskId: string, newAssignedTo: string[] | null) => Promise<{ success: boolean; taskTitle: string; newAssignedTo: string[] | null; oldAssignedTo: string[] }>;
   restoreTask: (taskId: string) => Promise<{ success: boolean; taskTitle: string; message: string }>;
 }
@@ -248,7 +248,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   // Método para cambiar estado con drag & drop
-  changeTaskStatus: async (taskId: string, newStatus: "pending" | "in_progress" | "completed" | "cancelled") => {
+  changeTaskStatus: async (taskId: string, newStatus: "pending" | "in_progress" | "review" | "completed" | "cancelled") => {
     console.log('🔄 TaskStore: Changing task status', taskId, 'to:', newStatus);
     const task = get().tasks.find(t => t.id === taskId);
     if (!task) {

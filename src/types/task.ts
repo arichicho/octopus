@@ -18,7 +18,7 @@ export interface Task {
   completedAt?: Date;
 }
 
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type TaskStatus = 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
 export type TaskPriority = 'urgent' | 'high' | 'medium' | 'low';
 
 export interface TaskFormData {

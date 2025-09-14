@@ -81,23 +81,23 @@ export interface Invitation {
 }
 
 export interface Task {
-  id?: string;
+  id: string;
   title: string;
-  description?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  description: string;
+  status: 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
   priority: 'urgent' | 'high' | 'medium' | 'low';
-  dueDate?: Date | Timestamp;
+  dueDate: Date;
   assignedTo: string[];
   companyId: string;
   createdBy: string;
-  progress?: number;
-  tags?: string[];
-  linkedDocs?: string[];
-  linkedEvents?: string[];
+  progress: number;
+  tags: string[];
+  linkedDocs: string[];
+  linkedEvents: string[];
   parentTaskId?: string;
-  createdAt: Date | Timestamp;
-  updatedAt: Date | Timestamp;
-  completedAt?: Date | Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt?: Date;
 }
 
 export interface Person {
