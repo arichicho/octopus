@@ -128,6 +128,7 @@ export function TaskListView({
   };
 
   const getStatusBadge = (status: string) => {
+    console.log('🔍 TaskListView getStatusBadge called with status:', status, 'type:', typeof status);
     const statusConfig = {
       pending: { 
         label: 'Pendiente', 
@@ -138,6 +139,11 @@ export function TaskListView({
         label: 'En Progreso', 
         className: 'bg-blue-100 text-blue-800 border-blue-200', 
         icon: <Zap className="h-3 w-3 mr-1" />
+      },
+      review: { 
+        label: 'Esperando Respuesta', 
+        className: 'bg-purple-100 text-purple-800 border-purple-200', 
+        icon: <Clock className="h-3 w-3 mr-1" />
       },
       completed: { 
         label: 'Completada', 
