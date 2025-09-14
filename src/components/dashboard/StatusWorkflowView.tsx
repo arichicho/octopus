@@ -46,8 +46,8 @@ const statusConfigs = [
   },
   {
     id: 'review' as TaskStatus,
-    title: 'Revisión',
-    description: 'Tareas en revisión',
+    title: 'Esperando Respuesta',
+    description: 'Tareas esperando respuesta',
     color: 'bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-800',
     headerColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
     badgeColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
