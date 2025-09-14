@@ -25,6 +25,7 @@ interface TaskState {
   changeTaskPriority: (taskId: string, newPriority: "urgent" | "high" | "medium" | "low") => Promise<{ success: boolean; taskTitle: string; newPriority: string; oldPriority: string }>;
   changeTaskStatus: (taskId: string, newStatus: "pending" | "in_progress" | "completed" | "cancelled") => Promise<{ success: boolean; taskTitle: string; newStatus: string; oldStatus: string }>;
   changeTaskAssignment: (taskId: string, newAssignedTo: string[] | null) => Promise<{ success: boolean; taskTitle: string; newAssignedTo: string[] | null; oldAssignedTo: string[] }>;
+  restoreTask: (taskId: string) => Promise<{ success: boolean; taskTitle: string; message: string }>;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -368,5 +369,64 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
 
     set({ filteredTasks: filtered });
+  },
+
+  restoreTask: async (taskId: string) => {
+    try {
+      const { tasks } = get();
+      const task = tasks.find(t => t.id === taskId);
+      
+      if (!task) {
+        return { 
+          success: false, 
+          taskTitle: 'Tarea no encontrada', 
+          message: 'No se pudo encontrar la tarea para restaurar' 
+        };
+      }
+
+      if (task.status !== 'completed' && task.status !== 'cancelled') {
+        return { 
+          success: false, 
+          taskTitle: task.title, 
+          message: 'Solo se pueden restaurar tareas completadas o canceladas' 
+        };
+      }
+
+      // Update task status to pending and remove completedAt
+      const updatedTask = {
+        ...task,
+        status: 'pending' as const,
+        completedAt: undefined,
+        updatedAt: new Date()
+      };
+
+      // Update in Firestore
+      await updateTaskFirestore(taskId, {
+        status: 'pending',
+        completedAt: null,
+        updatedAt: new Date()
+      });
+
+      // Update local state
+      set((state) => ({
+        tasks: state.tasks.map(t => t.id === taskId ? updatedTask : t),
+        filteredTasks: state.filteredTasks.map(t => t.id === taskId ? updatedTask : t)
+      }));
+
+      console.log('✅ Task restored successfully:', task.title);
+      
+      return { 
+        success: true, 
+        taskTitle: task.title, 
+        message: `Tarea "${task.title}" restaurada exitosamente como pendiente` 
+      };
+    } catch (error) {
+      console.error('❌ Error restoring task:', error);
+      return { 
+        success: false, 
+        taskTitle: 'Error', 
+        message: 'Error al restaurar la tarea. Inténtalo de nuevo.' 
+      };
+    }
   },
 }));

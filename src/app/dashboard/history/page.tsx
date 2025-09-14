@@ -7,7 +7,7 @@ import { Task } from '@/types/task';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckSquare, Calendar, User, Building2, Tag, Clock, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { CheckSquare, Calendar, User, Building2, Tag, Clock, AlertTriangle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { firestoreDateToDate } from '@/lib/utils/dateUtils';
@@ -15,8 +15,9 @@ import Link from 'next/link';
 
 export default function HistoryPage() {
   const { user, loading: authLoading } = useAuth();
-  const { tasks, loadTasks } = useTaskStore();
+  const { tasks, loadTasks, restoreTask } = useTaskStore();
   const [loading, setLoading] = useState(true);
+  const [restoring, setRestoring] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -36,6 +37,31 @@ export default function HistoryPage() {
 
     loadData();
   }, [user, loadTasks]);
+
+  const handleRestoreTask = async (taskId: string) => {
+    try {
+      setRestoring(taskId);
+      const result = await restoreTask(taskId);
+      
+      if (result.success) {
+        // Show success message (you could add a toast notification here)
+        console.log('✅ Task restored:', result.message);
+        // Optionally reload tasks to ensure UI is updated
+        if (user) {
+          await loadTasks(user.uid);
+        }
+      } else {
+        // Show error message
+        console.error('❌ Failed to restore task:', result.message);
+        alert(result.message); // Simple alert for now, could be replaced with toast
+      }
+    } catch (error) {
+      console.error('❌ Error restoring task:', error);
+      alert('Error al restaurar la tarea. Inténtalo de nuevo.');
+    } finally {
+      setRestoring(null);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -261,6 +287,29 @@ export default function HistoryPage() {
                                   </div>
                                 )}
                               </div>
+                            </div>
+                            
+                            {/* Restore Button */}
+                            <div className="ml-4 flex-shrink-0">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRestoreTask(task.id)}
+                                disabled={restoring === task.id}
+                                className="flex items-center gap-2"
+                              >
+                                {restoring === task.id ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                    Restaurando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <RotateCcw className="h-4 w-4" />
+                                    Restaurar
+                                  </>
+                                )}
+                              </Button>
                             </div>
                           </div>
                         </CardContent>
