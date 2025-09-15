@@ -5,26 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  Award,
+  AlertTriangle, 
+  TrendingUp, 
+  TrendingDown, 
+  Star,
   AlertCircle,
-  Clock,
   Filter,
-  Bell
+  RefreshCw
 } from 'lucide-react';
-import { Territory, MusicAlert } from '@/types/music';
+import { MusicAlert } from '@/types/music';
 
 interface MusicTrendsAlertsProps {
-  territory: Territory;
+  territory: 'argentina' | 'spain' | 'mexico' | 'global';
   period: 'daily' | 'weekly';
 }
 
 export function MusicTrendsAlerts({ territory, period }: MusicTrendsAlertsProps) {
   const [alerts, setAlerts] = useState<MusicAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [filter, setFilter] = useState<'all' | 'jump' | 'drop' | 'debut' | 'risk'>('all');
 
   useEffect(() => {
     fetchAlertsData();
@@ -153,216 +152,107 @@ export function MusicTrendsAlerts({ territory, period }: MusicTrendsAlertsProps)
         {
           id: '1',
           type: 'jump',
+          trackId: 'track-1',
+          trackTitle: 'Viral Hit',
+          artist: 'TikTok Sensation',
+          territory,
+          period,
+          date: new Date(),
+          message: 'Salto significativo: +33 posiciones (45 → 12)',
           severity: 'high',
-          track: {
-            id: 'track-1',
-            title: 'Viral Hit',
-            artist: 'TikTok Sensation',
-            position: 12,
-            previousPosition: 45,
-            streams: 2500000,
-            weeksOnChart: 3,
-            isNewEntry: false,
-            isReEntry: false,
-            isNewPeak: true,
-            territory,
-            period,
-            date: new Date()
-          },
-          message: 'Salto significativo: +33 posiciones',
-          value: 33,
-          threshold: 10,
-          createdAt: new Date()
+          read: false
         },
         {
           id: '2',
           type: 'debut',
+          trackId: 'track-2',
+          trackTitle: 'New Artist Debut',
+          artist: 'Emerging Artist',
+          territory,
+          period,
+          date: new Date(),
+          message: 'Debut en posición 8',
           severity: 'medium',
-          track: {
-            id: 'track-2',
-            title: 'New Artist Debut',
-            artist: 'Emerging Artist',
-            position: 8,
-            streams: 1800000,
-            weeksOnChart: 1,
-            isNewEntry: true,
-            isReEntry: false,
-            isNewPeak: true,
-            territory,
-            period,
-            date: new Date()
-          },
-          message: 'Debut en Top 10',
-          value: 8,
-          threshold: 10,
-          createdAt: new Date()
+          read: false
         },
         {
           id: '3',
           type: 'drop',
+          trackId: 'track-3',
+          trackTitle: 'Fading Track',
+          artist: 'Veteran Artist',
+          territory,
+          period,
+          date: new Date(),
+          message: 'Caída significativa: -44 posiciones (23 → 67)',
           severity: 'high',
-          track: {
-            id: 'track-3',
-            title: 'Fading Track',
-            artist: 'Veteran Artist',
-            position: 67,
-            previousPosition: 23,
-            streams: 800000,
-            weeksOnChart: 12,
-            isNewEntry: false,
-            isReEntry: false,
-            isNewPeak: false,
-            territory,
-            period,
-            date: new Date()
-          },
-          message: 'Caída significativa: -44 posiciones',
-          value: -44,
-          threshold: -20,
-          createdAt: new Date()
-        },
-        {
-          id: '4',
-          type: 'peak',
-          severity: 'medium',
-          track: {
-            id: 'track-4',
-            title: 'Peak Performance',
-            artist: 'Chart Topper',
-            position: 5,
-            previousPosition: 7,
-            streams: 3200000,
-            weeksOnChart: 8,
-            isNewEntry: false,
-            isReEntry: false,
-            isNewPeak: true,
-            territory,
-            period,
-            date: new Date()
-          },
-          message: 'Nuevo pico alcanzado',
-          value: 5,
-          threshold: 0,
-          createdAt: new Date()
-        },
-        {
-          id: '5',
-          type: 'risk',
-          severity: 'low',
-          track: {
-            id: 'track-5',
-            title: 'At Risk Track',
-            artist: 'Declining Artist',
-            position: 185,
-            previousPosition: 150,
-            streams: 200000,
-            weeksOnChart: 15,
-            isNewEntry: false,
-            isReEntry: false,
-            isNewPeak: false,
-            territory,
-            period,
-            date: new Date()
-          },
-          message: 'Riesgo de salir del Top 200',
-          value: 185,
-          threshold: 180,
-          createdAt: new Date()
+          read: false
         }
       ];
       
       setAlerts(mockAlerts);
-    } catch (error) {
-      console.error('Error fetching alerts data:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getAlertIcon = (type: MusicAlert['type']) => {
+  const getAlertIcon = (type: string) => {
     switch (type) {
       case 'jump':
-        return <TrendingUp className="w-4 h-4" />;
+        return <TrendingUp className="w-4 h-4 text-green-600" />;
       case 'drop':
-        return <TrendingDown className="w-4 h-4" />;
+        return <TrendingDown className="w-4 h-4 text-red-600" />;
       case 'debut':
-        return <Award className="w-4 h-4" />;
-      case 'peak':
-        return <Award className="w-4 h-4" />;
+        return <Star className="w-4 h-4 text-yellow-600" />;
       case 'risk':
-        return <AlertCircle className="w-4 h-4" />;
+        return <AlertCircle className="w-4 h-4 text-orange-600" />;
       default:
-        return <AlertTriangle className="w-4 h-4" />;
+        return <AlertTriangle className="w-4 h-4 text-gray-600" />;
     }
   };
 
-  const getAlertColor = (severity: MusicAlert['severity']) => {
-    switch (severity) {
-      case 'high':
-        return 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800';
-      case 'medium':
-        return 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800';
-      case 'low':
-        return 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800';
-      default:
-        return 'bg-gray-50 border-gray-200 dark:bg-gray-900/20 dark:border-gray-800';
-    }
-  };
-
-  const getSeverityBadge = (severity: MusicAlert['severity']) => {
+  const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'high':
         return <Badge variant="destructive">Alta</Badge>;
       case 'medium':
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Media</Badge>;
       case 'low':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Baja</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Baja</Badge>;
       default:
         return <Badge variant="outline">Desconocida</Badge>;
     }
   };
 
-  const getTypeBadge = (type: MusicAlert['type']) => {
+  const getTypeLabel = (type: string) => {
     switch (type) {
       case 'jump':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Salto</Badge>;
+        return 'Salto';
       case 'drop':
-        return <Badge variant="destructive">Caída</Badge>;
+        return 'Caída';
       case 'debut':
-        return <Badge variant="default" className="bg-blue-100 text-blue-800">Debut</Badge>;
-      case 'peak':
-        return <Badge variant="default" className="bg-purple-100 text-purple-800">Pico</Badge>;
+        return 'Debut';
       case 'risk':
-        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Riesgo</Badge>;
+        return 'Riesgo';
       default:
-        return <Badge variant="outline">Desconocido</Badge>;
+        return 'Alerta';
     }
   };
 
-  const filteredAlerts = alerts.filter(alert => 
-    filter === 'all' || alert.severity === filter
-  );
-
-  const alertStats = {
-    total: alerts.length,
-    high: alerts.filter(a => a.severity === 'high').length,
-    medium: alerts.filter(a => a.severity === 'medium').length,
-    low: alerts.filter(a => a.severity === 'low').length
-  };
+  const filteredAlerts = filter === 'all' 
+    ? alerts 
+    : alerts.filter(alert => alert.type === filter);
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {[...Array(5)].map((_, i) => (
+        {[...Array(3)].map((_, i) => (
           <Card key={i} className="animate-pulse">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-8 h-8 bg-gray-200 rounded"></div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </div>
-                <div className="w-16 h-6 bg-gray-200 rounded"></div>
+            <CardContent className="p-6">
+              <div className="space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/4"></div>
               </div>
             </CardContent>
           </Card>
@@ -373,166 +263,146 @@ export function MusicTrendsAlerts({ territory, period }: MusicTrendsAlertsProps)
 
   return (
     <div className="space-y-6">
-      {/* Alert Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Total</p>
-                <p className="text-2xl font-bold">{alertStats.total}</p>
-              </div>
-              <Bell className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Alta</p>
-                <p className="text-2xl font-bold text-red-600">{alertStats.high}</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Media</p>
-                <p className="text-2xl font-bold text-yellow-600">{alertStats.medium}</p>
-              </div>
-              <AlertCircle className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Baja</p>
-                <p className="text-2xl font-bold text-blue-600">{alertStats.low}</p>
-              </div>
-              <AlertCircle className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
+      {/* Header with filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filtros
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Alertas del Top 200
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchAlertsData}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
-            <Button
-              variant={filter === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('all')}
-            >
-              Todas ({alertStats.total})
-            </Button>
-            <Button
-              variant={filter === 'high' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('high')}
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              Alta ({alertStats.high})
-            </Button>
-            <Button
-              variant={filter === 'medium' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('medium')}
-              className="text-yellow-600 border-yellow-200 hover:bg-yellow-50"
-            >
-              Media ({alertStats.medium})
-            </Button>
-            <Button
-              variant={filter === 'low' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter('low')}
-              className="text-blue-600 border-blue-200 hover:bg-blue-50"
-            >
-              Baja ({alertStats.low})
-            </Button>
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            <span className="text-sm font-medium">Filtrar por tipo:</span>
+            <div className="flex gap-1">
+              {(['all', 'jump', 'drop', 'debut', 'risk'] as const).map((filterType) => (
+                <Button
+                  key={filterType}
+                  variant={filter === filterType ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter(filterType)}
+                >
+                  {filterType === 'all' ? 'Todas' : getTypeLabel(filterType)}
+                </Button>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Alerts List */}
-      <div className="space-y-4">
-        {filteredAlerts.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No hay alertas para mostrar</p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredAlerts.map((alert) => (
-            <Card key={alert.id} className={`border-l-4 ${getAlertColor(alert.severity)}`}>
-              <CardContent className="p-4">
+      {/* Alerts list */}
+      {filteredAlerts.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">No hay alertas para mostrar</p>
+            <p className="text-sm text-gray-400 mt-2">
+              {filter === 'all' 
+                ? 'No se detectaron movimientos significativos en el Top 200'
+                : `No hay alertas de tipo "${getTypeLabel(filter)}" en el Top 200`
+              }
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredAlerts.map((alert) => (
+            <Card key={alert.id} className={`${alert.read ? 'opacity-60' : ''}`}>
+              <CardContent className="p-6">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
+                  <div className="flex items-start gap-3 flex-1">
                     <div className="flex-shrink-0 mt-1">
                       {getAlertIcon(alert.type)}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        {getTypeBadge(alert.type)}
+                        <h3 className="font-semibold text-lg">
+                          {alert.trackTitle}
+                        </h3>
+                        <Badge variant="outline" className="text-xs">
+                          {getTypeLabel(alert.type)}
+                        </Badge>
                         {getSeverityBadge(alert.severity)}
                       </div>
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100">
-                        {alert.track.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        {alert.track.artist} • Posición #{alert.track.position}
+                      <p className="text-gray-600 mb-2">
+                        {alert.artist}
                       </p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <p className="text-sm text-gray-700 mb-3">
                         {alert.message}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {alert.createdAt.toLocaleString('es-AR')}
-                        </span>
-                        {alert.track.previousPosition && (
-                          <span>
-                            Anterior: #{alert.track.previousPosition}
-                          </span>
-                        )}
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span>
-                          Streams: {(alert.track.streams / 1000000).toFixed(1)}M
+                          {alert.date.toLocaleDateString('es-AR')} {alert.date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
+                        <span>•</span>
+                        <span>{alert.territory.toUpperCase()} {alert.period.toUpperCase()}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex-shrink-0 ml-4">
-                    <div className="text-right">
-                      <div className="text-lg font-bold">
-                        {alert.value > 0 ? '+' : ''}{alert.value}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        vs umbral: {alert.threshold}
-                      </div>
-                    </div>
+                  <div className="flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setAlerts(prev => prev.map(a => 
+                          a.id === alert.id ? { ...a, read: !a.read } : a
+                        ));
+                      }}
+                    >
+                      {alert.read ? 'Marcar como no leída' : 'Marcar como leída'}
+                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {/* Summary */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <p className="text-2xl font-bold text-green-600">
+                {alerts.filter(a => a.type === 'jump').length}
+              </p>
+              <p className="text-sm text-gray-600">Saltos</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-red-600">
+                {alerts.filter(a => a.type === 'drop').length}
+              </p>
+              <p className="text-sm text-gray-600">Caídas</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-yellow-600">
+                {alerts.filter(a => a.type === 'debut').length}
+              </p>
+              <p className="text-sm text-gray-600">Debuts</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-orange-600">
+                {alerts.filter(a => a.type === 'risk').length}
+              </p>
+              <p className="text-sm text-gray-600">Riesgos</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
