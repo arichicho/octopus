@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from '@/lib/server/auth';
+import { verifyAuth } from '@/lib/server/auth';
 import { Territory } from '@/types/music';
 
 // Auto-update system for music trends
@@ -115,8 +115,8 @@ async function storeMusicData(territory: Territory, period: 'daily' | 'weekly', 
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession();
-    if (!session) {
+    const auth = await verifyAuth(request);
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -166,8 +166,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession();
-    if (!session) {
+    const auth = await verifyAuth(request);
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

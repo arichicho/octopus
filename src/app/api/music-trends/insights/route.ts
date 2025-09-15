@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from '@/lib/server/auth';
+import { verifyAuth } from '@/lib/server/auth';
 import { Territory } from '@/types/music';
 import { callClaude, hasApiKey } from '@/lib/server/ai/client';
 
@@ -68,8 +68,8 @@ Responde ÚNICAMENTE en formato JSON estructurado con todos estos insights. No i
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession();
-    if (!session) {
+    const auth = await verifyAuth(request);
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -119,8 +119,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession();
-    if (!session) {
+    const auth = await verifyAuth(request);
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from '@/lib/server/auth';
+import { verifyAuth } from '@/lib/server/auth';
 
 // Chartmetric API integration
 async function fetchChartmetricData(trackId: string, artistId: string) {
@@ -103,8 +103,8 @@ async function searchChartmetricTrack(title: string, artist: string) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession();
-    if (!session) {
+    const auth = await verifyAuth(request);
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -140,8 +140,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession();
-    if (!session) {
+    const auth = await verifyAuth(request);
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

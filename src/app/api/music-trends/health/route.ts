@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from '@/lib/server/auth';
+import { verifyAuth } from '@/lib/server/auth';
 import { hasApiKey, healthPing } from '@/lib/server/ai/client';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession();
-    if (!session) {
+    const auth = await verifyAuth(request);
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
