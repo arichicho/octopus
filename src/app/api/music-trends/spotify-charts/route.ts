@@ -70,9 +70,10 @@ async function fetchSpotifyCharts(territory: Territory, period: 'daily' | 'weekl
   }
 }
 
-// Generate territory-specific mock data based on real SpotifyCharts data
+// Generate territory-specific mock data based on real SpotifyCharts data (Top 200)
 function generateMockChartData(territory: Territory, period: 'daily' | 'weekly') {
-  const territoryData = {
+  // Base tracks for each territory (top 5 real data)
+  const baseTracks = {
     argentina: {
       weekly: [
         { title: "Tu jardín con enanitos", artist: "Roze Oficial, Max Carra, Valen, RAMKY EN LOS CONTROLES", streams: 2700817 },
@@ -139,11 +140,43 @@ function generateMockChartData(territory: Territory, period: 'daily' | 'weekly')
     }
   };
 
-  const mockTracks = territoryData[territory]?.[period] || territoryData.global[period];
+  // Get base tracks for the territory/period
+  const baseTracksForPeriod = baseTracks[territory]?.[period] || baseTracks.global[period];
+  
+  // Generate 200 tracks by expanding the base tracks
+  const allTracks = [];
+  
+  // Add the real top 5 tracks
+  allTracks.push(...baseTracksForPeriod);
+  
+  // Generate additional tracks to reach 200
+  const additionalTracks = 195; // 200 - 5 base tracks
+  const genres = ['Pop', 'Reggaeton', 'Hip Hop', 'Rock', 'Electronic', 'R&B', 'Country', 'Jazz', 'Classical', 'Folk'];
+  const artists = [
+    'Artist A', 'Artist B', 'Artist C', 'Artist D', 'Artist E', 'Artist F', 'Artist G', 'Artist H', 'Artist I', 'Artist J',
+    'Artist K', 'Artist L', 'Artist M', 'Artist N', 'Artist O', 'Artist P', 'Artist Q', 'Artist R', 'Artist S', 'Artist T'
+  ];
+  
+  for (let i = 0; i < additionalTracks; i++) {
+    const position = i + 6; // Start from position 6
+    const genre = genres[Math.floor(Math.random() * genres.length)];
+    const artist = artists[Math.floor(Math.random() * artists.length)];
+    
+    // Calculate streams based on position (exponential decay)
+    const baseStreams = baseTracksForPeriod[0].streams;
+    const decayFactor = Math.pow(0.95, position - 1);
+    const streams = Math.floor(baseStreams * decayFactor * (0.3 + Math.random() * 0.4));
+    
+    allTracks.push({
+      title: `${genre} Track ${position}`,
+      artist: `${artist} feat. ${artists[Math.floor(Math.random() * artists.length)]}`,
+      streams: Math.max(streams, 1000) // Minimum 1000 streams
+    });
+  }
 
   return {
     chartEntryViewResponses: [{
-      entries: mockTracks.map((track, index) => ({
+      entries: allTracks.map((track, index) => ({
         chartEntryData: {
           currentRank: index + 1,
           previousRank: index + 1 + Math.floor(Math.random() * 6 - 3), // Random previous position
@@ -199,77 +232,10 @@ function parseSpotifyChartsAPI(apiData: any, territory: Territory, period: 'dail
         // Get peak position - API returns 0, so we'll use current position as peak for now
         const peakPosition = chartData.peakRank || position;
         
-        // Get streams from the mock data - we need to find the original track data
-        const territoryData = {
-          argentina: {
-            weekly: [
-              { title: "Tu jardín con enanitos", artist: "Roze Oficial, Max Carra, Valen, RAMKY EN LOS CONTROLES", streams: 2700817 },
-              { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 2261920 },
-              { title: "La Plena - W Sound 05", artist: "W Sound, Beéle, Ovy On The Drums", streams: 2007262 },
-              { title: "Tu Misterioso Alguien", artist: "Miranda!", streams: 1962077 },
-              { title: "TODO KE VER", artist: "Jere Klein, Katteyes, Mateo on the Beatz", streams: 1931585 }
-            ],
-            daily: [
-              { title: "Tu jardín con enanitos", artist: "Roze Oficial, Max Carra, Valen, RAMKY EN LOS CONTROLES", streams: 426889 },
-              { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 320372 },
-              { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 292961 },
-              { title: "Tu Misterioso Alguien", artist: "Miranda!", streams: 277783 },
-              { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 250000 }
-            ]
-          },
-          mexico: {
-            weekly: [
-              { title: "POR SUS BESOS", artist: "Tito Double P", streams: 9848684 },
-              { title: "Perlas Negras", artist: "Natanael Cano, Gabito Ballesteros", streams: 9581974 },
-              { title: "TU SANCHO", artist: "Fuerza Regida", streams: 9200132 },
-              { title: "Chula Vente", artist: "Luis R Conriquez, Fuerza Regida, Neton Vega", streams: 8959187 },
-              { title: "Marlboro Rojo", artist: "Fuerza Regida", streams: 8805435 }
-            ],
-            daily: [
-              { title: "Perlas Negras", artist: "Natanael Cano, Gabito Ballesteros", streams: 1352055 },
-              { title: "Marlboro Rojo", artist: "Fuerza Regida", streams: 1223780 },
-              { title: "TU SANCHO", artist: "Fuerza Regida", streams: 1211963 },
-              { title: "POR SUS BESOS", artist: "Tito Double P", streams: 1183151 },
-              { title: "Chula Vente", artist: "Luis R Conriquez, Fuerza Regida, Neton Vega", streams: 1133030 }
-            ]
-          },
-          spain: {
-            weekly: [
-              { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 3640901 },
-              { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 3409734 },
-              { title: "YO Y TÚ", artist: "Ovy On The Drums, Quevedo, Beéle", streams: 3031046 },
-              { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 2911529 },
-              { title: "La Plena - W Sound 05", artist: "W Sound, Beéle, Ovy On The Drums", streams: 2777044 }
-            ],
-            daily: [
-              { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 480183 },
-              { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 417677 },
-              { title: "YO Y TÚ", artist: "Ovy On The Drums, Quevedo, Beéle", streams: 360214 },
-              { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 357483 },
-              { title: "La Plena - W Sound 05", artist: "W Sound, Beéle, Ovy On The Drums", streams: 322289 }
-            ]
-          },
-          global: {
-            weekly: [
-              { title: "Golden", artist: "HUNTR/X, EJAE, AUDREY NUNA, REI AMI, KPop Demon Hunters Cast", streams: 54092207 },
-              { title: "back to friends", artist: "sombr", streams: 39955958 },
-              { title: "Ordinary", artist: "Alex Warren", streams: 33078736 },
-              { title: "Tears", artist: "Sabrina Carpenter", streams: 32356191 },
-              { title: "Soda Pop", artist: "Saja Boys, Andrew Choi, Neckwav, Danny Chung, KEVIN WOO, samUIL Lee, KPop Demon Hunters Cast", streams: 28675200 }
-            ],
-            daily: [
-              { title: "Golden", artist: "HUNTR/X, EJAE, AUDREY NUNA, REI AMI, KPop Demon Hunters Cast", streams: 7605752 },
-              { title: "back to friends", artist: "sombr", streams: 5664502 },
-              { title: "Ordinary", artist: "Alex Warren", streams: 4246596 },
-              { title: "Soda Pop", artist: "Saja Boys, Andrew Choi, Neckwav, Danny Chung, KEVIN WOO, samUIL Lee, KPop Demon Hunters Cast", streams: 4104916 },
-              { title: "Your Idol", artist: "Saja Boys, Andrew Choi, Neckwav, Danny Chung, KEVIN WOO, samUIL Lee, KPop Demon Hunters Cast", streams: 3749713 }
-            ]
-          }
-        };
-        
-        const territoryTracks = territoryData[territory]?.[period] || territoryData.global[period];
-        const originalTrack = territoryTracks[index];
-        const streams = originalTrack ? originalTrack.streams : Math.floor(Math.random() * 1000000) + 100000;
+        // Calculate streams based on position (exponential decay for realistic distribution)
+        const baseStreams = period === 'weekly' ? 2000000 : 300000;
+        const decayFactor = Math.pow(0.95, position - 1);
+        const streams = Math.floor(baseStreams * decayFactor * (0.5 + Math.random() * 0.5));
         
         tracks.push({
           id: `${territory}-${period}-${position}-${Date.now()}`,
