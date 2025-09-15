@@ -6,49 +6,24 @@ import { getRealSpotifyChartsData } from '@/lib/services/spotify-charts-scraper'
 // SpotifyCharts API function
 export async function fetchSpotifyCharts(territory: Territory, period: 'daily' | 'weekly') {
   try {
-    // Try multiple approaches to get the data
-    const approaches = [
-      // Approach 1: Direct API call (currently returns global data)
-      async () => {
-        const url = `https://charts-spotify-com-service.spotify.com/public/v0/charts`;
-        return await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://charts.spotify.com/',
-            'Origin': 'https://charts.spotify.com',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Cache-Control': 'no-cache'
-          }
-        });
-      },
-      // Approach 2: Try with different headers
-      async () => {
-        const url = `https://charts-spotify-com-service.spotify.com/public/v0/charts`;
-        return await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept': '*/*',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://charts.spotify.com/',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-US,en;q=0.9'
-          }
-        });
-      },
-      // Approach 3: Use territory-specific data (since API doesn't support country parameters)
-      async () => {
-        console.log(`Using territory-specific data for ${territory} ${period}`);
-        return {
-          ok: true,
-          json: async () => generateMockChartData(territory, period)
-        };
-      }
-    ];
-
-    // Since the API doesn't support country-specific data, we'll use territory-specific data directly
-    console.log(`Using territory-specific data for ${territory} ${period}`);
+    console.log(`🎵 Fetching real Spotify data for ${territory} ${period}`);
+    
+    // Use the real Spotify API service
+    const realData = await getRealSpotifyChartsData(territory, period);
+    
+    return {
+      success: true,
+      data: realData.tracks,
+      territory: realData.territory,
+      period: realData.period,
+      source: 'spotify-api',
+      lastUpdated: realData.date
+    };
+  } catch (error) {
+    console.error('Error fetching real Spotify data:', error);
+    
+    // Fallback to mock data if real API fails
+    console.log(`⚠️ Falling back to mock data for ${territory} ${period}`);
     const data = generateMockChartData(territory, period);
     const tracks = parseSpotifyChartsAPI(data, territory, period);
     
@@ -58,15 +33,7 @@ export async function fetchSpotifyCharts(territory: Territory, period: 'daily' |
       lastUpdated: new Date(),
       territory,
       period,
-      source: 'territory-specific'
-    };
-  } catch (error) {
-    console.error('Error fetching SpotifyCharts:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      territory,
-      period
+      source: 'mock-fallback'
     };
   }
 }
