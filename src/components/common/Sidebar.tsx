@@ -31,7 +31,8 @@ import {
   Database,
   X,
   LogOut,
-  History
+  History,
+  Music
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/lib/context/SidebarContext';
@@ -132,6 +133,17 @@ export const Sidebar = () => {
           href: '/dashboard/kpis',
           icon: Target,
           badge: null
+        }
+      ]
+    },
+    {
+      title: 'Music Trends',
+      items: [
+        {
+          title: 'Dashboard Musical',
+          href: '/dashboard/music-trends',
+          icon: Music,
+          badge: 'Nuevo'
         }
       ]
     },

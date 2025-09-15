@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './task';
 export * from './company';
+export * from './music';
 export type { User, UserInviteData, UserStats, UserPermissions } from './user';
 
 // Common types

@@ -171,3 +171,4 @@ const userTodayStr = userToday.toISOString().split('T')[0];
 El sistema ahora maneja correctamente las fechas y zonas horarias, eliminando los errores 404 y asegurando que "Obel Ejecutivo" aparezca en la fecha y hora correctas. 🗓️⏰
 
 
+

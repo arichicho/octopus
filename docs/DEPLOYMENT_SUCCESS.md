@@ -126,3 +126,4 @@ El sistema de persistencia y navegación de planes para "Mi Día" ha sido desple
 **¡La aplicación está lista para usar!** 🚀
 
 
+
