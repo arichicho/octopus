@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/server/auth';
 import { Territory } from '@/types/music';
+import { getRealSpotifyChartsData } from '@/lib/services/spotify-charts-scraper';
 
 // SpotifyCharts API function
 export async function fetchSpotifyCharts(territory: Territory, period: 'daily' | 'weekly') {
