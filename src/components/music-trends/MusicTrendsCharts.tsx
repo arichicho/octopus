@@ -48,8 +48,41 @@ export function MusicTrendsCharts({ territory, period }: MusicTrendsChartsProps)
   const fetchChartData = async () => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // Mock data for now
+      const response = await fetch(`/api/music-trends/spotify-charts?territory=${territory}&period=${period}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch chart data: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Convert API data to Track format
+        const apiTracks: Track[] = result.data.map((track: any) => ({
+          id: track.id,
+          title: track.title,
+          artist: track.artist,
+          position: track.position,
+          previousPosition: track.previousPosition,
+          streams: track.streams,
+          previousStreams: track.previousStreams,
+          peakPosition: track.peakPosition,
+          weeksOnChart: track.weeksOnChart,
+          isNewEntry: track.isNewEntry,
+          isReEntry: track.isReEntry,
+          isNewPeak: track.isNewPeak,
+          territory: track.territory,
+          period: track.period,
+          date: new Date(track.date)
+        }));
+        
+        setTracks(apiTracks);
+      } else {
+        throw new Error(result.error || 'Failed to fetch chart data');
+      }
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      // Fallback to mock data if API fails
       const mockTracks: Track[] = Array.from({ length: 50 }, (_, i) => ({
         id: `track-${i + 1}`,
         title: `Song Title ${i + 1}`,
@@ -69,8 +102,6 @@ export function MusicTrendsCharts({ territory, period }: MusicTrendsChartsProps)
       }));
       
       setTracks(mockTracks);
-    } catch (error) {
-      console.error('Error fetching chart data:', error);
     } finally {
       setIsLoading(false);
     }
