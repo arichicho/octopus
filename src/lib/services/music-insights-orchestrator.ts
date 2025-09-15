@@ -106,7 +106,8 @@ export class MusicInsightsOrchestrator {
     
     try {
       const result = await fetchSpotifyCharts(territory, period);
-      return result;
+      // Extract the data array from the response
+      return result.data || result;
     } catch (error) {
       console.error('Error fetching chart data:', error);
       throw new Error(`Failed to fetch chart data: ${error}`);
