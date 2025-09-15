@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
       success: true,
       chartmetric: result,
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV
+      environment: process.env.NODE_ENV,
+      hasToken: !!process.env.CHARTMETRIC_REFRESH_TOKEN,
+      tokenLength: process.env.CHARTMETRIC_REFRESH_TOKEN?.length || 0
     });
   } catch (error) {
     console.error('Error in Chartmetric status check:', error);
@@ -18,7 +20,9 @@ export async function GET(request: NextRequest) {
       { 
         success: false,
         error: error instanceof Error ? error.message : 'Internal server error',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        hasToken: !!process.env.CHARTMETRIC_REFRESH_TOKEN,
+        tokenLength: process.env.CHARTMETRIC_REFRESH_TOKEN?.length || 0
       },
       { status: 500 }
     );
