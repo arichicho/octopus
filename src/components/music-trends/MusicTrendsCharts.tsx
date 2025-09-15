@@ -48,7 +48,14 @@ export function MusicTrendsCharts({ territory, period }: MusicTrendsChartsProps)
   const fetchChartData = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/music-trends/spotify-charts?territory=${territory}&period=${period}`);
+      // Add cache-busting parameter to ensure fresh data
+      const timestamp = Date.now();
+      const response = await fetch(`/api/music-trends/spotify-charts?territory=${territory}&period=${period}&t=${timestamp}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`Failed to fetch chart data: ${response.status}`);

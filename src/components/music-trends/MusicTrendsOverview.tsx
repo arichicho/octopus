@@ -54,8 +54,14 @@ export function MusicTrendsOverview({ territory, period, lastUpdate }: MusicTren
   const fetchOverviewData = async () => {
     setIsLoading(true);
     try {
-      // Fetch real chart data
-      const response = await fetch(`/api/music-trends/spotify-charts?territory=${territory}&period=${period}`);
+      // Fetch real chart data with cache-busting
+      const timestamp = Date.now();
+      const response = await fetch(`/api/music-trends/spotify-charts?territory=${territory}&period=${period}&t=${timestamp}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`Failed to fetch chart data: ${response.status}`);
