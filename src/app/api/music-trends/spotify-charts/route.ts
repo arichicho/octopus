@@ -73,37 +73,73 @@ async function fetchSpotifyCharts(territory: Territory, period: 'daily' | 'weekl
 // Generate territory-specific mock data based on real SpotifyCharts data
 function generateMockChartData(territory: Territory, period: 'daily' | 'weekly') {
   const territoryData = {
-    argentina: [
-      { title: "Tu jardín con enanitos", artist: "Roze Oficial, Max Carra, Valen, RAMKY EN LOS CONTROLES", streams: 426889 },
-      { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 320372 },
-      { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 292961 },
-      { title: "Tu Misterioso Alguien", artist: "Miranda!", streams: 277783 },
-      { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 250000 }
-    ],
-    mexico: [
-      { title: "Perlas Negras", artist: "Natanael Cano, Gabito Ballesteros", streams: 1352055 },
-      { title: "Marlboro Rojo", artist: "Fuerza Regida", streams: 1223780 },
-      { title: "TU SANCHO", artist: "Fuerza Regida", streams: 1211963 },
-      { title: "POR SUS BESOS", artist: "Tito Double P", streams: 1183151 },
-      { title: "Chula Vente", artist: "Luis R Conriquez, Fuerza Regida, Neton Vega", streams: 1133030 }
-    ],
-    spain: [
-      { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 480183 },
-      { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 417677 },
-      { title: "YO Y TÚ", artist: "Ovy On The Drums, Quevedo, Beéle", streams: 360214 },
-      { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 357483 },
-      { title: "La Plena - W Sound 05", artist: "W Sound, Beéle, Ovy On The Drums", streams: 322289 }
-    ],
-    global: [
-      { title: "Golden", artist: "HUNTR/X, EJAE, AUDREY NUNA, REI AMI, KPop Demon Hunters Cast", streams: 7605752 },
-      { title: "back to friends", artist: "sombr", streams: 5664502 },
-      { title: "Ordinary", artist: "Alex Warren", streams: 4246596 },
-      { title: "Soda Pop", artist: "Saja Boys, Andrew Choi, Neckwav, Danny Chung, KEVIN WOO, samUIL Lee, KPop Demon Hunters Cast", streams: 4104916 },
-      { title: "Your Idol", artist: "Saja Boys, Andrew Choi, Neckwav, Danny Chung, KEVIN WOO, samUIL Lee, KPop Demon Hunters Cast", streams: 3749713 }
-    ]
+    argentina: {
+      weekly: [
+        { title: "Tu jardín con enanitos", artist: "Roze Oficial, Max Carra, Valen, RAMKY EN LOS CONTROLES", streams: 2700817 },
+        { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 2261920 },
+        { title: "La Plena - W Sound 05", artist: "W Sound, Beéle, Ovy On The Drums", streams: 2007262 },
+        { title: "Tu Misterioso Alguien", artist: "Miranda!", streams: 1962077 },
+        { title: "TODO KE VER", artist: "Jere Klein, Katteyes, Mateo on the Beatz", streams: 1931585 }
+      ],
+      daily: [
+        { title: "Tu jardín con enanitos", artist: "Roze Oficial, Max Carra, Valen, RAMKY EN LOS CONTROLES", streams: 426889 },
+        { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 320372 },
+        { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 292961 },
+        { title: "Tu Misterioso Alguien", artist: "Miranda!", streams: 277783 },
+        { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 250000 }
+      ]
+    },
+    mexico: {
+      weekly: [
+        { title: "POR SUS BESOS", artist: "Tito Double P", streams: 9848684 },
+        { title: "Perlas Negras", artist: "Natanael Cano, Gabito Ballesteros", streams: 9581974 },
+        { title: "TU SANCHO", artist: "Fuerza Regida", streams: 9200132 },
+        { title: "Chula Vente", artist: "Luis R Conriquez, Fuerza Regida, Neton Vega", streams: 8959187 },
+        { title: "Marlboro Rojo", artist: "Fuerza Regida", streams: 8805435 }
+      ],
+      daily: [
+        { title: "Perlas Negras", artist: "Natanael Cano, Gabito Ballesteros", streams: 1352055 },
+        { title: "Marlboro Rojo", artist: "Fuerza Regida", streams: 1223780 },
+        { title: "TU SANCHO", artist: "Fuerza Regida", streams: 1211963 },
+        { title: "POR SUS BESOS", artist: "Tito Double P", streams: 1183151 },
+        { title: "Chula Vente", artist: "Luis R Conriquez, Fuerza Regida, Neton Vega", streams: 1133030 }
+      ]
+    },
+    spain: {
+      weekly: [
+        { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 3640901 },
+        { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 3409734 },
+        { title: "YO Y TÚ", artist: "Ovy On The Drums, Quevedo, Beéle", streams: 3031046 },
+        { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 2911529 },
+        { title: "La Plena - W Sound 05", artist: "W Sound, Beéle, Ovy On The Drums", streams: 2777044 }
+      ],
+      daily: [
+        { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 480183 },
+        { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 417677 },
+        { title: "YO Y TÚ", artist: "Ovy On The Drums, Quevedo, Beéle", streams: 360214 },
+        { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 357483 },
+        { title: "La Plena - W Sound 05", artist: "W Sound, Beéle, Ovy On The Drums", streams: 322289 }
+      ]
+    },
+    global: {
+      weekly: [
+        { title: "Golden", artist: "HUNTR/X, EJAE, AUDREY NUNA, REI AMI, KPop Demon Hunters Cast", streams: 54092207 },
+        { title: "back to friends", artist: "sombr", streams: 39955958 },
+        { title: "Ordinary", artist: "Alex Warren", streams: 33078736 },
+        { title: "Tears", artist: "Sabrina Carpenter", streams: 32356191 },
+        { title: "Soda Pop", artist: "Saja Boys, Andrew Choi, Neckwav, Danny Chung, KEVIN WOO, samUIL Lee, KPop Demon Hunters Cast", streams: 28675200 }
+      ],
+      daily: [
+        { title: "Golden", artist: "HUNTR/X, EJAE, AUDREY NUNA, REI AMI, KPop Demon Hunters Cast", streams: 7605752 },
+        { title: "back to friends", artist: "sombr", streams: 5664502 },
+        { title: "Ordinary", artist: "Alex Warren", streams: 4246596 },
+        { title: "Soda Pop", artist: "Saja Boys, Andrew Choi, Neckwav, Danny Chung, KEVIN WOO, samUIL Lee, KPop Demon Hunters Cast", streams: 4104916 },
+        { title: "Your Idol", artist: "Saja Boys, Andrew Choi, Neckwav, Danny Chung, KEVIN WOO, samUIL Lee, KPop Demon Hunters Cast", streams: 3749713 }
+      ]
+    }
   };
 
-  const mockTracks = territoryData[territory] || territoryData.global;
+  const mockTracks = territoryData[territory]?.[period] || territoryData.global[period];
 
   return {
     chartEntryViewResponses: [{
