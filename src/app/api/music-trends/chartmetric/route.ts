@@ -1,92 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/server/auth';
+import { getChartmetricClient, testChartmetricConnection } from '@/lib/services/chartmetric-client';
 
-// Chartmetric API integration
-async function fetchChartmetricData(trackId: string, artistId: string) {
+// Chartmetric API integration using the new client
+async function fetchChartmetricData(spotifyId: string, type: 'track' | 'artist') {
+  const client = getChartmetricClient();
+  
+  if (!client) {
+    throw new Error('Chartmetric client not configured (missing CHARTMETRIC_REFRESH_TOKEN)');
+  }
+
   try {
-    const apiKey = process.env.CHARTMETRIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('Chartmetric API key not configured');
+    if (type === 'track') {
+      return await client.getTrackBySpotifyId(spotifyId);
+    } else {
+      return await client.getArtistBySpotifyId(spotifyId);
     }
-
-    // Fetch track data
-    const trackResponse = await fetch(`https://api.chartmetric.com/api/track/${trackId}`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!trackResponse.ok) {
-      throw new Error(`Chartmetric API error: ${trackResponse.status}`);
-    }
-
-    const trackData = await trackResponse.json();
-
-    // Fetch artist data
-    const artistResponse = await fetch(`https://api.chartmetric.com/api/artist/${artistId}`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!artistResponse.ok) {
-      throw new Error(`Chartmetric API error: ${artistResponse.status}`);
-    }
-
-    const artistData = await artistResponse.json();
-
-    // Fetch social metrics
-    const socialResponse = await fetch(`https://api.chartmetric.com/api/artist/${artistId}/stat`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const socialData = socialResponse.ok ? await socialResponse.json() : null;
-
-    return {
-      success: true,
-      data: {
-        track: trackData,
-        artist: artistData,
-        social: socialData
-      }
-    };
   } catch (error) {
-    console.error('Error fetching Chartmetric data:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
+    console.error('Chartmetric API error:', error);
+    throw error;
   }
 }
 
 async function searchChartmetricTrack(title: string, artist: string) {
+  const client = getChartmetricClient();
+  
+  if (!client) {
+    throw new Error('Chartmetric client not configured (missing CHARTMETRIC_REFRESH_TOKEN)');
+  }
+
   try {
-    const apiKey = process.env.CHARTMETRIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('Chartmetric API key not configured');
-    }
-
     // Search for track
-    const searchResponse = await fetch(
-      `https://api.chartmetric.com/api/search?q=${encodeURIComponent(`${title} ${artist}`)}&type=track`,
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    if (!searchResponse.ok) {
-      throw new Error(`Chartmetric search error: ${searchResponse.status}`);
-    }
-
-    const searchData = await searchResponse.json();
+    const searchData = await client.searchTracks(`${title} ${artist}`, 5);
     
     return {
       success: true,
@@ -101,6 +46,61 @@ async function searchChartmetricTrack(title: string, artist: string) {
   }
 }
 
+async function enrichTrackWithChartmetric(track: any) {
+  const client = getChartmetricClient();
+  
+  if (!client || !track.spotifyId) {
+    return {
+      ...track,
+      chartmetricData: null,
+      enrichmentError: 'Chartmetric not configured or no Spotify ID'
+    };
+  }
+
+  try {
+    // Get track data
+    const trackData = await client.getTrackBySpotifyId(track.spotifyId);
+    
+    // Get artist data if available
+    let artistData = null;
+    if (track.artistIds && track.artistIds.length > 0) {
+      try {
+        artistData = await client.getArtistBySpotifyId(track.artistIds[0]);
+      } catch (artistError) {
+        console.warn('Could not fetch artist data:', artistError);
+      }
+    }
+
+    // Get social metrics for artist
+    let socialMetrics = null;
+    if (artistData?.id) {
+      try {
+        socialMetrics = await client.getArtistSocialMetrics(artistData.id);
+      } catch (socialError) {
+        console.warn('Could not fetch social metrics:', socialError);
+      }
+    }
+
+    return {
+      ...track,
+      chartmetricData: {
+        track: trackData,
+        artist: artistData,
+        social: socialMetrics,
+        enriched: true,
+        enrichedAt: new Date().toISOString()
+      }
+    };
+  } catch (error) {
+    console.error('Error enriching track with Chartmetric:', error);
+    return {
+      ...track,
+      chartmetricData: null,
+      enrichmentError: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const auth = await verifyAuth(request);
@@ -110,19 +110,31 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
-    const trackId = searchParams.get('trackId');
-    const artistId = searchParams.get('artistId');
+    const spotifyId = searchParams.get('spotifyId');
+    const type = searchParams.get('type') as 'track' | 'artist';
     const title = searchParams.get('title');
     const artist = searchParams.get('artist');
+    const test = searchParams.get('test');
 
+    // Test connection
+    if (test === 'true') {
+      const testResult = await testChartmetricConnection();
+      return NextResponse.json(testResult);
+    }
+
+    // Search for track
     if (action === 'search' && title && artist) {
       const result = await searchChartmetricTrack(title, artist);
       return NextResponse.json(result);
     }
 
-    if (action === 'fetch' && trackId && artistId) {
-      const result = await fetchChartmetricData(trackId, artistId);
-      return NextResponse.json(result);
+    // Fetch specific data
+    if (action === 'fetch' && spotifyId && type) {
+      const result = await fetchChartmetricData(spotifyId, type);
+      return NextResponse.json({
+        success: true,
+        data: result
+      });
     }
 
     return NextResponse.json(
@@ -146,49 +158,33 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { tracks } = body;
+    const { tracks, action } = body;
 
-    if (!tracks || !Array.isArray(tracks)) {
-      return NextResponse.json(
-        { error: 'Invalid tracks data' },
-        { status: 400 }
+    if (action === 'enrich' && tracks && Array.isArray(tracks)) {
+      // Batch enrich tracks with Chartmetric data
+      const enrichedTracks = await Promise.allSettled(
+        tracks.map(async (track: any) => {
+          return await enrichTrackWithChartmetric(track);
+        })
       );
+
+      const results = enrichedTracks.map((result, index) => ({
+        trackId: tracks[index].id,
+        success: result.status === 'fulfilled',
+        data: result.status === 'fulfilled' ? result.value : null,
+        error: result.status === 'rejected' ? result.reason : null
+      }));
+
+      return NextResponse.json({
+        success: true,
+        data: results
+      });
     }
 
-    // Batch fetch Chartmetric data for multiple tracks
-    const results = await Promise.allSettled(
-      tracks.map(async (track: any) => {
-        const searchResult = await searchChartmetricTrack(track.title, track.artist);
-        if (searchResult.success && searchResult.data?.obj?.tracks?.length > 0) {
-          const trackData = searchResult.data.obj.tracks[0];
-          const artistId = trackData.artists?.[0]?.id;
-          
-          if (artistId) {
-            const detailedResult = await fetchChartmetricData(trackData.id, artistId);
-            return {
-              trackId: track.id,
-              data: detailedResult
-            };
-          }
-        }
-        return {
-          trackId: track.id,
-          data: { success: false, error: 'Track not found in Chartmetric' }
-        };
-      })
+    return NextResponse.json(
+      { error: 'Invalid parameters' },
+      { status: 400 }
     );
-
-    const enrichedTracks = results.map((result, index) => ({
-      trackId: tracks[index].id,
-      success: result.status === 'fulfilled',
-      data: result.status === 'fulfilled' ? result.value.data : null,
-      error: result.status === 'rejected' ? result.reason : null
-    }));
-
-    return NextResponse.json({
-      success: true,
-      data: enrichedTracks
-    });
   } catch (error) {
     console.error('Error in Chartmetric POST API:', error);
     return NextResponse.json(

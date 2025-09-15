@@ -32,6 +32,11 @@ interface HealthStatus {
     chartmetric: {
       hasApiKey: boolean;
       configured: boolean;
+      test?: {
+        success: boolean;
+        error?: string;
+        data?: any;
+      };
     };
     firestore: {
       configured: boolean;
@@ -190,10 +195,15 @@ export function MusicTrendsHealth() {
             </div>
           </div>
           <div className="text-right">
-            {getStatusBadge(getDependencyStatus(health.dependencies.chartmetric.hasApiKey))}
+            {getStatusBadge(getDependencyStatus(health.dependencies.chartmetric.hasApiKey, health.dependencies.chartmetric.test?.success))}
             {!health.dependencies.chartmetric.hasApiKey && (
               <p className="text-xs text-yellow-600 mt-1">
-                API key requerida
+                Refresh token requerido
+              </p>
+            )}
+            {health.dependencies.chartmetric.test?.error && (
+              <p className="text-xs text-red-600 mt-1">
+                {health.dependencies.chartmetric.test.error}
               </p>
             )}
           </div>

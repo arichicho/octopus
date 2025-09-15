@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/server/auth';
 import { hasApiKey, healthPing } from '@/lib/server/ai/client';
+import { testChartmetricConnection } from '@/lib/services/chartmetric-client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,6 +13,9 @@ export async function GET(request: NextRequest) {
     // Check Claude API health
     const claudeHealth = await healthPing();
     
+    // Test Chartmetric connection
+    const chartmetricTest = await testChartmetricConnection();
+    
     // Check other dependencies
     const dependencies = {
       claude: {
@@ -20,8 +24,9 @@ export async function GET(request: NextRequest) {
         model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022'
       },
       chartmetric: {
-        hasApiKey: !!process.env.CHARTMETRIC_API_KEY,
-        configured: !!process.env.CHARTMETRIC_API_KEY
+        hasApiKey: !!process.env.CHARTMETRIC_REFRESH_TOKEN,
+        configured: !!process.env.CHARTMETRIC_REFRESH_TOKEN,
+        test: chartmetricTest
       },
       firestore: {
         configured: !!process.env.FIREBASE_PROJECT_ID,

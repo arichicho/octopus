@@ -70,14 +70,29 @@ src/types/music.ts             # Tipos TypeScript para música
 
 ### Variables de Entorno
 ```env
-# Chartmetric API (requerida para enriquecimiento de datos)
-CHARTMETRIC_API_KEY=your_chartmetric_api_key
+# Chartmetric API - 64-character refresh token (permanent)
+# Obtener después de suscribirse al plan de API de Chartmetric
+CHARTMETRIC_REFRESH_TOKEN=your_64_character_chartmetric_refresh_token
 
 # Claude AI (ya configurada en el sistema)
 CLAUDE_API_KEY=your_claude_api_key
 
 # Internal API (para actualizaciones automáticas)
 INTERNAL_API_KEY=your_internal_api_key
+```
+
+### Configuración de Chartmetric
+
+1. **Suscribirse al Plan de API**: Visitar [Chartmetric API](https://api.chartmetric.com/apidoc/#api-Authorization-GetAccessToken)
+2. **Obtener Refresh Token**: Token permanente de 64 caracteres
+3. **Configurar Variable**: Agregar `CHARTMETRIC_REFRESH_TOKEN` a las variables de entorno
+4. **Test de Conexión**: Usar `/api/music-trends/chartmetric-test?action=connection`
+
+#### Flujo de Autenticación Chartmetric
+```
+1. Refresh Token (64 chars) → Access Token (180 chars, 1 hora)
+2. Access Token → API calls
+3. Token expirado (401) → Refresh automático
 ```
 
 ### Firestore Collections
