@@ -179,14 +179,14 @@ class ChartmetricClient {
    * Search for artists
    */
   async searchArtists(query: string, limit: number = 10) {
-    return this.request(`/search/artists?q=${encodeURIComponent(query)}&limit=${limit}`);
+    return this.request(`/search?q=${encodeURIComponent(query)}&type=artists&limit=${limit}`);
   }
 
   /**
    * Search for tracks
    */
   async searchTracks(query: string, limit: number = 10) {
-    return this.request(`/search/tracks?q=${encodeURIComponent(query)}&limit=${limit}`);
+    return this.request(`/search?q=${encodeURIComponent(query)}&type=tracks&limit=${limit}`);
   }
 
   /**
