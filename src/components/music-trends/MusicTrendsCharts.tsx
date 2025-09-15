@@ -89,8 +89,8 @@ export function MusicTrendsCharts({ territory, period }: MusicTrendsChartsProps)
       }
     } catch (error) {
       console.error('Error fetching chart data:', error);
-      // Fallback to mock data if API fails
-      const mockTracks: Track[] = Array.from({ length: 50 }, (_, i) => ({
+      // Fallback to mock data if API fails (Top 200)
+      const mockTracks: Track[] = Array.from({ length: 200 }, (_, i) => ({
         id: `track-${i + 1}`,
         title: `Song Title ${i + 1}`,
         artist: `Artist ${i + 1}`,

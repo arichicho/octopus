@@ -4,7 +4,8 @@
  * Avoids regenerating insights on every request
  */
 
-import { db } from '@/lib/firebase/admin';
+import { db } from '@/lib/firebase/config';
+import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, orderBy, limit, writeBatch } from 'firebase/firestore';
 import { StrategicInsights, MusicInsight } from './music-insights-generator';
 import { ChartAnalysis } from './music-insights-pipeline';
 import { Territory, ChartPeriod } from '@/types/music';
@@ -32,14 +33,15 @@ export class MusicInsightsStorage {
   async getInsights(territory: Territory, period: ChartPeriod): Promise<StoredInsights | null> {
     try {
       const docId = this.getDocumentId(territory, period);
-      const doc = await db.collection(this.COLLECTION).doc(docId).get();
+      const docRef = doc(db, this.COLLECTION, docId);
+      const docSnap = await getDoc(docRef);
 
-      if (!doc.exists) {
+      if (!docSnap.exists()) {
         console.log(`📊 No insights found for ${territory} ${period}`);
         return null;
       }
 
-      const data = doc.data() as StoredInsights;
+      const data = docSnap.data() as StoredInsights;
       
       // Check if insights are stale
       const isStale = this.isInsightsStale(data);
@@ -82,7 +84,7 @@ export class MusicInsightsStorage {
         isStale: false
       };
 
-      await db.collection(this.COLLECTION).doc(docId).set(storedInsights);
+      await setDoc(doc(db, this.COLLECTION, docId), storedInsights);
       console.log(`💾 Stored insights for ${territory} ${period}`);
 
     } catch (error) {
@@ -110,10 +112,10 @@ export class MusicInsightsStorage {
         const hasSignificantChanges = this.hasSignificantChanges(existingData.chartData, newChartData);
         
         if (hasSignificantChanges) {
-          await db.collection(this.COLLECTION).doc(docId).update({
-            isStale: true,
-            lastUpdated: new Date()
-          });
+        await updateDoc(doc(db, this.COLLECTION, docId), {
+          isStale: true,
+          lastUpdated: new Date()
+        });
           console.log(`🔄 Marked insights as stale for ${territory} ${period}`);
         }
       }
@@ -127,10 +129,12 @@ export class MusicInsightsStorage {
    */
   async getAllInsightsForTerritory(territory: Territory): Promise<StoredInsights[]> {
     try {
-      const snapshot = await db.collection(this.COLLECTION)
-        .where('territory', '==', territory)
-        .orderBy('date', 'desc')
-        .get();
+      const q = query(
+        collection(db, this.COLLECTION),
+        where('territory', '==', territory),
+        orderBy('date', 'desc')
+      );
+      const snapshot = await getDocs(q);
 
       return snapshot.docs.map(doc => doc.data() as StoredInsights);
     } catch (error) {
@@ -144,10 +148,12 @@ export class MusicInsightsStorage {
    */
   async getRecentInsights(limit: number = 10): Promise<StoredInsights[]> {
     try {
-      const snapshot = await db.collection(this.COLLECTION)
-        .orderBy('lastUpdated', 'desc')
-        .limit(limit)
-        .get();
+      const q = query(
+        collection(db, this.COLLECTION),
+        orderBy('lastUpdated', 'desc'),
+        limit(limit)
+      );
+      const snapshot = await getDocs(q);
 
       return snapshot.docs.map(doc => doc.data() as StoredInsights);
     } catch (error) {
@@ -163,11 +169,13 @@ export class MusicInsightsStorage {
     try {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       
-      const snapshot = await db.collection(this.COLLECTION)
-        .where('date', '<', thirtyDaysAgo)
-        .get();
+      const q = query(
+        collection(db, this.COLLECTION),
+        where('date', '<', thirtyDaysAgo)
+      );
+      const snapshot = await getDocs(q);
 
-      const batch = db.batch();
+      const batch = writeBatch(db);
       snapshot.docs.forEach(doc => {
         batch.delete(doc.ref);
       });
@@ -192,7 +200,7 @@ export class MusicInsightsStorage {
     }>;
   }> {
     try {
-      const snapshot = await db.collection(this.COLLECTION).get();
+      const snapshot = await getDocs(collection(db, this.COLLECTION));
       const insights = snapshot.docs.map(doc => doc.data() as StoredInsights);
 
       const territories: Territory[] = ['argentina', 'spain', 'mexico', 'global'];

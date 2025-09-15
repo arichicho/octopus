@@ -118,12 +118,14 @@ export class MusicInsightsGenerator {
   private getSystemPrompt(): string {
     return `Eres un analista estratégico de la industria musical con acceso a datos de SpotifyCharts y Chartmetric. Tu trabajo es generar insights ejecutivos sobre tendencias musicales, movimientos de mercado y oportunidades estratégicas.
 
-ANÁLISIS REQUERIDO:
-1. **Resumen Ejecutivo**: 2-3 párrafos con los hallazgos más importantes
-2. **Hallazgos Clave**: 5-7 insights específicos con datos concretos
-3. **Análisis de Mercado**: Tendencias de género, dinámicas de sellos, movimientos de artistas
-4. **Recomendaciones**: Oportunidades, riesgos y estrategias
-5. **Alertas**: Movimientos significativos que requieren atención
+ANÁLISIS REQUERIDO (TOP 200 COMPLETO):
+1. **Resumen Ejecutivo**: 2-3 párrafos con los hallazgos más importantes del top 200
+2. **Hallazgos Clave**: 5-7 insights específicos con datos concretos de todo el chart
+3. **Análisis de Mercado**: Tendencias de género, dinámicas de sellos, movimientos de artistas en todo el top 200
+4. **Recomendaciones**: Oportunidades, riesgos y estrategias basadas en el análisis completo
+5. **Alertas**: Movimientos significativos que requieren atención (no solo top 10)
+
+IMPORTANTE: Analiza TODO el top 200, no solo los primeros puestos. Identifica patrones, tendencias y movimientos significativos en todas las posiciones del chart.
 
 FORMATO DE RESPUESTA:
 Responde en JSON válido con la siguiente estructura:
@@ -214,8 +216,8 @@ Responde en JSON válido con array de insights:
   private buildUserPrompt(analysis: ChartAnalysis): string {
     const { territory, period, totalTracks, totalStreams, summary, enrichedTracks } = analysis;
 
-    // Get top tracks for context
-    const topTracks = enrichedTracks.slice(0, 10).map(track => ({
+    // Get all tracks for context (Top 200)
+    const allTracks = enrichedTracks.map(track => ({
       position: track.position,
       title: track.title,
       artist: track.artist,
@@ -242,12 +244,18 @@ RESUMEN DEL MERCADO:
 - Nuevos picos: ${summary.marketDynamics.newPeaks}
 - Tasa de rotación: ${summary.marketDynamics.turnoverRate}%
 
-TOP 10 TRACKS:
-${topTracks.map(track => 
+TOP 200 TRACKS (muestra de los primeros 20 para contexto):
+${allTracks.slice(0, 20).map(track => 
   `${track.position}. ${track.title} - ${track.artist}
    Streams: ${track.streams?.toLocaleString() || 'N/A'} | Género: ${track.genre} | Origen: ${track.origin}
    Sello: ${track.label} | ${track.isNewEntry ? 'NUEVA ENTRADA' : ''} ${track.isReEntry ? 'RE-ENTRADA' : ''} ${track.isNewPeak ? 'NUEVO PICO' : ''}`
 ).join('\n')}
+
+NOTA: Tienes acceso a los datos completos de los 200 tracks para el análisis. Usa esta información para generar insights sobre:
+- Movimientos significativos en todo el chart (no solo top 10)
+- Patrones de género y origen en todo el top 200
+- Dinámicas de sellos y distribuidores en todo el chart
+- Tendencias de entrada y salida en todas las posiciones
 
 TOP GÉNEROS:
 ${summary.topGenres.slice(0, 5).map(g => `${g.genre}: ${g.count} tracks (${g.percentage.toFixed(1)}%)`).join('\n')}

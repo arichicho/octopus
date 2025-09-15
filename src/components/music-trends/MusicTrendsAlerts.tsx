@@ -33,8 +33,122 @@ export function MusicTrendsAlerts({ territory, period }: MusicTrendsAlertsProps)
   const fetchAlertsData = async () => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // Mock data for now
+      // Fetch real chart data to generate alerts from Top 200
+      const timestamp = Date.now();
+      const response = await fetch(`/api/music-trends/spotify-charts?territory=${territory}&period=${period}&t=${timestamp}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch chart data: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        const tracks = result.data;
+        
+        // Generate alerts from real data (Top 200)
+        const realAlerts: MusicAlert[] = [];
+        
+        // Alert 1: Significant jumps (>10 positions)
+        const significantJumps = tracks.filter((track: any) => 
+          track.previousPosition && (track.previousPosition - track.position) > 10
+        ).slice(0, 5);
+        
+        significantJumps.forEach((track: any, index: number) => {
+          const change = track.previousPosition - track.position;
+          realAlerts.push({
+            id: `jump-${index}`,
+            type: 'jump',
+            trackId: track.id,
+            trackTitle: track.title,
+            artist: track.artist,
+            territory,
+            period,
+            date: new Date(track.date),
+            message: `Salto significativo: +${change} posiciones (${track.previousPosition} → ${track.position})`,
+            severity: change > 20 ? 'high' : 'medium',
+            read: false
+          });
+        });
+        
+        // Alert 2: New entries in Top 50
+        const top50NewEntries = tracks.filter((track: any) => 
+          track.isNewEntry && track.position <= 50
+        ).slice(0, 5);
+        
+        top50NewEntries.forEach((track: any, index: number) => {
+          realAlerts.push({
+            id: `debut-${index}`,
+            type: 'debut',
+            trackId: track.id,
+            trackTitle: track.title,
+            artist: track.artist,
+            territory,
+            period,
+            date: new Date(track.date),
+            message: `Debut en posición ${track.position}`,
+            severity: track.position <= 10 ? 'high' : 'medium',
+            read: false
+          });
+        });
+        
+        // Alert 3: Significant drops (>20 positions from Top 50)
+        const significantDrops = tracks.filter((track: any) => 
+          track.previousPosition && 
+          track.previousPosition <= 50 && 
+          (track.position - track.previousPosition) > 20
+        ).slice(0, 5);
+        
+        significantDrops.forEach((track: any, index: number) => {
+          const change = track.position - track.previousPosition;
+          realAlerts.push({
+            id: `drop-${index}`,
+            type: 'drop',
+            trackId: track.id,
+            trackTitle: track.title,
+            artist: track.artist,
+            territory,
+            period,
+            date: new Date(track.date),
+            message: `Caída significativa: -${change} posiciones (${track.previousPosition} → ${track.position})`,
+            severity: 'high',
+            read: false
+          });
+        });
+        
+        // Alert 4: Risk of dropping out (positions 180-200)
+        const riskTracks = tracks.filter((track: any) => 
+          track.position >= 180 && track.position <= 200
+        ).slice(0, 3);
+        
+        riskTracks.forEach((track: any, index: number) => {
+          realAlerts.push({
+            id: `risk-${index}`,
+            type: 'risk',
+            trackId: track.id,
+            trackTitle: track.title,
+            artist: track.artist,
+            territory,
+            period,
+            date: new Date(track.date),
+            message: `Riesgo de salir del Top 200 (posición ${track.position})`,
+            severity: 'medium',
+            read: false
+          });
+        });
+        
+        setAlerts(realAlerts);
+      } else {
+        throw new Error(result.error || 'Failed to fetch chart data');
+      }
+    } catch (error) {
+      console.error('Error fetching alerts data:', error);
+      // Fallback to mock data if API fails
       const mockAlerts: MusicAlert[] = [
         {
           id: '1',
