@@ -81,7 +81,7 @@ export function MusicTrendsInsights({ territory, period }: MusicTrendsInsightsPr
     try {
       // Add cache-busting parameter to ensure fresh data
       const timestamp = Date.now();
-      const response = await fetch(`/api/music-trends/insights?territory=${territory}&period=${period}&t=${timestamp}`, {
+      const response = await fetch(`/api/music-trends/test-insights?territory=${territory}&period=${period}&t=${timestamp}`, {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache'
