@@ -101,16 +101,16 @@ export class MusicInsightsOrchestrator {
   private async fetchChartData(territory: Territory, period: ChartPeriod) {
     console.log(`📊 Fetching chart data for ${territory} ${period}`);
     
-    // This would call the SpotifyCharts API endpoint
-    // For now, we'll simulate the data structure
-    const response = await fetch(`/api/music-trends/spotify-charts?territory=${territory}&period=${period}`);
+    // Import the SpotifyCharts API function directly
+    const { fetchSpotifyCharts } = await import('@/app/api/music-trends/spotify-charts/route');
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch chart data: ${response.status}`);
+    try {
+      const result = await fetchSpotifyCharts(territory, period);
+      return result;
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      throw new Error(`Failed to fetch chart data: ${error}`);
     }
-    
-    const result = await response.json();
-    return result.data;
   }
 
   /**
