@@ -67,31 +67,31 @@ class SpotifyChartsService {
     const playlists = {
       'argentina': {
         'daily': [
-          '37i9dQZF1DX0XUsuxWHRQd', // Top 50 Argentina
+          '37i9dQZEVXbMMy2roB9myp', // Top Songs - Argentina
           '37i9dQZF1DXcBWIGoYBM5M'  // Viral Argentina
         ],
         'weekly': [
-          '37i9dQZF1DX0XUsuxWHRQd', // Top 50 Argentina
+          '37i9dQZEVXbMMy2roB9myp', // Top Songs - Argentina
           '37i9dQZF1DXcBWIGoYBM5M'  // Viral Argentina
         ]
       },
       'mexico': {
         'daily': [
-          '37i9dQZF1DX0XUsuxWHRQd', // Top 50 Mexico
+          '37i9dQZEVXbO3MFU6HTj0j', // Top Songs - Mexico
           '37i9dQZF1DXcBWIGoYBM5M'  // Viral Mexico
         ],
         'weekly': [
-          '37i9dQZF1DX0XUsuxWHRQd', // Top 50 Mexico
+          '37i9dQZEVXbO3MFU6HTj0j', // Top Songs - Mexico
           '37i9dQZF1DXcBWIGoYBM5M'  // Viral Mexico
         ]
       },
       'spain': {
         'daily': [
-          '37i9dQZF1DX0XUsuxWHRQd', // Top 50 Spain
+          '37i9dQZEVXbNFJfN1Vw8d9', // Top Songs - Spain
           '37i9dQZF1DXcBWIGoYBM5M'  // Viral Spain
         ],
         'weekly': [
-          '37i9dQZF1DX0XUsuxWHRQd', // Top 50 Spain
+          '37i9dQZEVXbNFJfN1Vw8d9', // Top Songs - Spain
           '37i9dQZF1DXcBWIGoYBM5M'  // Viral Spain
         ]
       },
@@ -206,7 +206,7 @@ class SpotifyChartsService {
   private removeDuplicates(tracks: any[]): any[] {
     const seen = new Set();
     return tracks.filter(item => {
-      const trackId = item.track?.id;
+      const trackId = item.id || item.track?.id;
       if (seen.has(trackId)) {
         return false;
       }
@@ -232,7 +232,21 @@ class SpotifyChartsService {
         'tag:hipster',
         'tag:pop',
         'tag:rock',
-        'tag:electronic'
+        'tag:electronic',
+        'tag:reggaeton',
+        'tag:latin',
+        'tag:indie',
+        'tag:alternative',
+        'tag:folk',
+        'tag:country',
+        'tag:jazz',
+        'tag:classical',
+        'tag:blues',
+        'tag:r&b',
+        'tag:hip-hop',
+        'tag:rap',
+        'tag:edm',
+        'tag:house'
       ];
 
       const allTracks: any[] = [];
@@ -250,6 +264,9 @@ class SpotifyChartsService {
         if (response.ok) {
           const data = await response.json();
           allTracks.push(...data.tracks.items);
+          console.log(`Found ${data.tracks.items.length} tracks for query: ${query}`);
+        } else {
+          console.warn(`Failed to search for ${query}: ${response.status}`);
         }
       }
 
@@ -310,16 +327,8 @@ export const spotifyChartsService = new SpotifyChartsService();
  */
 export async function getRealSpotifyChartsData(territory: Territory, period: 'daily' | 'weekly'): Promise<SpotifyChartsData> {
   try {
-    // Try to get data from official playlists first
-    const playlistData = await spotifyChartsService.getRealChartsData(territory, period);
-    
-    if (playlistData.tracks.length > 0) {
-      console.log(`✅ Got ${playlistData.tracks.length} tracks from official playlists`);
-      return playlistData;
-    }
-    
-    // Fallback to trending tracks search
-    console.log('🔄 Falling back to trending tracks search');
+    // Use trending tracks search directly since playlists are not accessible
+    console.log('🎵 Using trending tracks search for real Spotify data');
     return await spotifyChartsService.getTrendingTracks(territory, period);
     
   } catch (error) {
