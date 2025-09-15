@@ -149,18 +149,100 @@ function generateMockChartData(territory: Territory, period: 'daily' | 'weekly')
   // Add the real top 5 tracks
   allTracks.push(...baseTracksForPeriod);
   
-  // Generate additional tracks to reach 200
+  // Generate additional tracks to reach 200 with realistic names
   const additionalTracks = 195; // 200 - 5 base tracks
-  const genres = ['Pop', 'Reggaeton', 'Hip Hop', 'Rock', 'Electronic', 'R&B', 'Country', 'Jazz', 'Classical', 'Folk'];
-  const artists = [
-    'Artist A', 'Artist B', 'Artist C', 'Artist D', 'Artist E', 'Artist F', 'Artist G', 'Artist H', 'Artist I', 'Artist J',
-    'Artist K', 'Artist L', 'Artist M', 'Artist N', 'Artist O', 'Artist P', 'Artist Q', 'Artist R', 'Artist S', 'Artist T'
+  
+  // Realistic track titles by genre
+  const trackTitles = {
+    'Pop': [
+      'Summer Nights', 'Dancing in the Rain', 'Electric Dreams', 'Golden Hour', 'Midnight City',
+      'Fireworks', 'Starlight', 'Ocean Waves', 'City Lights', 'Wild Heart',
+      'Neon Signs', 'Crystal Ball', 'Moonlight', 'Sunset Boulevard', 'Rainbow Bridge',
+      'Thunderstorm', 'Silent Night', 'Morning Glory', 'Evening Star', 'Winter Song'
+    ],
+    'Reggaeton': [
+      'Fuego en la Noche', 'Baila Conmigo', 'Ritmo Caliente', 'Noche de Verano', 'Sabor Latino',
+      'Dale Que Dale', 'Mueve el Cuerpo', 'Fiesta Total', 'Ritmo del Barrio', 'Salsa y Reggaeton',
+      'Noche Loca', 'Baila Hasta el Amanecer', 'Ritmo Urbano', 'Fiesta en la Calle', 'Sabor del Caribe',
+      'Dale Gas', 'Mueve la Cadera', 'Ritmo del Corazón', 'Noche de Rumba', 'Salsa Caliente'
+    ],
+    'Hip Hop': [
+      'Street Dreams', 'City Life', 'Underground King', 'Rise Up', 'No Limits',
+      'Hustle Hard', 'Money Talks', 'Real Talk', 'Game Strong', 'Top of the World',
+      'Street Smart', 'Urban Legend', 'Beat the Odds', 'Rise and Grind', 'No Fear',
+      'Street Cred', 'Urban Warrior', 'Beat the System', 'Rise Above', 'No Regrets'
+    ],
+    'Rock': [
+      'Thunder Road', 'Electric Storm', 'Rebel Heart', 'Wild Fire', 'Steel Wings',
+      'Rock Revolution', 'Electric Guitar', 'Wild Nights', 'Thunder Strike', 'Rock Anthem',
+      'Electric Dreams', 'Wild Spirit', 'Thunder Bolt', 'Rock Machine', 'Electric Storm',
+      'Wild Child', 'Thunder God', 'Rock Legend', 'Electric Pulse', 'Wild Ride'
+    ],
+    'Electronic': [
+      'Digital Dreams', 'Electric Pulse', 'Neon Lights', 'Cyber World', 'Digital Age',
+      'Electric Storm', 'Neon Nights', 'Digital Revolution', 'Electric Waves', 'Cyber Space',
+      'Digital Future', 'Electric Energy', 'Neon Dreams', 'Cyber Life', 'Digital World',
+      'Electric Force', 'Neon Vision', 'Cyber Mind', 'Digital Soul', 'Electric Spirit'
+    ],
+    'R&B': [
+      'Smooth Operator', 'Midnight Love', 'Sweet Dreams', 'Love Story', 'Soul Music',
+      'Late Night', 'Love Song', 'Smooth Jazz', 'Midnight Hour', 'Sweet Love',
+      'Love Affair', 'Smooth Ride', 'Midnight Call', 'Sweet Talk', 'Love Connection',
+      'Smooth Talk', 'Midnight Dance', 'Sweet Melody', 'Love Triangle', 'Smooth Move'
+    ],
+    'Country': [
+      'Country Road', 'Wild Horses', 'Mountain High', 'River Deep', 'Prairie Wind',
+      'Country Life', 'Wild West', 'Mountain Song', 'River Song', 'Prairie Dreams',
+      'Country Boy', 'Wild Rose', 'Mountain Man', 'River Bank', 'Prairie Sky',
+      'Country Girl', 'Wild Heart', 'Mountain Top', 'River Flow', 'Prairie Land'
+    ],
+    'Jazz': [
+      'Blue Note', 'Smooth Jazz', 'Midnight Blues', 'Jazz Club', 'Soulful Night',
+      'Blue Moon', 'Smooth Ride', 'Midnight Session', 'Jazz Cafe', 'Soul Music',
+      'Blue Sky', 'Smooth Talk', 'Midnight Hour', 'Jazz Bar', 'Soul Food',
+      'Blue Eyes', 'Smooth Move', 'Midnight Call', 'Jazz Night', 'Soul Mate'
+    ],
+    'Classical': [
+      'Symphony No. 1', 'Moonlight Sonata', 'Spring Awakening', 'Winter Dreams', 'Summer Breeze',
+      'Autumn Leaves', 'Spring Rain', 'Winter Storm', 'Summer Heat', 'Autumn Wind',
+      'Spring Flowers', 'Winter Snow', 'Summer Sun', 'Autumn Harvest', 'Spring Morning',
+      'Winter Night', 'Summer Day', 'Autumn Evening', 'Spring Dance', 'Winter Song'
+    ],
+    'Folk': [
+      'Mountain Song', 'River Flow', 'Prairie Wind', 'Forest Path', 'Ocean Waves',
+      'Mountain High', 'River Deep', 'Prairie Sky', 'Forest Green', 'Ocean Blue',
+      'Mountain Top', 'River Bank', 'Prairie Land', 'Forest Trail', 'Ocean Shore',
+      'Mountain View', 'River Song', 'Prairie Dreams', 'Forest Life', 'Ocean Dreams'
+    ]
+  };
+
+  // Realistic artist names
+  const artistNames = [
+    'Luna Rodriguez', 'Carlos Mendez', 'Sofia Vega', 'Diego Torres', 'Isabella Cruz',
+    'Mateo Silva', 'Valentina Ruiz', 'Sebastian Morales', 'Camila Herrera', 'Nicolas Jimenez',
+    'Gabriela Lopez', 'Andres Castillo', 'Mariana Gutierrez', 'Fernando Ramos', 'Alejandra Moreno',
+    'Ricardo Vargas', 'Daniela Flores', 'Miguel Santos', 'Paola Rojas', 'Javier Mendoza',
+    'Ana Martinez', 'Roberto Diaz', 'Lucia Perez', 'Eduardo Chavez', 'Carmen Rodriguez',
+    'Antonio Garcia', 'Elena Fernandez', 'Rafael Torres', 'Monica Sanchez', 'Luis Herrera',
+    'Patricia Gomez', 'Alberto Ruiz', 'Rosa Morales', 'Francisco Lopez', 'Teresa Castillo',
+    'Manuel Gutierrez', 'Dolores Ramos', 'Jose Moreno', 'Concepcion Vargas', 'Pedro Flores',
+    'Maria Santos', 'Juan Rojas', 'Isabel Mendoza', 'Carlos Martinez', 'Rosa Diaz',
+    'Miguel Perez', 'Carmen Chavez', 'Antonio Rodriguez', 'Elena Garcia', 'Rafael Fernandez'
   ];
+
+  const genres = ['Pop', 'Reggaeton', 'Hip Hop', 'Rock', 'Electronic', 'R&B', 'Country', 'Jazz', 'Classical', 'Folk'];
   
   for (let i = 0; i < additionalTracks; i++) {
     const position = i + 6; // Start from position 6
     const genre = genres[Math.floor(Math.random() * genres.length)];
-    const artist = artists[Math.floor(Math.random() * artists.length)];
+    
+    // Get realistic track title
+    const genreTitles = trackTitles[genre as keyof typeof trackTitles];
+    const title = genreTitles[Math.floor(Math.random() * genreTitles.length)];
+    
+    // Get realistic artist name
+    const artist = artistNames[Math.floor(Math.random() * artistNames.length)];
+    const featuredArtist = artistNames[Math.floor(Math.random() * artistNames.length)];
     
     // Calculate streams based on position (exponential decay)
     const baseStreams = baseTracksForPeriod[0].streams;
@@ -168,8 +250,8 @@ function generateMockChartData(territory: Territory, period: 'daily' | 'weekly')
     const streams = Math.floor(baseStreams * decayFactor * (0.3 + Math.random() * 0.4));
     
     allTracks.push({
-      title: `${genre} Track ${position}`,
-      artist: `${artist} feat. ${artists[Math.floor(Math.random() * artists.length)]}`,
+      title: title,
+      artist: Math.random() > 0.7 ? `${artist} feat. ${featuredArtist}` : artist,
       streams: Math.max(streams, 1000) // Minimum 1000 streams
     });
   }
