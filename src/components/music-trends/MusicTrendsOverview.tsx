@@ -56,7 +56,7 @@ export function MusicTrendsOverview({ territory, period, lastUpdate }: MusicTren
     try {
       // Fetch real chart data with cache-busting
       const timestamp = Date.now();
-      const response = await fetch(`/api/music-trends/spotify-charts?territory=${territory}&period=${period}&t=${timestamp}`, {
+      const response = await fetch(`/api/music-trends/spotify-charts-public?territory=${territory}&period=${period}&t=${timestamp}`, {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache'

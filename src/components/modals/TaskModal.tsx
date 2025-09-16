@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, KeyboardEvent, useEffect } from 'react';
+import React, { useState, KeyboardEvent, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,7 +70,7 @@ export const TaskModal = ({ isOpen, onClose, company, task, mode = 'create' }: T
     }
   }, [task, mode]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     setLoading(true);
@@ -124,8 +124,8 @@ export const TaskModal = ({ isOpen, onClose, company, task, mode = 'create' }: T
     try {
       await updateTask(task.id, {
         status: 'completed',
-        completedAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        completedAt: new Date(),
+        updatedAt: new Date(),
       });
       onClose();
     } catch (error) {

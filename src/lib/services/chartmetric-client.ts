@@ -202,6 +202,111 @@ class ChartmetricClient {
   async getDistributor(distributorId: string) {
     return this.request(`/distributor/${distributorId}`);
   }
+
+  /**
+   * Get Spotify charts for a specific territory and period
+   */
+  async getSpotifyCharts(territory: string, period: 'daily' | 'weekly' = 'weekly', limit: number = 200) {
+    // Try different possible endpoints
+    const possibleEndpoints = [
+      `/charts/spotify/${territory}/${period}`,
+      `/charts/spotify/${territory}`,
+      `/charts/spotify`,
+      `/charts/${territory}/${period}`,
+      `/charts/${territory}`,
+      `/charts`,
+      `/spotify/charts/${territory}/${period}`,
+      `/spotify/charts/${territory}`,
+      `/spotify/charts`
+    ];
+
+    for (const endpoint of possibleEndpoints) {
+      try {
+        console.log(`Trying Chartmetric endpoint: ${endpoint}`);
+        const result = await this.request(endpoint, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log(`✅ Success with endpoint: ${endpoint}`);
+        return result;
+      } catch (error) {
+        console.log(`❌ Failed with endpoint: ${endpoint}`);
+        continue;
+      }
+    }
+
+    throw new Error('No valid Chartmetric charts endpoint found');
+  }
+
+  /**
+   * Get all available chart territories
+   */
+  async getChartTerritories() {
+    const possibleEndpoints = [
+      '/charts/territories',
+      '/territories',
+      '/charts/regions',
+      '/regions'
+    ];
+
+    for (const endpoint of possibleEndpoints) {
+      try {
+        console.log(`Trying Chartmetric territories endpoint: ${endpoint}`);
+        const result = await this.request(endpoint);
+        console.log(`✅ Success with territories endpoint: ${endpoint}`);
+        return result;
+      } catch (error) {
+        console.log(`❌ Failed with territories endpoint: ${endpoint}`);
+        continue;
+      }
+    }
+
+    throw new Error('No valid Chartmetric territories endpoint found');
+  }
+
+  /**
+   * Get chart metadata for a specific chart
+   */
+  async getChartMetadata(chartId: string) {
+    return this.request(`/charts/${chartId}`);
+  }
+
+  /**
+   * Test available endpoints
+   */
+  async testEndpoints() {
+    const testEndpoints = [
+      '/charts',
+      '/charts/spotify',
+      '/charts/spotify/AR',
+      '/charts/spotify/AR/weekly',
+      '/territories',
+      '/regions',
+      '/spotify/charts',
+      '/spotify/charts/AR',
+      '/spotify/charts/AR/weekly'
+    ];
+
+    const results = [];
+    
+    for (const endpoint of testEndpoints) {
+      try {
+        console.log(`Testing endpoint: ${endpoint}`);
+        const result = await this.request(endpoint);
+        results.push({ endpoint, success: true, data: result });
+      } catch (error) {
+        results.push({ 
+          endpoint, 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        });
+      }
+    }
+
+    return results;
+  }
 }
 
 // Singleton instance

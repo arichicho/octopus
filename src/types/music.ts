@@ -231,7 +231,7 @@ export interface StreamsComparison {
   };
 }
 
-export type Territory = 'argentina' | 'spain' | 'mexico' | 'global';
+export type Territory = 'argentina' | 'spanish' | 'mexico' | 'global';
 
 export interface MusicTrendsConfig {
   autoUpdate: {

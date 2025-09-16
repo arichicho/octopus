@@ -20,28 +20,31 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { Territory } from '@/types/music';
-import { MusicTrendsOverview } from '@/components/music-trends/MusicTrendsOverview';
+import { MusicTrendsSummary } from '@/components/music-trends/MusicTrendsSummary';
 import { MusicTrendsCharts } from '@/components/music-trends/MusicTrendsCharts';
-import { MusicTrendsInsights } from '@/components/music-trends/MusicTrendsInsights';
-import { MusicTrendsAlerts } from '@/components/music-trends/MusicTrendsAlerts';
-import { MusicTrendsHealth } from '@/components/music-trends/MusicTrendsHealth';
+import { MusicTrendsInsightsAdvanced } from '@/components/music-trends/MusicTrendsInsightsAdvanced';
+import { MusicTrendsAlertsAdvanced } from '@/components/music-trends/MusicTrendsAlertsAdvanced';
+import { MusicTrendsStatusAdvanced } from '@/components/music-trends/MusicTrendsStatusAdvanced';
+import { MusicTrendsLoadingProgress } from '@/components/music-trends/MusicTrendsLoadingProgress';
 
 export default function MusicTrendsPage() {
   const [currentPeriod, setCurrentPeriod] = useState<'daily' | 'weekly'>('weekly');
   const [currentTerritory, setCurrentTerritory] = useState<Territory>('argentina');
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoadingProgress, setShowLoadingProgress] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [updateStatus, setUpdateStatus] = useState<'current' | 'delayed' | 'error'>('current');
 
   const territories: { value: Territory; label: string; flag: string }[] = [
     { value: 'argentina', label: 'Argentina', flag: '🇦🇷' },
-    { value: 'spain', label: 'España', flag: '🇪🇸' },
+    { value: 'spanish', label: 'España', flag: '🇪🇸' },
     { value: 'mexico', label: 'México', flag: '🇲🇽' },
     { value: 'global', label: 'Global', flag: '🌍' }
   ];
 
   const handleRefresh = async () => {
     setIsLoading(true);
+    setShowLoadingProgress(true);
     try {
       const response = await fetch('/api/music-trends/auto-update', {
         method: 'POST',
@@ -73,6 +76,20 @@ export default function MusicTrendsPage() {
     }
   };
 
+  const handleLoadingComplete = () => {
+    setShowLoadingProgress(false);
+  };
+
+  // Show loading progress when territory or period changes
+  useEffect(() => {
+    setShowLoadingProgress(true);
+    const timer = setTimeout(() => {
+      setShowLoadingProgress(false);
+    }, 6000); // 6 seconds total loading time
+
+    return () => clearTimeout(timer);
+  }, [currentTerritory, currentPeriod]);
+
   const getUpdateStatusBadge = () => {
     switch (updateStatus) {
       case 'current':
@@ -85,6 +102,19 @@ export default function MusicTrendsPage() {
         return <Badge variant="outline">Desconocido</Badge>;
     }
   };
+
+  // Show loading progress overlay
+  if (showLoadingProgress) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <MusicTrendsLoadingProgress
+          territory={currentTerritory}
+          period={currentPeriod}
+          onComplete={handleLoadingComplete}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -208,7 +238,7 @@ export default function MusicTrendsPage() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <MusicTrendsOverview 
+          <MusicTrendsSummary 
             territory={currentTerritory}
             period={currentPeriod}
             lastUpdate={lastUpdate}
@@ -223,21 +253,24 @@ export default function MusicTrendsPage() {
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-4">
-          <MusicTrendsInsights 
+          <MusicTrendsInsightsAdvanced 
             territory={currentTerritory}
             period={currentPeriod}
           />
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-4">
-          <MusicTrendsAlerts 
+          <MusicTrendsAlertsAdvanced 
             territory={currentTerritory}
             period={currentPeriod}
           />
         </TabsContent>
 
         <TabsContent value="health" className="space-y-4">
-          <MusicTrendsHealth />
+          <MusicTrendsStatusAdvanced 
+            territory={currentTerritory}
+            period={currentPeriod}
+          />
         </TabsContent>
       </Tabs>
     </div>

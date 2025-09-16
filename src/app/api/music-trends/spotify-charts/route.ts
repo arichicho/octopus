@@ -74,18 +74,18 @@ function generateMockChartData(territory: Territory, period: 'daily' | 'weekly')
         { title: "Chula Vente", artist: "Luis R Conriquez, Fuerza Regida, Neton Vega", streams: 1133030 }
       ]
     },
-    spain: {
+    spanish: {
       weekly: [
-        { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 3640901 },
+        { title: "Me Mareo (w/ JC Reyes)", artist: "Kidd Voodoo", streams: 3640901 },
         { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 3409734 },
-        { title: "YO Y TÚ", artist: "Ovy On The Drums, Quevedo, Beéle", streams: 3031046 },
+        { title: "YO y TÚ (w/ Quevedo, Beéle)", artist: "Ovy On The Drums", streams: 3031046 },
         { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 2911529 },
         { title: "La Plena - W Sound 05", artist: "W Sound, Beéle, Ovy On The Drums", streams: 2777044 }
       ],
       daily: [
-        { title: "Me Mareo", artist: "Kidd Voodoo, JC Reyes", streams: 480183 },
+        { title: "Me Mareo (w/ JC Reyes)", artist: "Kidd Voodoo", streams: 480183 },
         { title: "TU VAS SIN (fav)", artist: "Rels B", streams: 417677 },
-        { title: "YO Y TÚ", artist: "Ovy On The Drums, Quevedo, Beéle", streams: 360214 },
+        { title: "YO y TÚ (w/ Quevedo, Beéle)", artist: "Ovy On The Drums", streams: 360214 },
         { title: "QLOO*", artist: "Young Cister, Kreamly", streams: 357483 },
         { title: "La Plena - W Sound 05", artist: "W Sound, Beéle, Ovy On The Drums", streams: 322289 }
       ]
@@ -333,7 +333,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!['argentina', 'spain', 'mexico', 'global'].includes(territory)) {
+    if (!['argentina', 'spanish', 'mexico', 'global'].includes(territory)) {
       return NextResponse.json(
         { error: 'Invalid territory' },
         { status: 400 }
