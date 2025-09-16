@@ -36,6 +36,7 @@ export function MusicTrendsCharts({ territory, period }: MusicTrendsChartsProps)
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'position' | 'change' | 'streams'>('position');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [reportDate, setReportDate] = useState<Date | null>(null);
 
   useEffect(() => {
     fetchChartData();
@@ -82,9 +83,18 @@ export function MusicTrendsCharts({ territory, period }: MusicTrendsChartsProps)
           period: track.period,
           date: new Date(track.date)
         }));
-        
+
         setTracks(apiTracks);
+
+        // Set the report date from the first track or current date
+        if (apiTracks.length > 0 && apiTracks[0].date) {
+          setReportDate(apiTracks[0].date);
+        } else {
+          setReportDate(new Date());
+        }
       } else {
+        // Even if no data, set current date
+        setReportDate(new Date());
         throw new Error(result.error || 'Failed to fetch chart data');
       }
     } catch (error) {
@@ -302,9 +312,22 @@ export function MusicTrendsCharts({ territory, period }: MusicTrendsChartsProps)
       {/* Chart Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Music className="w-5 h-5" />
-            Top 50 - {territory.charAt(0).toUpperCase() + territory.slice(1)} ({period === 'daily' ? 'Diario' : 'Semanal'})
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Music className="w-5 h-5" />
+              <span>
+                Top 50 - {territory.charAt(0).toUpperCase() + territory.slice(1)} ({period === 'daily' ? 'Diario' : 'Semanal'})
+              </span>
+            </div>
+            {reportDate && (
+              <Badge variant="outline" className="ml-2 font-normal">
+                {reportDate.toLocaleDateString('es-ES', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>

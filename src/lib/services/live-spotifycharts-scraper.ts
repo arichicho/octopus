@@ -304,13 +304,14 @@ export class LiveSpotifyChartsScraper {
    * Get territory code for SpotifyCharts URLs
    */
   private getTerritoryCode(territory: Territory): string {
-    const territoryCodes = {
+    const territoryCodes: { [key: string]: string } = {
       'argentina': 'ar',
-      'mexico': 'mx', 
+      'mexico': 'mx',
       'spain': 'es',
+      'spanish': 'es', // Map 'spanish' to 'es' for Spain
       'global': 'global'
     };
-    
+
     return territoryCodes[territory] || 'global';
   }
 

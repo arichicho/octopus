@@ -52,6 +52,28 @@ interface InsightsData {
   labelDistributor: LabelDistributorAnalysis;
   risingArtists: RisingArtistsAnalysis;
   watchlist: WatchlistAnalysis;
+  labelMarketShare: {
+    major_labels: Array<{
+      label: string;
+      tracks_count: number;
+      market_share_pct: number;
+      avg_position: number;
+      top10_tracks: number;
+      total_streams: number;
+    }>;
+    independent_labels: Array<{
+      label: string;
+      tracks_count: number;
+      market_share_pct: number;
+      avg_position: number;
+      streams: number;
+    }>;
+    market_concentration: {
+      top3_labels_share: number;
+      top5_labels_share: number;
+      hhi_index: number;
+    };
+  };
   lastUpdated: Date;
 }
 
@@ -194,7 +216,7 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
 
       {/* Insights Tabs */}
       <Tabs defaultValue="movers" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="movers" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             Movers
@@ -210,6 +232,10 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
           <TabsTrigger value="genres" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
             Géneros
+          </TabsTrigger>
+          <TabsTrigger value="labels" className="flex items-center gap-2">
+            <Building className="w-4 h-4" />
+            Labels
           </TabsTrigger>
           <TabsTrigger value="watchlist" className="flex items-center gap-2">
             <Star className="w-4 h-4" />
@@ -554,6 +580,111 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Labels Tab */}
+        <TabsContent value="labels" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Major Labels */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="w-5 h-5 text-blue-600" />
+                  Major Labels Market Share
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {data.labelMarketShare.major_labels.slice(0, 6).map((label, index) => (
+                    <div key={label.label} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="font-medium text-sm">{label.label}</p>
+                          <p className="text-xs text-gray-600">{label.tracks_count} tracks</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="default" className="bg-blue-600 mb-1">
+                          {label.market_share_pct.toFixed(1)}%
+                        </Badge>
+                        <p className="text-xs text-gray-500">Top 10: {label.top10_tracks}</p>
+                        <p className="text-xs text-gray-400">Avg: #{label.avg_position.toFixed(0)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Independent Labels */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="w-5 h-5 text-green-600" />
+                  Independent Labels
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {data.labelMarketShare.independent_labels.slice(0, 6).map((label, index) => (
+                    <div key={label.label} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="font-medium text-sm">{label.label}</p>
+                          <p className="text-xs text-gray-600">{label.tracks_count} tracks</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="default" className="bg-green-600 mb-1">
+                          {label.market_share_pct.toFixed(1)}%
+                        </Badge>
+                        <p className="text-xs text-gray-500">{formatNumber(label.streams)}</p>
+                        <p className="text-xs text-gray-400">Avg: #{label.avg_position.toFixed(0)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Market Concentration Metrics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Concentración del Mercado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <p className="text-2xl font-bold text-purple-600">{data.labelMarketShare.market_concentration.top3_labels_share.toFixed(1)}%</p>
+                  <p className="text-sm text-gray-600">Top 3 Labels</p>
+                  <p className="text-xs text-gray-500">Market Share</p>
+                </div>
+                <div className="text-center p-4 bg-indigo-50 rounded-lg">
+                  <p className="text-2xl font-bold text-indigo-600">{data.labelMarketShare.market_concentration.top5_labels_share.toFixed(1)}%</p>
+                  <p className="text-sm text-gray-600">Top 5 Labels</p>
+                  <p className="text-xs text-gray-500">Market Share</p>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <p className="text-2xl font-bold text-orange-600">{data.labelMarketShare.market_concentration.hhi_index.toFixed(0)}</p>
+                  <p className="text-sm text-gray-600">HHI Index</p>
+                  <p className="text-xs text-gray-500">
+                    {data.labelMarketShare.market_concentration.hhi_index < 1500 ? 'Competitivo' :
+                     data.labelMarketShare.market_concentration.hhi_index < 2500 ? 'Moderado' : 'Concentrado'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Watchlist Tab */}

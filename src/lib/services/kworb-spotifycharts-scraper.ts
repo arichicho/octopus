@@ -9,17 +9,20 @@ export class KworbSpotifyChartsScraper {
   async getRealSpotifyChartsData(territory: Territory, period: 'daily' | 'weekly'): Promise<SpotifyChartsData> {
     try {
       console.log(`🌐 Scraping REAL SpotifyCharts data from Kworb.net for ${territory} ${period}`);
-      
+
       const url = this.getKworbUrl(territory, period);
-      console.log(`📡 Fetching: ${url}`);
-      
+      console.log(`📡 Fetching from Kworb: ${url}`);
+
+      // Server-side fetch doesn't have CORS restrictions
       const response = await fetch(url, {
+        method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         }
       });
 
@@ -34,13 +37,16 @@ export class KworbSpotifyChartsScraper {
         throw new Error('No tracks found in Kworb data');
       }
 
-      console.log(`✅ Successfully scraped ${tracks.length} REAL tracks from Kworb.net`);
-      
+      // Try to extract the actual chart date from the HTML
+      const chartDate = this.extractChartDate(html) || new Date();
+
+      console.log(`✅ Successfully scraped ${tracks.length} REAL tracks from Kworb.net (Date: ${chartDate.toISOString()})`);
+
       return {
-        tracks,
+        tracks: tracks.map(track => ({ ...track, date: chartDate })),
         territory,
         period,
-        date: new Date().toISOString(),
+        date: chartDate.toISOString(),
         totalTracks: tracks.length
       };
       
@@ -68,8 +74,9 @@ export class KworbSpotifyChartsScraper {
       argentina: 'ar',
       mexico: 'mx',
       spanish: 'es', // Spain uses 'es' in Kworb URLs
+      spain: 'es',   // Also handle 'spain' territory
       global: 'global',
-    };
+    } as any;
     
     return territoryCodes[territory] || 'global';
   }
@@ -79,18 +86,22 @@ export class KworbSpotifyChartsScraper {
    */
   private parseKworbHTML(html: string, territory: Territory, period: 'daily' | 'weekly'): SpotifyChartsTrack[] {
     const tracks: SpotifyChartsTrack[] = [];
-    
+
     try {
-      // Parse HTML manually without cheerio
-      const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
+      // Look for the main chart table in Kworb HTML
+      // Kworb has multiple tables, we need the one with class 'd'
+      const tableMatch = html.match(/<table[^>]*class="[^"]*d[^"]*"[^>]*>([\s\S]*?)<\/table>/i) ||
+                        html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
+
       if (!tableMatch) {
         console.log('No table found in HTML');
+        console.log('HTML preview:', html.substring(0, 500));
         return [];
       }
 
       const tableContent = tableMatch[1];
       const rowMatches = tableContent.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
-      
+
       if (!rowMatches) {
         console.log('No table rows found');
         return [];
@@ -109,18 +120,47 @@ export class KworbSpotifyChartsScraper {
           return cell.replace(/<[^>]*>/g, '').trim();
         });
 
-        // Kworb table structure: Pos | P+ | Artist and Title | Wks | Pk | (x?) | Streams | Streams+ | Total
+        // Kworb table structure for daily/weekly:
+        // Daily: Pos | P+ | Artist and Title | Days | Pk | Streams
+        // Weekly: Pos | P+ | Artist and Title | Wks | Pk | (x?) | Streams | Streams+ | Total
         const position = parseInt(cells[0]) || i;
         const cambio = cells[1]; // Position change indicator (=, +2, -1, +1...)
         const artistAndTitle = cells[2]; // Artist - Title (combined)
-        const semanasText = cells[3]; // Weeks on chart
+        const semanasText = cells[3]; // Weeks/Days on chart
         const picoText = cells[4]; // Peak position
-        const streamsText = cells[6]; // Streams (skip the (x?) column)
-        
-        // Parse streams - handle different formats
+
+        // Parse streams - Kworb shows streams in different columns
+        // Structure for Argentina daily (from actual data):
+        // Pos | P+ | Artist-Title | Days | Pk | (x?) | Streams | Streams+ | Daily Total | Weekly+ | Total
+        // 0     1    2             3      4    5      6         7          8            9        10
         let streams = 0;
+        let streamsText = '';
+
+        // For daily charts: column 6 has today's streams, column 10 has total
+        // For weekly charts: similar structure but different meaning
+        if (period === 'daily') {
+          // Use today's streams (column 6) or total (column 10)
+          streamsText = cells[6] || cells[10] || cells[5] || '';
+        } else {
+          // For weekly, try total column first
+          streamsText = cells[10] || cells[8] || cells[6] || '';
+        }
+
+        // Debug log to see what we're parsing
+        if (i <= 3) {
+          console.log(`Row ${i}: Cell count: ${cells.length}, Streams text: '${streamsText}'`);
+          if (cells.length > 10) {
+            console.log(`  Col 6: '${cells[6]}', Col 8: '${cells[8]}', Col 10: '${cells[10]}'`);
+          }
+        }
+
+        // Parse streams - handle different formats
         if (streamsText) {
-          const streamMatch = streamsText.match(/(\d{1,3}(?:,\d{3})*)/);
+          // Remove any HTML tags first
+          const cleanStreams = streamsText.replace(/<[^>]*>/g, '').trim();
+
+          // Match numbers with commas (e.g., "426,889" or "2,821,686")
+          const streamMatch = cleanStreams.match(/(\d{1,3}(?:,\d{3})*|\d+)/);
           if (streamMatch) {
             streams = parseInt(streamMatch[1].replace(/,/g, '')) || 0;
           }
@@ -168,16 +208,27 @@ export class KworbSpotifyChartsScraper {
         // Extract artist and title from the combined cell
         let artist = '';
         let title = '';
-        
+
         if (artistAndTitle) {
-          // Remove HTML links and extract text
-          const cleanText = artistAndTitle.replace(/<[^>]*>/g, '').trim();
-          const titleMatch = cleanText.match(/^(.+?)\s*-\s*(.+)$/);
-          if (titleMatch) {
-            artist = titleMatch[1].trim();
-            title = titleMatch[2].trim();
+          // Remove HTML links but preserve text
+          const cleanText = artistAndTitle
+            .replace(/<a[^>]*>/g, '')
+            .replace(/<\/a>/g, '')
+            .replace(/<[^>]*>/g, '')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#039;/g, "'")
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .trim();
+
+          // Kworb format is "Artist - Title"
+          const parts = cleanText.split(' - ');
+          if (parts.length >= 2) {
+            artist = parts[0].trim();
+            title = parts.slice(1).join(' - ').trim(); // Handle titles with dashes
           } else {
-            // Fallback: if no dash found, treat the whole thing as title
+            // Sometimes format might be different, try to extract
             title = cleanText;
             artist = 'Unknown Artist';
           }
@@ -210,6 +261,60 @@ export class KworbSpotifyChartsScraper {
     } catch (error) {
       console.error('Error parsing Kworb HTML:', error);
       return [];
+    }
+  }
+
+  /**
+   * Extract the chart date from Kworb HTML
+   */
+  private extractChartDate(html: string): Date | null {
+    try {
+      // Kworb shows the chart date in the page title like:
+      // "Spotify Daily Chart - Argentina - 2025/09/14"
+      // "Spotify Weekly Chart - Argentina - 2025/09/08 - 2025/09/14"
+
+      const datePatterns = [
+        // Kworb specific format: YYYY/MM/DD
+        /Spotify\s+(?:Daily|Weekly)\s+Chart\s+[^-]+\s+-\s+(\d{4}\/\d{2}\/\d{2})/i,
+        // Alternative with hyphen: YYYY-MM-DD
+        /Spotify\s+(?:Daily|Weekly)\s+Chart\s+[^-]+\s+-\s+(\d{4}-\d{2}-\d{2})/i,
+        // For weekly charts with date range
+        /Spotify\s+Weekly\s+Chart\s+[^-]+\s+-\s+\d{4}[\/\-]\d{2}[\/\-]\d{2}\s+-\s+(\d{4}[\/\-]\d{2}[\/\-]\d{2})/i,
+        // Generic date formats as fallback
+        /(\d{4}[\/\-]\d{2}[\/\-]\d{2})/,  // YYYY/MM/DD or YYYY-MM-DD
+        /(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i,
+        /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})/i
+      ];
+
+      for (const pattern of datePatterns) {
+        const match = html.match(pattern);
+        if (match && match[1]) {
+          const dateStr = match[1].trim();
+          console.log(`Found potential date string: '${dateStr}'`);
+
+          // Clean up the date string and convert format
+          const cleanDateStr = dateStr
+            .replace(/&nbsp;/g, ' ')
+            .replace(/\//g, '-')  // Convert YYYY/MM/DD to YYYY-MM-DD
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const date = new Date(cleanDateStr + 'T00:00:00');
+          if (!isNaN(date.getTime())) {
+            console.log(`✅ Extracted chart date: ${date.toISOString().split('T')[0]}`);
+            return date;
+          }
+        }
+      }
+
+      // If no date found, use yesterday's date as charts are usually 1 day behind
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      console.log(`⚠️ No chart date found in HTML, using yesterday: ${yesterday.toISOString()}`);
+      return yesterday;
+    } catch (error) {
+      console.error('Error extracting chart date:', error);
+      return null;
     }
   }
 }

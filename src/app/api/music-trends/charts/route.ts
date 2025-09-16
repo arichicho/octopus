@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Territory } from '@/types/music';
-import { musicDataIngestion } from '@/lib/services/music-data-ingestion';
+import { getRealSpotifyChartsDataFromKworb } from '@/lib/services/kworb-spotifycharts-scraper';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,55 +10,66 @@ export async function GET(request: NextRequest) {
 
     if (!territory || !period) {
       return NextResponse.json(
-        { error: 'Missing territory or period parameter' },
+        { success: false, error: 'Missing territory or period parameter' },
         { status: 400 }
       );
     }
 
     if (!['argentina', 'spanish', 'mexico', 'global'].includes(territory)) {
       return NextResponse.json(
-        { error: 'Invalid territory' },
+        { success: false, error: 'Invalid territory' },
         { status: 400 }
       );
     }
 
     if (!['daily', 'weekly'].includes(period)) {
       return NextResponse.json(
-        { error: 'Invalid period' },
+        { success: false, error: 'Invalid period' },
         { status: 400 }
       );
     }
 
-    console.log(`📊 Getting charts data for ${territory} ${period}`);
+    console.log(`📊 Getting REAL charts data from Kworb for ${territory} ${period}`);
 
-    // Get real data from music data ingestion
-    const tracks = await musicDataIngestion.ingestData(territory, period);
-    
+    // Get real data directly from Kworb scraper
+    const kworbData = await getRealSpotifyChartsDataFromKworb(territory, period);
+    const tracks = kworbData.tracks;
+
     if (tracks.length === 0) {
-      return NextResponse.json(
-        { error: 'No data available for the specified territory and period' },
-        { status: 404 }
-      );
+      console.warn('No data available from Kworb, returning empty array');
+      return NextResponse.json({
+        success: true,
+        data: [],
+        metadata: {
+          territory,
+          period,
+          totalTracks: 0,
+          generatedAt: new Date().toISOString(),
+          source: 'kworb'
+        }
+      });
     }
 
-    // Convert to the format expected by the frontend
-    const chartData = tracks.map(track => ({
-      id: track.track_id || `track-${track.position}`,
-      title: track.track_name || 'Unknown Title',
-      artist: track.artists || 'Unknown Artist',
-      position: track.position,
-      previousPosition: track.previous_position,
-      streams: track.streams,
-      previousStreams: track.previous_streams,
-      peakPosition: track.peak_position,
-      weeksOnChart: track.weeks_on_chart,
-      isNewEntry: track.is_debut,
-      isReEntry: track.is_reentry,
-      isNewPeak: track.is_new_peak,
-      territory: track.territory,
-      period: track.period,
-      date: track.date
+    // The tracks from Kworb are already in the correct format
+    const chartData = tracks.map((track, index) => ({
+      id: track.spotifyId || `track-${track.position}`,
+      title: track.title || 'Unknown Title',
+      artist: track.artist || 'Unknown Artist',
+      position: track.position || (index + 1),
+      previousPosition: track.previousPosition,
+      streams: track.streams || 0,
+      previousStreams: track.previousStreams,
+      peakPosition: track.peakPosition || track.position,
+      weeksOnChart: track.weeksOnChart || 1,
+      isNewEntry: track.isNewEntry || false,
+      isReEntry: track.isReEntry || false,
+      isNewPeak: track.isNewPeak || false,
+      territory: track.territory || territory,
+      period: track.period || period,
+      date: track.date || new Date()
     }));
+
+    console.log(`✅ Successfully returning ${chartData.length} tracks from Kworb`);
 
     return NextResponse.json({
       success: true,
@@ -66,20 +77,27 @@ export async function GET(request: NextRequest) {
       metadata: {
         territory,
         period,
-        totalTracks: tracks.length,
+        totalTracks: chartData.length,
         generatedAt: new Date().toISOString(),
+        source: 'kworb'
       }
     });
 
   } catch (error) {
-    console.error('Error getting charts data:', error);
-    return NextResponse.json(
-      { 
-        success: false,
-        error: 'Failed to get charts data',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    console.error('Error getting charts data from Kworb:', error);
+
+    // Return empty data instead of error to prevent frontend crash
+    return NextResponse.json({
+      success: true,
+      data: [],
+      metadata: {
+        territory: 'global',
+        period: 'weekly',
+        totalTracks: 0,
+        generatedAt: new Date().toISOString(),
+        source: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    });
   }
 }
