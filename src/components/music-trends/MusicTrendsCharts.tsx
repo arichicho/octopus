@@ -116,8 +116,8 @@ export function MusicTrendsCharts({ territory, period }: MusicTrendsChartsProps)
 
   const filterAndSortTracks = () => {
     let filtered = tracks.filter(track => 
-      track.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      track.artist.toLowerCase().includes(searchTerm.toLowerCase())
+      (track.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (track.artist || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     filtered.sort((a, b) => {

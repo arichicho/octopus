@@ -43,18 +43,18 @@ export async function GET(request: NextRequest) {
 
     // Convert to the format expected by the frontend
     const chartData = tracks.map(track => ({
-      id: track.id,
-      title: track.title,
-      artist: track.artist,
+      id: track.track_id || `track-${track.position}`,
+      title: track.track_name || 'Unknown Title',
+      artist: track.artists || 'Unknown Artist',
       position: track.position,
-      previousPosition: track.previousPosition,
+      previousPosition: track.previous_position,
       streams: track.streams,
-      previousStreams: track.previousStreams,
-      peakPosition: track.peakPosition,
-      weeksOnChart: track.weeksOnChart,
-      isNewEntry: track.isNewEntry,
-      isReEntry: track.isReEntry,
-      isNewPeak: track.isNewPeak,
+      previousStreams: track.previous_streams,
+      peakPosition: track.peak_position,
+      weeksOnChart: track.weeks_on_chart,
+      isNewEntry: track.is_debut,
+      isReEntry: track.is_reentry,
+      isNewPeak: track.is_new_peak,
       territory: track.territory,
       period: track.period,
       date: track.date
