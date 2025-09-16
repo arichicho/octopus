@@ -275,6 +275,17 @@ export class ChartmetricLabelEnricher {
     independent_labels: LabelMarketShare[];
     market_concentration: MarketConcentration;
   } {
+    if (!enrichedTracks || enrichedTracks.length === 0) {
+      return {
+        major_labels: [],
+        independent_labels: [],
+        market_concentration: {
+          top3_labels_share: 0,
+          top5_labels_share: 0,
+          hhi_index: 0
+        }
+      };
+    }
     const labelCounts = new Map<string, {
       tracks: EnrichedTrackData[];
       type: 'major' | 'independent';

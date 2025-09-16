@@ -74,7 +74,10 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
     }
   };
 
-  const formatNumber = (num: number): string => {
+  const formatNumber = (num: number | undefined): string => {
+    if (num === undefined || num === null || isNaN(num)) {
+      return '0';
+    }
     if (num >= 1000000) {
       return `${(num / 1000000).toFixed(1)}M`;
     } else if (num >= 1000) {
@@ -83,8 +86,18 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
     return num.toString();
   };
 
-  const formatPercentage = (num: number): string => {
+  const formatPercentage = (num: number | undefined): string => {
+    if (num === undefined || num === null || isNaN(num)) {
+      return '0.0%';
+    }
     return `${num >= 0 ? '+' : ''}${num.toFixed(1)}%`;
+  };
+
+  const safeToFixed = (num: number | undefined, decimals: number = 1): string => {
+    if (num === undefined || num === null || isNaN(num)) {
+      return '0' + (decimals > 0 ? '.' + '0'.repeat(decimals) : '');
+    }
+    return num.toFixed(decimals);
   };
 
   const getChangeColor = (value: number): string => {
@@ -223,7 +236,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Turnover Rate</p>
-                <p className="text-2xl font-bold">{data.kpis.turnover_rate.toFixed(1)}%</p>
+                <p className="text-2xl font-bold">{safeToFixed(data.kpis.turnover_rate, 1)}%</p>
                 <p className="text-xs text-gray-500">Rotación total</p>
               </div>
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -238,7 +251,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Volatilidad</p>
-                <p className="text-2xl font-bold">{data.movers.volatility_index.toFixed(1)}</p>
+                <p className="text-2xl font-bold">{safeToFixed(data.movers.volatility_index, 1)}</p>
                 <p className="text-xs text-gray-500">Índice de cambio</p>
               </div>
               <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -266,7 +279,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Share</span>
-                <span className="font-medium">{(data.kpis.top10_share * 100).toFixed(1)}%</span>
+                <span className="font-medium">{safeToFixed((data.kpis.top10_share || 0) * 100, 1)}%</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">vs Anterior</span>
@@ -294,7 +307,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Share</span>
-                <span className="font-medium">{(data.kpis.top50_share * 100).toFixed(1)}%</span>
+                <span className="font-medium">{safeToFixed((data.kpis.top50_share || 0) * 100, 1)}%</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">vs Anterior</span>
@@ -322,7 +335,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Share</span>
-                <span className="font-medium">{(data.kpis.top200_share * 100).toFixed(1)}%</span>
+                <span className="font-medium">{safeToFixed((data.kpis.top200_share || 0) * 100, 1)}%</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">vs Anterior</span>
@@ -352,7 +365,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
               </div>
               <p className="text-2xl font-bold text-blue-600">{data.entries.debut_count}</p>
               <p className="text-sm text-gray-600">Nuevos</p>
-              <p className="text-xs text-gray-500">{data.entries.turnover_new_pct.toFixed(1)}% del total</p>
+              <p className="text-xs text-gray-500">{safeToFixed(data.entries.turnover_new_pct, 1)}% del total</p>
             </div>
             
             <div className="text-center">
@@ -361,7 +374,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
               </div>
               <p className="text-2xl font-bold text-green-600">{data.entries.reentry_count}</p>
               <p className="text-sm text-gray-600">Re-entradas</p>
-              <p className="text-xs text-gray-500">{data.entries.turnover_reentry_pct.toFixed(1)}% del total</p>
+              <p className="text-xs text-gray-500">{safeToFixed(data.entries.turnover_reentry_pct, 1)}% del total</p>
             </div>
             
             <div className="text-center">
@@ -370,7 +383,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
               </div>
               <p className="text-2xl font-bold text-red-600">{data.entries.exit_count}</p>
               <p className="text-sm text-gray-600">Salidas</p>
-              <p className="text-xs text-gray-500">{data.entries.turnover_exit_pct.toFixed(1)}% del total</p>
+              <p className="text-xs text-gray-500">{safeToFixed(data.entries.turnover_exit_pct, 1)}% del total</p>
             </div>
           </div>
         </CardContent>

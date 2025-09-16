@@ -118,7 +118,10 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
     }
   };
 
-  const formatNumber = (num: number): string => {
+  const formatNumber = (num: number | undefined): string => {
+    if (num === undefined || num === null || isNaN(num)) {
+      return '0';
+    }
     if (num >= 1000000) {
       return `${(num / 1000000).toFixed(1)}M`;
     } else if (num >= 1000) {
@@ -127,8 +130,18 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
     return num.toString();
   };
 
-  const formatPercentage = (num: number): string => {
+  const formatPercentage = (num: number | undefined): string => {
+    if (num === undefined || num === null || isNaN(num)) {
+      return '0.0%';
+    }
     return `${num >= 0 ? '+' : ''}${num.toFixed(1)}%`;
+  };
+
+  const safeToFixed = (num: number | undefined, decimals: number = 1): string => {
+    if (num === undefined || num === null || isNaN(num)) {
+      return '0' + (decimals > 0 ? '.' + '0'.repeat(decimals) : '');
+    }
+    return num.toFixed(decimals);
   };
 
   const getChangeColor = (value: number): string => {
@@ -324,15 +337,15 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold">{data.movers.mean_delta_pos.toFixed(1)}</p>
+                  <p className="text-2xl font-bold">{safeToFixed(data.movers.mean_delta_pos, 1)}</p>
                   <p className="text-sm text-gray-600">Cambio Promedio</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold">{data.movers.median_delta_pos.toFixed(1)}</p>
+                  <p className="text-2xl font-bold">{safeToFixed(data.movers.median_delta_pos, 1)}</p>
                   <p className="text-sm text-gray-600">Cambio Mediano</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold">{data.movers.volatility_index.toFixed(1)}</p>
+                  <p className="text-2xl font-bold">{safeToFixed(data.movers.volatility_index, 1)}</p>
                   <p className="text-sm text-gray-600">Índice Volatilidad</p>
                 </div>
               </div>
@@ -423,17 +436,17 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <p className="text-2xl font-bold text-blue-600">{data.entries.debut_count}</p>
                   <p className="text-sm text-gray-600">Nuevos</p>
-                  <p className="text-xs text-gray-500">{data.entries.turnover_new_pct.toFixed(1)}%</p>
+                  <p className="text-xs text-gray-500">{safeToFixed(data.entries.turnover_new_pct, 1)}%</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <p className="text-2xl font-bold text-green-600">{data.entries.reentry_count}</p>
                   <p className="text-sm text-gray-600">Re-entradas</p>
-                  <p className="text-xs text-gray-500">{data.entries.turnover_reentry_pct.toFixed(1)}%</p>
+                  <p className="text-xs text-gray-500">{safeToFixed(data.entries.turnover_reentry_pct, 1)}%</p>
                 </div>
                 <div className="text-center p-4 bg-red-50 rounded-lg">
                   <p className="text-2xl font-bold text-red-600">{data.entries.exit_count}</p>
                   <p className="text-sm text-gray-600">Salidas</p>
-                  <p className="text-xs text-gray-500">{data.entries.turnover_exit_pct.toFixed(1)}%</p>
+                  <p className="text-xs text-gray-500">{safeToFixed(data.entries.turnover_exit_pct, 1)}%</p>
                 </div>
               </div>
             </CardContent>
@@ -466,7 +479,7 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
                       </div>
                       <div className="text-right">
                         <Badge variant="default" className="bg-purple-600">
-                          {track.momentum_score?.toFixed(0)} pts
+                          {safeToFixed(track.momentum_score, 0)} pts
                         </Badge>
                         <p className="text-xs text-gray-500">#{track.position}</p>
                       </div>
@@ -499,7 +512,7 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
                       </div>
                       <div className="text-right">
                         <Badge variant="default" className="bg-yellow-600">
-                          {track.momentum_score?.toFixed(0)} pts
+                          {safeToFixed(track.momentum_score, 0)} pts
                         </Badge>
                         <p className="text-xs text-gray-500">#{track.position}</p>
                       </div>
@@ -537,9 +550,9 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
                       </div>
                       <div className="text-right">
                         <Badge variant="outline">
-                          {genre.percentage.toFixed(1)}%
+                          {safeToFixed(genre.percentage, 1)}%
                         </Badge>
-                        <p className="text-xs text-gray-500">Pos. #{genre.avg_position.toFixed(0)}</p>
+                        <p className="text-xs text-gray-500">Pos. #{safeToFixed(genre.avg_position, 0)}</p>
                       </div>
                     </div>
                   ))}
@@ -570,7 +583,7 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
                       </div>
                       <div className="text-right">
                         <Badge variant="outline">
-                          {origin.percentage.toFixed(1)}%
+                          {safeToFixed(origin.percentage, 1)}%
                         </Badge>
                         <p className="text-xs text-gray-500">{origin.count} tracks</p>
                       </div>
@@ -608,10 +621,10 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
                       </div>
                       <div className="text-right">
                         <Badge variant="default" className="bg-blue-600 mb-1">
-                          {label.market_share_pct.toFixed(1)}%
+                          {safeToFixed(label.market_share_pct, 1)}%
                         </Badge>
-                        <p className="text-xs text-gray-500">Top 10: {label.top10_tracks}</p>
-                        <p className="text-xs text-gray-400">Avg: #{label.avg_position.toFixed(0)}</p>
+                        <p className="text-xs text-gray-500">Top 10: {label.top10_tracks || 0}</p>
+                        <p className="text-xs text-gray-400">Avg: #{safeToFixed(label.avg_position, 0)}</p>
                       </div>
                     </div>
                   ))}
@@ -642,10 +655,10 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
                       </div>
                       <div className="text-right">
                         <Badge variant="default" className="bg-green-600 mb-1">
-                          {label.market_share_pct.toFixed(1)}%
+                          {safeToFixed(label.market_share_pct, 1)}%
                         </Badge>
-                        <p className="text-xs text-gray-500">{formatNumber(label.streams)}</p>
-                        <p className="text-xs text-gray-400">Avg: #{label.avg_position.toFixed(0)}</p>
+                        <p className="text-xs text-gray-500">{formatNumber(label.streams || label.total_streams)}</p>
+                        <p className="text-xs text-gray-400">Avg: #{safeToFixed(label.avg_position, 0)}</p>
                       </div>
                     </div>
                   ))}
@@ -665,17 +678,17 @@ export function MusicTrendsInsightsAdvanced({ territory, period }: MusicTrendsIn
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <p className="text-2xl font-bold text-purple-600">{data.labelMarketShare.market_concentration.top3_labels_share.toFixed(1)}%</p>
+                  <p className="text-2xl font-bold text-purple-600">{safeToFixed(data.labelMarketShare.market_concentration.top3_labels_share, 1)}%</p>
                   <p className="text-sm text-gray-600">Top 3 Labels</p>
                   <p className="text-xs text-gray-500">Market Share</p>
                 </div>
                 <div className="text-center p-4 bg-indigo-50 rounded-lg">
-                  <p className="text-2xl font-bold text-indigo-600">{data.labelMarketShare.market_concentration.top5_labels_share.toFixed(1)}%</p>
+                  <p className="text-2xl font-bold text-indigo-600">{safeToFixed(data.labelMarketShare.market_concentration.top5_labels_share, 1)}%</p>
                   <p className="text-sm text-gray-600">Top 5 Labels</p>
                   <p className="text-xs text-gray-500">Market Share</p>
                 </div>
                 <div className="text-center p-4 bg-orange-50 rounded-lg">
-                  <p className="text-2xl font-bold text-orange-600">{data.labelMarketShare.market_concentration.hhi_index.toFixed(0)}</p>
+                  <p className="text-2xl font-bold text-orange-600">{safeToFixed(data.labelMarketShare.market_concentration.hhi_index, 0)}</p>
                   <p className="text-sm text-gray-600">HHI Index</p>
                   <p className="text-xs text-gray-500">
                     {data.labelMarketShare.market_concentration.hhi_index < 1500 ? 'Competitivo' :
