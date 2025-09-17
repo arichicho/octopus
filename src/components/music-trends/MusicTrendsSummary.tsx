@@ -14,7 +14,8 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  Target
 } from 'lucide-react';
 import { Territory } from '@/types/music';
 import { ExecutiveKPIs, StreamsAggregates, EntriesAnalysis, MoversAnalysis } from '@/types/music-analysis';
@@ -137,7 +138,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {[...Array(8)].map((_, i) => (
             <Card key={i}>
               <CardContent className="p-6">
@@ -222,7 +223,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
       </div>
 
       {/* Executive KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -278,6 +279,21 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
               </div>
               <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                 <TrendingDown className="w-5 h-5 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Concentración</p>
+                <p className="text-2xl font-bold">{safeToFixed(data.kpis.concentration_index, 1)}%</p>
+                <p className="text-xs text-gray-500">Top 5 del total</p>
+              </div>
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <Target className="w-5 h-5 text-red-600" />
               </div>
             </div>
           </CardContent>

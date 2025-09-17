@@ -11,6 +11,7 @@ interface SummaryData {
     top10_share: number;
     top50_share: number;
     top200_share: number;
+    concentration_index: number;
     track_of_the_week: {
       track_name: string;
       artists: string;
@@ -75,9 +76,44 @@ export async function GET(request: NextRequest) {
 
     console.log(`📊 Generating summary data for ${territory} ${period}`);
 
-    // Get current charts data
-    const currentData = await getRealSpotifyChartsDataFromKworb(territory, period);
-    const tracks = currentData.tracks;
+    // Get latest historical data instead of scraping Kworb
+    const latestHistoricalData = await getLatestHistoricalData(territory, period);
+
+    if (!latestHistoricalData) {
+      console.warn('No historical data available, falling back to Kworb scraping');
+      const currentData = await getRealSpotifyChartsDataFromKworb(territory, period);
+      const tracks = currentData.tracks;
+
+      if (tracks.length === 0) {
+        console.warn('No tracks data available from Kworb either');
+        return NextResponse.json({
+          success: true,
+          data: generateEmptySummary(),
+          metadata: {
+            territory,
+            period,
+            generatedAt: new Date().toISOString(),
+            source: 'empty'
+          }
+        });
+      }
+
+      // Calculate summary from Kworb data
+      const summaryData = await calculateSummaryFromTracks(tracks, territory, period);
+      return NextResponse.json({
+        success: true,
+        data: summaryData,
+        metadata: {
+          territory,
+          period,
+          totalTracks: tracks.length,
+          generatedAt: new Date().toISOString(),
+          source: 'kworb_fallback'
+        }
+      });
+    }
+
+    const tracks = latestHistoricalData.tracks;
 
     if (tracks.length === 0) {
       console.warn('No tracks data available for summary');
@@ -93,27 +129,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Store current REAL data for future historical comparisons
-    try {
-      const currentDate = new Date();
-      const year = currentDate.getFullYear();
-      const weekNumber = Math.ceil((currentDate.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
-      const currentId = `${territory}-${period}-${year}W${weekNumber}`;
-
-      // Check if we already have this week's data
-      const existingData = historicalDataCollector.getStoredData(currentId);
-
-      if (!existingData) {
-        // Store the current REAL data as historical for future comparisons
-        const historicalEntry = historicalDataCollector.transformToHistoricalData(currentData, currentDate, 0);
-        historicalDataCollector.setStoredData(currentId, historicalEntry);
-        console.log(`💾 Stored REAL current data as historical: ${currentId}`);
-      } else {
-        console.log(`📋 Current week data already exists: ${currentId}`);
-      }
-    } catch (error) {
-      console.error('Error storing current real data as historical:', error);
-    }
+    // Using historical data - no need to store current data
 
     // Calculate summary statistics
     const summaryData = await calculateSummaryFromTracks(tracks, territory, period);
@@ -128,7 +144,8 @@ export async function GET(request: NextRequest) {
         period,
         totalTracks: tracks.length,
         generatedAt: new Date().toISOString(),
-        source: 'kworb'
+        source: 'historical_data',
+        dataDate: latestHistoricalData.date
       }
     });
 
@@ -209,6 +226,12 @@ async function calculateSummaryFromTracks(tracks: any[], territory: Territory, p
     ? positionChanges.reduce((sum, change) => sum + change, 0) / positionChanges.length
     : 0;
 
+  // Calculate concentration index (Top 5 concentration ratio)
+  const top5Streams = tracks.slice(0, 5).reduce((sum, track) => sum + (track.streams || 0), 0);
+  const concentrationIndex = top200Streams > 0 ? (top5Streams / top200Streams) * 100 : 0;
+
+  console.log(`📊 Concentration index: ${concentrationIndex.toFixed(2)}% (Top 5: ${top5Streams.toLocaleString()} / Total: ${top200Streams.toLocaleString()})`);
+
   // Estimate exits (for demo purposes, we'll use a calculation based on turnover)
   const estimatedExits = Math.max(0, totalTurnover - 10); // Rough estimate
 
@@ -220,6 +243,7 @@ async function calculateSummaryFromTracks(tracks: any[], territory: Territory, p
       top10_share: top10Share,
       top50_share: top50Share,
       top200_share: 1.0, // Always 100% for top 200
+      concentration_index: concentrationIndex,
       track_of_the_week: {
         track_name: trackOfTheWeek.title || 'Unknown Track',
         artists: trackOfTheWeek.artist || 'Unknown Artist',
@@ -389,6 +413,7 @@ function generateEmptySummary(): SummaryData {
       top10_share: 0,
       top50_share: 0,
       top200_share: 0,
+      concentration_index: 0,
       track_of_the_week: {
         track_name: 'No Data',
         artists: 'No Data',
@@ -423,4 +448,51 @@ function generateEmptySummary(): SummaryData {
     },
     lastUpdated: new Date()
   };
+}
+
+/**
+ * Get the latest historical data for a territory and period
+ */
+async function getLatestHistoricalData(
+  territory: Territory,
+  period: 'daily' | 'weekly'
+): Promise<any | null> {
+  try {
+    console.log(`📊 Getting latest historical data for ${territory} ${period}`);
+
+    // Read historical data directly from file
+    const fs = require('fs');
+    const path = require('path');
+    const dataPath = path.join(process.cwd(), 'data', 'historical-charts.json');
+
+    if (!fs.existsSync(dataPath)) {
+      console.log(`❌ Historical data file not found: ${dataPath}`);
+      return null;
+    }
+
+    const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    const allEntries = Object.values(data) as any[];
+
+    // Filter for this territory and period, then sort by date
+    const territoryData = allEntries
+      .filter(entry => entry.territory === territory && entry.period === period)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    console.log(`📈 Found ${territoryData.length} historical entries for ${territory}`);
+
+    if (territoryData.length === 0) {
+      console.log(`⚠️ No historical data found for ${territory} ${period}`);
+      return null;
+    }
+
+    // Get the most recent entry
+    const latestEntry = territoryData[territoryData.length - 1];
+    console.log(`✅ Using latest entry from ${latestEntry.date} with ${latestEntry.tracks.length} tracks`);
+
+    return latestEntry;
+
+  } catch (error) {
+    console.error('Error getting latest historical data:', error);
+    return null;
+  }
 }
