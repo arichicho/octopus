@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Territory } from '@/types/music';
 import { getRealSpotifyChartsDataFromKworb } from '@/lib/services/kworb-spotifycharts-scraper';
 import { historicalDataCollector } from '@/lib/services/historical-data-collector';
+import { MusicTrendsStorage } from '@/lib/services/music-trends-storage';
 
 interface SummaryData {
   kpis: {
@@ -75,6 +76,29 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`📊 Generating summary data for ${territory} ${period}`);
+
+    // Prefer Firestore stored charts (written by cron) to avoid live scraping
+    try {
+      const stored = await MusicTrendsStorage.getLatestChartData(territory, period);
+      if (stored && stored.tracks && stored.tracks.length > 0) {
+        const tracks = stored.tracks;
+        const summaryData = await calculateSummaryFromTracks(tracks as any[], territory, period);
+        return NextResponse.json({
+          success: true,
+          data: summaryData,
+          metadata: {
+            territory,
+            period,
+            totalTracks: tracks.length,
+            generatedAt: new Date().toISOString(),
+            source: 'storage',
+            dataDate: stored.date.toISOString()
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('⚠️ Storage read failed, will try historical file/kworb fallback:', e instanceof Error ? e.message : e);
+    }
 
     // Get latest historical data instead of scraping Kworb
     const latestHistoricalData = await getLatestHistoricalData(territory, period);

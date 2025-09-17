@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Territory } from '@/types/music';
 import { getRealSpotifyChartsDataFromKworb } from '@/lib/services/kworb-spotifycharts-scraper';
+import { MusicTrendsStorage } from '@/lib/services/music-trends-storage';
 import { chartmetricLabelEnricher } from '@/lib/services/chartmetric-label-enricher';
 
 interface InsightsData {
@@ -139,9 +140,20 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔍 Generating insights data for ${territory} ${period}`);
 
-    // Get current charts data
-    const currentData = await getRealSpotifyChartsDataFromKworb(territory, period);
-    const tracks = currentData.tracks;
+    // Get current charts data (prefer storage, fallback to Kworb)
+    let tracks: any[] = [];
+    try {
+      const stored = await MusicTrendsStorage.getLatestChartData(territory, period);
+      if (stored?.tracks?.length) {
+        tracks = stored.tracks as any[];
+      }
+    } catch (e) {
+      console.warn('⚠️ Storage read failed for insights, will try Kworb:', e instanceof Error ? e.message : e);
+    }
+    if (tracks.length === 0) {
+      const currentData = await getRealSpotifyChartsDataFromKworb(territory, period);
+      tracks = currentData.tracks as any[];
+    }
 
     if (tracks.length === 0) {
       console.warn('No tracks data available for insights');
@@ -392,5 +404,4 @@ function generateEmptyInsights(): InsightsData {
     lastUpdated: new Date()
   };
 }
-
 

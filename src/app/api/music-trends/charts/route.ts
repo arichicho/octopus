@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Territory } from '@/types/music';
 import { getRealSpotifyChartsDataFromKworb } from '@/lib/services/kworb-spotifycharts-scraper';
+import { MusicTrendsStorage } from '@/lib/services/music-trends-storage';
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,11 +30,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`📊 Getting REAL charts data from Kworb for ${territory} ${period}`);
-
-    // Get real data directly from Kworb scraper
-    const kworbData = await getRealSpotifyChartsDataFromKworb(territory, period);
-    const tracks = kworbData.tracks;
+    console.log(`📊 Getting charts data for ${territory} ${period} (prefer storage)`);
+    // Try Firestore storage first
+    const stored = await MusicTrendsStorage.getLatestChartData(territory, period);
+    const tracks = stored?.tracks && stored.tracks.length > 0
+      ? stored.tracks as any[]
+      : (await getRealSpotifyChartsDataFromKworb(territory, period)).tracks as any[];
 
     if (tracks.length === 0) {
       console.warn('No data available from Kworb, returning empty array');
@@ -45,7 +47,7 @@ export async function GET(request: NextRequest) {
           period,
           totalTracks: 0,
           generatedAt: new Date().toISOString(),
-          source: 'kworb'
+          source: stored ? 'storage' : 'kworb'
         }
       });
     }
@@ -69,7 +71,7 @@ export async function GET(request: NextRequest) {
       date: track.date || new Date()
     }));
 
-    console.log(`✅ Successfully returning ${chartData.length} tracks from Kworb`);
+    console.log(`✅ Successfully returning ${chartData.length} tracks from ${stored ? 'storage' : 'kworb'}`);
 
     return NextResponse.json({
       success: true,
@@ -79,7 +81,7 @@ export async function GET(request: NextRequest) {
         period,
         totalTracks: chartData.length,
         generatedAt: new Date().toISOString(),
-        source: 'kworb'
+        source: stored ? 'storage' : 'kworb'
       }
     });
 

@@ -36,10 +36,25 @@ export async function GET(request: NextRequest) {
     const tracks = await musicDataIngestion.ingestData(territory, period);
     
     if (tracks.length === 0) {
-      return NextResponse.json(
-        { error: 'No data available for the specified territory and period' },
-        { status: 404 }
-      );
+      // Be resilient: return empty dataset with success instead of 404
+      const empty = {
+        alerts: [],
+        rules: musicAlertSystem.getAlertRules(),
+        statistics: { total: 0, bySeverity: {}, byType: {}, byTerritory: {}, acknowledged: 0, unacknowledged: 0 },
+        lastUpdated: new Date(),
+      };
+      return NextResponse.json({
+        success: true,
+        data: empty,
+        metadata: {
+          territory,
+          period,
+          totalTracks: 0,
+          totalAlerts: 0,
+          generatedAt: new Date().toISOString(),
+          source: 'empty'
+        }
+      });
     }
 
     // Step 2: Calculate advanced features

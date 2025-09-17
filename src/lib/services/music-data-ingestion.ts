@@ -1,6 +1,7 @@
 import { TrackAnalysis, Territory, AnalysisConfig, DEFAULT_ANALYSIS_CONFIG } from '@/types/music-analysis';
 import { getRealSpotifyChartsDataFromKworb } from './kworb-spotifycharts-scraper';
 import { getChartmetricClient } from './chartmetric-client';
+import { MusicTrendsStorage } from './music-trends-storage';
 
 export class MusicDataIngestion {
   private config: AnalysisConfig;
@@ -18,9 +19,9 @@ export class MusicDataIngestion {
     console.log(`🔄 Starting data ingestion for ${territory} ${period}${date ? ` on ${date.toISOString().split('T')[0]}` : ''}`);
     
     try {
-      // Step 1: Load raw data from Kworb
-      const rawTracks = await this.loadKworbData(territory, period, date);
-      console.log(`✅ Loaded ${rawTracks.length} tracks from Kworb`);
+      // Step 1: Load raw data (prefer stored Firestore, fallback to Kworb)
+      const rawTracks = await this.loadChartData(territory, period, date);
+      console.log(`✅ Loaded ${rawTracks.length} tracks for ingestion`);
 
       // Step 2: Normalize track IDs
       const normalizedTracks = await this.normalizeTrackIds(rawTracks);
@@ -43,14 +44,17 @@ export class MusicDataIngestion {
   }
 
   /**
-   * Load raw data from Kworb
+   * Load chart data preferring stored Firestore (from cron), fallback to Kworb
    */
-  private async loadKworbData(territory: Territory, period: 'daily' | 'weekly', date?: Date): Promise<any[]> {
+  private async loadChartData(territory: Territory, period: 'daily' | 'weekly', date?: Date): Promise<any[]> {
     try {
-      const kworbData = await getRealSpotifyChartsDataFromKworb(territory, period);
-      
+      const stored = await MusicTrendsStorage.getLatestChartData(territory, period);
+      const sourceTracks = stored?.tracks && stored.tracks.length > 0
+        ? stored.tracks
+        : (await getRealSpotifyChartsDataFromKworb(territory, period)).tracks;
+
       // Convert to our format
-      return kworbData.tracks.map(track => ({
+      return sourceTracks.map((track: any) => ({
         track_id: track.spotifyId || null,
         track_name: track.title,
         artists: track.artist,

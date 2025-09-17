@@ -1,5 +1,5 @@
 import { getChartmetricClient } from './chartmetric-client';
-import { SpotifyChartsTrack } from '@/types/music';
+import type { SpotifyChartsTrack } from './spotify-charts-scraper';
 
 /**
  * Service to enrich Kworb track data with real label information from Chartmetric

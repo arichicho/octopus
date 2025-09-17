@@ -429,7 +429,7 @@ export function MusicTrendsAlertsAdvanced({ territory, period }: MusicTrendsAler
                       <div className="flex items-center space-x-4 text-xs text-gray-500">
                         <span className="flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
-                          {alert.created_at.toLocaleString()}
+                          {new Date(alert.created_at as any).toLocaleString()}
                         </span>
                         <span>{alert.territory.toUpperCase()} • {alert.period.toUpperCase()}</span>
                       </div>
