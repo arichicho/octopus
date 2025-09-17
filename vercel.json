@@ -6,7 +6,7 @@
   "crons": [
     {
       "path": "/api/music-trends/cron?territory=all&period=all",
-      "schedule": "30 0,12,18 * * *"
+      "schedule": "30 12 * * *"
     }
   ]
 }

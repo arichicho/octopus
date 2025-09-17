@@ -22,11 +22,15 @@ vercel --prod
 ```
 
 ## Cron en Vercel
-Este repo incluye `vercel.json` con un cron que llama 3 veces por día a:
+Este repo incluye `vercel.json` con un cron que llama 1 vez por día a:
 `/api/music-trends/cron?territory=all&period=all`
 
-Horario (UTC): 00:30, 12:30, 18:30
-- Buenos Aires (UTC-3): 21:30, 09:30, 15:30
+Horario (UTC): 12:30
+- Buenos Aires (UTC-3): 09:30
+- México (UTC-6): 06:30
+- España (UTC+1): 13:30
+
+**Nota**: Vercel Hobby solo permite crons diarios. Para múltiples ejecuciones diarias se necesita plan Pro.
 
 El endpoint acepta:
 - Header de Vercel Cron (`x-vercel-cron` / `x-vercel-scheduled`), o
