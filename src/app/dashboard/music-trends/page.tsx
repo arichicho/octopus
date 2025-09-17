@@ -215,7 +215,7 @@ export default function MusicTrendsPage() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="global-overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="global-overview" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
             General

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Globe, RefreshCw, Share2, Layers } from 'lucide-react';
+import { BarChart3, Globe, RefreshCw, Share2, Layers, Activity } from 'lucide-react';
+import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
 type Territory = 'argentina' | 'spanish' | 'mexico' | 'global';
 
@@ -37,6 +38,7 @@ export function MusicTrendsOverviewLanding() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<'daily' | 'weekly'>('weekly');
+  const [normalize, setNormalize] = useState<boolean>(false);
 
   useEffect(() => {
     fetchOverview();
@@ -64,6 +66,63 @@ export function MusicTrendsOverviewLanding() {
 
   const fmt = (n: number) => n >= 1_000_000 ? `${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n/1_000).toFixed(1)}K` : String(n);
   const pct = (p: number) => `${(p*100).toFixed(1)}%`;
+
+  const labelOf: Record<Territory, string> = {
+    argentina: 'Argentina',
+    spanish: 'España',
+    mexico: 'México',
+    global: 'Global',
+  };
+
+  const seriesColors: Record<Territory, string> = {
+    argentina: '#2563eb', // blue-600
+    spanish: '#f59e0b',   // amber-500
+    mexico: '#10b981',    // emerald-500
+    global: '#8b5cf6',    // violet-500
+  };
+
+  function buildChartData(): Array<{ date: string } & Partial<Record<Territory, number>>> {
+    if (!data?.timeseries) return [];
+    const dates = new Set<string>();
+    (Object.keys(data.timeseries) as Territory[]).forEach((t) => {
+      (data.timeseries![t] || []).forEach((pt) => dates.add(pt.date));
+    });
+    const sorted = Array.from(dates).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+    // Compute base for normalization
+    const base: Partial<Record<Territory, number>> = {};
+    if (normalize) {
+      (Object.keys(data.timeseries) as Territory[]).forEach((t) => {
+        const arr = data.timeseries![t] || [];
+        const firstNonZero = arr.find((x) => (x.top200 || 0) > 0);
+        base[t] = firstNonZero?.top200 || 0;
+      });
+    }
+
+    return sorted.map((d) => {
+      const row: any = { date: d };
+      (Object.keys(data.timeseries!) as Territory[]).forEach((t) => {
+        const point = (data.timeseries![t] || []).find((x) => x.date === d);
+        const val = point?.top200 || 0;
+        if (normalize) {
+          const b = base[t!] || 0;
+          row[t] = b > 0 ? (val / b) * 100 : 0;
+        } else {
+          row[t] = val;
+        }
+      });
+      return row;
+    });
+  }
+
+  function heatColor(v: number): string {
+    // v in [0,1] → blue to green scale
+    const x = Math.max(0, Math.min(1, v));
+    const r = Math.round(30 + 20 * x);
+    const g = Math.round(120 + 100 * x);
+    const b = Math.round(200 - 120 * x);
+    return `rgb(${r},${g},${b})`;
+  }
 
   if (isLoading) {
     return (
@@ -116,7 +175,7 @@ export function MusicTrendsOverviewLanding() {
             <Card key={t}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center justify-between">
-                  <span className="capitalize">{t}</span>
+                  <span className="capitalize">{labelOf[t]}</span>
                   <Layers className="w-4 h-4 text-gray-500"/>
                 </CardTitle>
               </CardHeader>
@@ -131,6 +190,39 @@ export function MusicTrendsOverviewLanding() {
           );
         })}
       </div>
+
+      {/* Comparative Streams (timeseries) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2"><Activity className="w-5 h-5"/>Evolución Top200 (comparativa)</span>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="outline">{normalize ? 'Base 100' : 'Absoluto'}</Badge>
+              <Button size="sm" variant="outline" onClick={() => setNormalize(!normalize)}>Normalizar</Button>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.timeseries && Object.keys(data.timeseries).length > 0 ? (
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={buildChartData()} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d) => String(d).slice(5)} />
+                  <YAxis tick={{ fontSize: 11 }} domain={[0, 'auto']} />
+                  <Tooltip formatter={(value: any) => (normalize ? `${(value as number).toFixed(0)}%` : fmt(value as number))} />
+                  <Legend />
+                  {territories.map((t) => (
+                    <Line key={t} type="monotone" dataKey={t} name={labelOf[t]} stroke={seriesColors[t]} dot={false} strokeWidth={2} />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-600">Sin histórico configurado (timeseries). Se mostrará cuando se carguen datos históricos.</div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Shared Tracks + Intersection */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -158,18 +250,23 @@ export function MusicTrendsOverviewLanding() {
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5"/>Intersección (Jaccard)</CardTitle></CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 text-xs font-semibold mb-1">
+            <div className="grid grid-cols-5 text-xs font-semibold mb-1">
               <div></div>
-              {territories.map(t => (<div key={t} className="text-center capitalize">{t[0].toUpperCase()}</div>))}
+              {territories.map(t => (<div key={t} className="text-center capitalize">{labelOf[t][0]}</div>))}
             </div>
             {territories.map((a) => (
-              <div key={a} className="grid grid-cols-4 text-xs items-center">
-                <div className="capitalize font-medium">{a}</div>
-                {territories.map((b) => (
-                  <div key={`${a}-${b}`} className="text-center border p-1 rounded-sm">
-                    {data.crossTerritory.intersection[a][b].jaccard}
-                  </div>
-                ))}
+              <div key={a} className="grid grid-cols-5 text-xs items-center">
+                <div className="capitalize font-medium">{labelOf[a]}</div>
+                {territories.map((b) => {
+                  const cell = data.crossTerritory.intersection[a][b];
+                  const bg = heatColor(cell.jaccard);
+                  return (
+                    <div key={`${a}-${b}`} className="text-center border p-1 rounded-sm" style={{ background: bg }}>
+                      <div className="font-semibold text-white">{cell.jaccard}</div>
+                      <div className="text-[10px] text-white/90">{cell.count}</div>
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </CardContent>
@@ -180,4 +277,3 @@ export function MusicTrendsOverviewLanding() {
 }
 
 export default MusicTrendsOverviewLanding;
-
