@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Territory } from '@/types/music';
 import { getRealSpotifyChartsDataFromKworb } from '@/lib/services/kworb-spotifycharts-scraper';
+import { historicalDataCollector } from '@/lib/services/historical-data-collector';
 
 interface SummaryData {
   kpis: {
@@ -90,6 +91,28 @@ export async function GET(request: NextRequest) {
           source: 'empty'
         }
       });
+    }
+
+    // Store current REAL data for future historical comparisons
+    try {
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const weekNumber = Math.ceil((currentDate.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+      const currentId = `${territory}-${period}-${year}W${weekNumber}`;
+
+      // Check if we already have this week's data
+      const existingData = historicalDataCollector.getStoredData(currentId);
+
+      if (!existingData) {
+        // Store the current REAL data as historical for future comparisons
+        const historicalEntry = historicalDataCollector.transformToHistoricalData(currentData, currentDate, 0);
+        historicalDataCollector.setStoredData(currentId, historicalEntry);
+        console.log(`💾 Stored REAL current data as historical: ${currentId}`);
+      } else {
+        console.log(`📋 Current week data already exists: ${currentId}`);
+      }
+    } catch (error) {
+      console.error('Error storing current real data as historical:', error);
     }
 
     // Calculate summary statistics
@@ -241,36 +264,36 @@ async function calculateGrowthRates(
   try {
     console.log(`📈 Calculating growth rates for ${territory} ${period}`);
 
-    // For historical comparison, we need data from previous period
-    // Since we don't have stored historical data yet, we'll use a reasonable simulation
-    // based on typical music industry patterns
+    // Get 12-week average data for comparison
+    const averageData = await get12WeekAverageData(territory, period);
 
-    // Get previous period data (simulated for now, would be real historical data in production)
-    const previousData = await getPreviousPeriodData(territory, period);
-
-    if (!previousData) {
-      console.log('⚠️ No previous period data available, using estimated growth rates');
+    if (!averageData) {
+      console.log('⚠️ No 12-week average data available, returning null values');
+      // Return null-like values that will be handled by the frontend as "N/A"
       return {
-        top10: getEstimatedGrowthRate('top10', currentStreams.top10),
-        top50: getEstimatedGrowthRate('top50', currentStreams.top50),
-        top200: getEstimatedGrowthRate('top200', currentStreams.top200)
+        top10: 999999, // Special value to indicate "no data"
+        top50: 999999,
+        top200: 999999
       };
     }
 
-    // Calculate real growth rates
-    const top10Growth = previousData.top10 > 0
-      ? ((currentStreams.top10 - previousData.top10) / previousData.top10) * 100
+    // Calculate growth vs 12-week average (current week vs average of last 12 weeks)
+    const top10Growth = averageData.top10 > 0
+      ? ((currentStreams.top10 - averageData.top10) / averageData.top10) * 100
       : 0;
 
-    const top50Growth = previousData.top50 > 0
-      ? ((currentStreams.top50 - previousData.top50) / previousData.top50) * 100
+    const top50Growth = averageData.top50 > 0
+      ? ((currentStreams.top50 - averageData.top50) / averageData.top50) * 100
       : 0;
 
-    const top200Growth = previousData.top200 > 0
-      ? ((currentStreams.top200 - previousData.top200) / previousData.top200) * 100
+    const top200Growth = averageData.top200 > 0
+      ? ((currentStreams.top200 - averageData.top200) / averageData.top200) * 100
       : 0;
 
-    console.log(`  Growth rates: Top10: ${top10Growth.toFixed(2)}%, Top50: ${top50Growth.toFixed(2)}%, Top200: ${top200Growth.toFixed(2)}%`);
+    console.log(`  🎯 Growth vs 12-week average:`);
+    console.log(`     Top 10: ${top10Growth.toFixed(2)}% (current: ${currentStreams.top10.toLocaleString()}, avg: ${averageData.top10.toLocaleString()})`);
+    console.log(`     Top 50: ${top50Growth.toFixed(2)}% (current: ${currentStreams.top50.toLocaleString()}, avg: ${averageData.top50.toLocaleString()})`);
+    console.log(`     Top 200: ${top200Growth.toFixed(2)}% (current: ${currentStreams.top200.toLocaleString()}, avg: ${averageData.top200.toLocaleString()})`);
 
     return {
       top10: top10Growth,
@@ -281,56 +304,81 @@ async function calculateGrowthRates(
   } catch (error) {
     console.error('Error calculating growth rates:', error);
     return {
-      top10: 0,
-      top50: 0,
-      top200: 0
+      top10: 999999, // Special value to indicate error
+      top50: 999999,
+      top200: 999999
     };
   }
 }
 
-async function getPreviousPeriodData(
+async function get12WeekAverageData(
   territory: Territory,
   period: 'daily' | 'weekly'
 ): Promise<{ top10: number; top50: number; top200: number } | null> {
   try {
-    // In a real implementation, this would query a database or cache
-    // For now, we'll simulate by fetching previous period from Kworb
-    // This could be expensive, so in production you'd want to cache this data
+    console.log(`📊 Calculating 12-week average for ${territory} ${period}`);
 
-    console.log(`📅 Attempting to get previous period data for ${territory} ${period}`);
+    // Read historical data directly from file to bypass any loading issues
+    const fs = require('fs');
+    const path = require('path');
+    const dataPath = path.join(process.cwd(), 'data', 'historical-charts.json');
 
-    // For daily: get yesterday's data
-    // For weekly: get last week's data
-    // Since Kworb might not have this readily available, we'll use intelligent estimation
+    if (!fs.existsSync(dataPath)) {
+      console.log(`❌ Historical data file not found: ${dataPath}`);
+      return null;
+    }
 
-    return null; // Will trigger estimation instead
+    const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    const allEntries = Object.values(data) as any[];
+
+    // Filter for this territory and period
+    const territoryData = allEntries
+      .filter(entry => entry.territory === territory && entry.period === period)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    console.log(`📈 Found ${territoryData.length} weeks of data for ${territory}`);
+
+    if (territoryData.length < 12) {
+      console.log(`⚠️ Insufficient historical data (${territoryData.length} weeks), need at least 12 weeks`);
+      return null;
+    }
+
+    // Get last 12 weeks (excluding the most recent week which would be current)
+    const last12Weeks = territoryData.slice(-13, -1); // Last 13, excluding current = last 12
+
+    if (last12Weeks.length < 12) {
+      console.log(`⚠️ Not enough historical weeks (${last12Weeks.length}/12)`);
+      return null;
+    }
+
+    // Calculate averages for the last 12 weeks
+    const totalTop10 = last12Weeks.reduce((sum: number, week: any) => sum + (week.aggregatedData?.top10_streams || 0), 0);
+    const totalTop50 = last12Weeks.reduce((sum: number, week: any) => sum + (week.aggregatedData?.top50_streams || 0), 0);
+    const totalTop200 = last12Weeks.reduce((sum: number, week: any) => sum + (week.aggregatedData?.top200_streams || 0), 0);
+
+    const avgTop10 = totalTop10 / 12;
+    const avgTop50 = totalTop50 / 12;
+    const avgTop200 = totalTop200 / 12;
+
+    console.log(`✅ 12-week averages calculated:`);
+    console.log(`   Top 10: ${avgTop10.toLocaleString()} streams`);
+    console.log(`   Top 50: ${avgTop50.toLocaleString()} streams`);
+    console.log(`   Top 200: ${avgTop200.toLocaleString()} streams`);
+    console.log(`   Period: ${last12Weeks[0].date.slice(0, 10)} to ${last12Weeks[11].date.slice(0, 10)}`);
+
+    return {
+      top10: avgTop10,
+      top50: avgTop50,
+      top200: avgTop200
+    };
 
   } catch (error) {
-    console.error('Error getting previous period data:', error);
+    console.error('Error calculating 12-week average:', error);
     return null;
   }
 }
 
-function getEstimatedGrowthRate(tier: 'top10' | 'top50' | 'top200', currentStreams: number): number {
-  // Estimate growth based on typical music industry patterns
-  const baseRates = {
-    top10: { min: -8, max: 12, volatility: 6 },   // Top tracks more volatile
-    top50: { min: -5, max: 8, volatility: 4 },    // Mid-tier more stable
-    top200: { min: -3, max: 5, volatility: 3 }    // Overall market less volatile
-  };
-
-  const config = baseRates[tier];
-
-  // Add some randomness but within realistic bounds
-  const baseGrowth = (Math.random() - 0.5) * config.volatility * 2;
-
-  // Adjust based on current streams (higher streams tend to be more stable)
-  const stabilityFactor = Math.min(currentStreams / 1000000, 1); // Normalize by 1M streams
-  const adjustedGrowth = baseGrowth * (1 - stabilityFactor * 0.3);
-
-  // Clamp to realistic bounds
-  return Math.max(config.min, Math.min(config.max, adjustedGrowth));
-}
+// Removed getEstimatedGrowthRate - we now use real data or show N/A
 
 function generateEmptySummary(): SummaryData {
   return {

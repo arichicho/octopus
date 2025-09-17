@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Music, 
-  Award, 
-  Users, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Music,
+  Award,
+  Users,
   BarChart3,
   RefreshCw,
   AlertTriangle,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Territory } from '@/types/music';
 import { ExecutiveKPIs, StreamsAggregates, EntriesAnalysis, MoversAnalysis } from '@/types/music-analysis';
+import { StreamsEvolutionModal } from './StreamsEvolutionModal';
 
 interface MusicTrendsSummaryProps {
   territory: Territory;
@@ -37,6 +38,13 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
   const [data, setData] = useState<SummaryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [evolutionModal, setEvolutionModal] = useState<{
+    isOpen: boolean;
+    tier: 'top10' | 'top50' | 'top200';
+  }>({
+    isOpen: false,
+    tier: 'top10'
+  });
 
   useEffect(() => {
     fetchSummaryData();
@@ -45,7 +53,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
   const fetchSummaryData = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const timestamp = Date.now();
       const response = await fetch(`/api/music-trends/summary?territory=${territory}&period=${period}&t=${timestamp}`, {
@@ -60,7 +68,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
       }
 
       const result = await response.json();
-      
+
       if (result.success && result.data) {
         setData(result.data);
       } else {
@@ -72,6 +80,14 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const openEvolutionModal = (tier: 'top10' | 'top50' | 'top200') => {
+    setEvolutionModal({ isOpen: true, tier });
+  };
+
+  const closeEvolutionModal = () => {
+    setEvolutionModal({ isOpen: false, tier: 'top10' });
   };
 
   const formatNumber = (num: number | undefined): string => {
@@ -88,7 +104,11 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
 
   const formatPercentage = (num: number | undefined): string => {
     if (num === undefined || num === null || isNaN(num)) {
-      return '0.0%';
+      return 'N/A';
+    }
+    // Special value indicating no historical data
+    if (num === 999999) {
+      return 'N/A';
     }
     return `${num >= 0 ? '+' : ''}${num.toFixed(1)}%`;
   };
@@ -101,12 +121,14 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
   };
 
   const getChangeColor = (value: number): string => {
+    if (value === 999999) return 'text-gray-400'; // N/A color
     if (value > 0) return 'text-green-600';
     if (value < 0) return 'text-red-600';
     return 'text-gray-600';
   };
 
   const getChangeIcon = (value: number) => {
+    if (value === 999999) return <Clock className="w-4 h-4" />; // N/A icon
     if (value > 0) return <TrendingUp className="w-4 h-4" />;
     if (value < 0) return <TrendingDown className="w-4 h-4" />;
     return <BarChart3 className="w-4 h-4" />;
@@ -266,7 +288,10 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle
+              className="text-sm flex items-center gap-2 cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={() => openEvolutionModal('top10')}
+            >
               <BarChart3 className="w-4 h-4" />
               Top 10 Streams
             </CardTitle>
@@ -282,7 +307,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
                 <span className="font-medium">{safeToFixed((data.kpis.top10_share || 0) * 100, 1)}%</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">vs Anterior</span>
+                <span className="text-sm text-gray-600">vs Promedio 12s</span>
                 <span className={`text-sm flex items-center gap-1 ${getChangeColor(data.streams.growth_pct.vs_previous.top10)}`}>
                   {getChangeIcon(data.streams.growth_pct.vs_previous.top10)}
                   {formatPercentage(data.streams.growth_pct.vs_previous.top10)}
@@ -294,7 +319,10 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle
+              className="text-sm flex items-center gap-2 cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={() => openEvolutionModal('top50')}
+            >
               <BarChart3 className="w-4 h-4" />
               Top 50 Streams
             </CardTitle>
@@ -310,7 +338,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
                 <span className="font-medium">{safeToFixed((data.kpis.top50_share || 0) * 100, 1)}%</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">vs Anterior</span>
+                <span className="text-sm text-gray-600">vs Promedio 12s</span>
                 <span className={`text-sm flex items-center gap-1 ${getChangeColor(data.streams.growth_pct.vs_previous.top50)}`}>
                   {getChangeIcon(data.streams.growth_pct.vs_previous.top50)}
                   {formatPercentage(data.streams.growth_pct.vs_previous.top50)}
@@ -322,7 +350,10 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle
+              className="text-sm flex items-center gap-2 cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={() => openEvolutionModal('top200')}
+            >
               <BarChart3 className="w-4 h-4" />
               Top 200 Streams
             </CardTitle>
@@ -338,7 +369,7 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
                 <span className="font-medium">{safeToFixed((data.kpis.top200_share || 0) * 100, 1)}%</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">vs Anterior</span>
+                <span className="text-sm text-gray-600">vs Promedio 12s</span>
                 <span className={`text-sm flex items-center gap-1 ${getChangeColor(data.streams.growth_pct.vs_previous.top200)}`}>
                   {getChangeIcon(data.streams.growth_pct.vs_previous.top200)}
                   {formatPercentage(data.streams.growth_pct.vs_previous.top200)}
@@ -413,6 +444,15 @@ export function MusicTrendsSummary({ territory, period, lastUpdate }: MusicTrend
           </div>
         </CardContent>
       </Card>
+
+      {/* Evolution Modal */}
+      <StreamsEvolutionModal
+        isOpen={evolutionModal.isOpen}
+        onClose={closeEvolutionModal}
+        territory={territory}
+        period={period}
+        tier={evolutionModal.tier}
+      />
     </div>
   );
 }
