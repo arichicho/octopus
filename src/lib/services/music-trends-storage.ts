@@ -10,7 +10,7 @@ import {
   limit,
   Timestamp 
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { Territory, Track, MusicInsights, ChartData } from '@/types/music';
 
 // Collection names
@@ -26,9 +26,17 @@ const COLLECTIONS = {
 
 export class MusicTrendsStorage {
   
+  // Check if Firestore is available
+  private static checkFirestore() {
+    if (!db) {
+      throw new Error('Firestore is not initialized');
+    }
+  }
+  
   // Chart Data Storage
   static async storeChartData(chartData: ChartData): Promise<void> {
     try {
+      this.checkFirestore();
       const dateStr = chartData.date.toISOString().split('T')[0];
       const docId = `${chartData.territory}_${chartData.period}_${dateStr}`;
       
@@ -56,6 +64,7 @@ export class MusicTrendsStorage {
     date?: Date
   ): Promise<ChartData | null> {
     try {
+      this.checkFirestore();
       const targetDate = date || new Date();
       const dateStr = targetDate.toISOString().split('T')[0];
       const docId = `${territory}_${period}_${dateStr}`;
@@ -88,6 +97,7 @@ export class MusicTrendsStorage {
     period: 'daily' | 'weekly'
   ): Promise<ChartData | null> {
     try {
+      this.checkFirestore();
       const q = query(
         collection(db, COLLECTIONS.CHARTS),
         where('territory', '==', territory),

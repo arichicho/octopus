@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Territory } from '@/types/music';
 import { MusicTrendsSummary } from '@/components/music-trends/MusicTrendsSummary';
+import { MusicTrendsOverviewLanding } from '@/components/music-trends/MusicTrendsOverviewLanding';
 import { MusicTrendsCharts } from '@/components/music-trends/MusicTrendsCharts';
 import { MusicTrendsInsightsAdvanced } from '@/components/music-trends/MusicTrendsInsightsAdvanced';
 import { MusicTrendsAlertsAdvanced } from '@/components/music-trends/MusicTrendsAlertsAdvanced';
@@ -213,8 +214,12 @@ export default function MusicTrendsPage() {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue="global-overview" className="space-y-4">
         <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="global-overview" className="flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            General
+          </TabsTrigger>
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Resumen
@@ -236,6 +241,10 @@ export default function MusicTrendsPage() {
             Estado
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="global-overview" className="space-y-4">
+          <MusicTrendsOverviewLanding />
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
           <MusicTrendsSummary 
