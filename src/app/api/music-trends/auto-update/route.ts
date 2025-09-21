@@ -2,13 +2,45 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/server/auth';
 import { Territory } from '@/types/music';
 
+function resolveBaseUrl(request: NextRequest): string {
+  const trimTrailingSlash = (url: string) => url.replace(/\/$/, '');
+
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+  if (envUrl) {
+    return trimTrailingSlash(envUrl);
+  }
+
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    const protocol = process.env.VERCEL_ENV === 'development' ? 'http' : 'https';
+    return trimTrailingSlash(`${protocol}://${vercelUrl}`);
+  }
+
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  if (forwardedHost && forwardedProto) {
+    return trimTrailingSlash(`${forwardedProto}://${forwardedHost}`);
+  }
+
+  const host = request.headers.get('host');
+  if (host) {
+    const protocol = request.nextUrl.protocol ? request.nextUrl.protocol.replace(/:$/, '') : 'https';
+    return trimTrailingSlash(`${protocol}://${host}`);
+  }
+
+  return trimTrailingSlash(request.nextUrl.origin);
+}
+
 // Auto-update system for music trends
-async function triggerAutoUpdate(territory: Territory, period: 'daily' | 'weekly') {
+async function triggerAutoUpdate(territory: Territory, period: 'daily' | 'weekly', baseUrl: string) {
   try {
     console.log(`🔄 Triggering auto-update for ${territory} ${period}`);
+    const chartsUrl = new URL(`/api/music-trends/spotify-charts`, baseUrl);
+    chartsUrl.searchParams.set('territory', territory);
+    chartsUrl.searchParams.set('period', period);
     
     // Fetch latest chart data
-    const chartResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/music-trends/spotify-charts?territory=${territory}&period=${period}`, {
+    const chartResponse = await fetch(chartsUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${process.env.INTERNAL_API_KEY || 'internal'}`,
@@ -27,7 +59,8 @@ async function triggerAutoUpdate(territory: Territory, period: 'daily' | 'weekly
     }
 
     // Enrich with Chartmetric data
-    const enrichedResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/music-trends/chartmetric`, {
+    const chartmetricUrl = new URL('/api/music-trends/chartmetric', baseUrl);
+    const enrichedResponse = await fetch(chartmetricUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.INTERNAL_API_KEY || 'internal'}`,
@@ -47,7 +80,8 @@ async function triggerAutoUpdate(territory: Territory, period: 'daily' | 'weekly
     }
 
     // Generate insights with Claude
-    const insightsResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/music-trends/insights`, {
+    const insightsUrl = new URL('/api/music-trends/insights', baseUrl);
+    const insightsResponse = await fetch(insightsUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.INTERNAL_API_KEY || 'internal'}`,
@@ -120,6 +154,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const baseUrl = resolveBaseUrl(request);
+
     const { searchParams } = new URL(request.url);
     const territory = searchParams.get('territory') as Territory;
     const period = searchParams.get('period') as 'daily' | 'weekly';
@@ -133,7 +169,7 @@ export async function GET(request: NextRequest) {
       const results = [];
       for (const t of territories) {
         for (const p of periods) {
-          const result = await triggerAutoUpdate(t, p);
+          const result = await triggerAutoUpdate(t, p, baseUrl);
           results.push(result);
         }
       }
@@ -152,7 +188,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = await triggerAutoUpdate(territory, period);
+    const result = await triggerAutoUpdate(territory, period, baseUrl);
     
     return NextResponse.json(result);
   } catch (error) {
@@ -174,6 +210,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { territory, period, force } = body;
 
+    const baseUrl = resolveBaseUrl(request);
+
     if (!territory || !period) {
       return NextResponse.json(
         { error: 'Missing territory or period parameter' },
@@ -181,7 +219,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await triggerAutoUpdate(territory, period);
+    const result = await triggerAutoUpdate(territory, period, baseUrl);
     
     return NextResponse.json(result);
   } catch (error) {
