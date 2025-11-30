@@ -1,96 +1,147 @@
 # Variables de Entorno para Vercel - Octopus
 
-## 🚀 Despliegue Completado
-- **URL de Producción**: https://octopus-byh0hk7ri-arichicho1-gmailcoms-projects.vercel.app
-- **URL de Inspección**: https://vercel.com/arichicho1-gmailcoms-projects/octopus/AEaDrYrw1CLyURcES5MK1Mhn8b6Q
+## 🚀 Despliegue
+
+- **URL de Producción**: https://octopus-theceo.vercel.app
+- **Dashboard Vercel**: https://vercel.com/dashboard
 
 ## 📋 Variables de Entorno Requeridas
 
+⚠️ **IMPORTANTE**: Este documento NO contiene secretos reales. Usa `config/env.example` como referencia.
+
 ### 1. Firebase Cliente Web
+
+Configura estas variables en Vercel (Settings → Environment Variables):
+
 ```
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyButtaDMIheklUExNySlL9HCNaVUW-8UFY
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=iamtheoceo.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=iamtheoceo
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=iamtheoceo.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=511546212594
-NEXT_PUBLIC_FIREBASE_APP_ID=1:511546212594:web:08397e8ff7f942a34a906b
+NEXT_PUBLIC_FIREBASE_API_KEY=tu_api_key_aqui
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu_proyecto.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu_proyecto_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu_proyecto.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=tu_app_id
 ```
+
+**Cómo obtenerlas:**
+1. Ve a [Firebase Console](https://console.firebase.google.com/)
+2. Selecciona tu proyecto
+3. Ve a "Configuración del proyecto" → "Tus apps"
+4. Copia la configuración del SDK
 
 ### 2. Firebase Admin (Servicio de Cuenta)
+
 ```
-FIREBASE_PROJECT_ID=iamtheoceo
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@iamtheoceo.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCFkOzkLnNQFQJd\n+f9YlTYTN/WT4k4VfwnyZsyAbOMC+Epo3rbdAvylw/w1V7xnXIP2nNva5EbjIOMM\nEXxLz3M6WFQ1TUb4aTUB/9Wtt/bAvqA1Iqvf1zGryJ3gFMyX5lwCSPY021cqBU33\nYIVF/A75Atq7kICc22+XLyjHu6ltUysBkTntG+bwrXl7+RWDYX7Hz/6lR/itwDz4\nS9nBYHBmyeSRqgb2It8EnGl2DYX6nN7dN8AlhC6HMzTPzJ/gF5uqeSaAUVQhtLBb\n5zL9EygtNPnwdGtSu4B1G4mIYTIl6ftOZMEnAIqk1zU3t4+JjoqfauaCMyxD+ay1\njFE8Xa9tAgMBAAECggEACdkyI8UVCu5G+rzzSgnT2ejsulcby36kMh5zAnPaQp7M\n2xyzk7+johQTEFqEHC74gAJNkmn18XYRp73Q/MSyyguMnKgyYnYHdY/ypoODte9D\nCt1KmmUDVuz3pHfZeh3UjPU/n41zc41pPqNRpbkR4Dnd/P8zrIfgRjUw/EE8cJYa\nYScCwT5Ts0du09A5qE6bAf8zoDBWaGfA3iHXATEWYac4ZEr1RN/bcqZnPk+eZgEv\n4aSErdMvOTAij54JqsKHg2A5U7DpClj7jWGE96SbVE7ewcBaBLAnbaszIYKeQqI0\nfRQpiXz4YlgaS/k9OZHlkzRXMp3dAXiLtnTYtkx5VQKBgQC7UXZ/Fi4uV0iCGr3v\nTjqTY5tVrinBBvZo4uJx7ueB+DrncHy7FLcMmmhZ5D21/hq/j0idx5FuTtdAaGoH\nf1hXYHWI6pBMcbSFFZIaiD4ze/zumGkPY+Cy860uKqkv+kuvgohfqdodtItiY4MF\nTLvTX6bSDopgKS29j737sf68RwKBgQC2igvvyPA/0Ogc38V7MGNLxtY5E3HacbcP\ncOZjMaGELL9fIGYp01ck31MX0FBLuVsnwR5+7xxsUizRpZDCC7omHX4T3kiug7GF\nnZ2+PxnYKPz424a33N5vLnjSUEswdV9M8mAnVtbBdG3V99kA985UKPkNfxlbY2py\nnhYAnIy0qwKBgQCOoVLnJg53/sIZPx+MzjZP8DJhJUJp1lFeQBRIyK7DCi5f+Akh\nsn5HPHNkryRGJXxcjE+wxDr6kVHZmyfRGag8sBgO7vx9GL9p7qjXRxKFxU0sqCSn\nMVfxKxac5qL5A08KDwykOwL4R3cyra8gI/OI2XZ+z8+RtQk9I+x3cGsVFQKBgCXJ\nAZuLHqA3IDUJ5RkQ9Rz0ddeuvLyZGWmq1yXlWifAE4UfccZqpvlMvlM+ShOyLBEGChs\ng2GHIX0SrZBgE0z3nHrTVAvM0YK+Y/rim4qMCU+DfIoO9x4MLEcbeYsfb9ECGs4U\nxe6evSmibjICcfsPULh/Gr6+doNCWwCK1McfoMitAoGACPRI3rGyg6fk+8M3yNrq\nTSIAwfSMqnwGapqfDiR+VilAl7XWSnpflz6RnvnA2ptF1ha0gvFnrLJYSWslnoZP\nQGXIvyOL21qHO9Jx4c4Ba3elpaXox1XXOW+NpC7bFISURGTTwD9OyJlvKOT71jg4\ndTiSG6XlMK/0oRPRcgtrqNs=\n-----END PRIVATE KEY-----\n"
+FIREBASE_PROJECT_ID=tu_proyecto_id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk@tu_proyecto.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
+
+**Cómo obtenerlas:**
+1. Ve a [Firebase Console](https://console.firebase.google.com/)
+2. Selecciona tu proyecto
+3. Ve a "Configuración del proyecto" → "Cuentas de servicio"
+4. Genera una nueva clave privada o usa una existente
+5. **NUNCA** subas el archivo JSON al repositorio
 
 ### 3. Google OAuth
+
 ```
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=511546212594-2n67bqufe9h562fl41bfe0a7c37k98q6.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=tu_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=tu_client_secret
 ```
 
+**Cómo obtenerlas:**
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. Selecciona tu proyecto
+3. Ve a "APIs y servicios" → "Credenciales"
+4. Crea o usa un "ID de cliente OAuth 2.0"
+5. Configura los Redirect URIs:
+   - `https://octopus-theceo.vercel.app/api/auth/google/callback`
+
 ### 4. Configuración de la App
+
 ```
-NEXT_PUBLIC_APP_URL=https://octopus-byh0hk7ri-arichicho1-gmailcoms-projects.vercel.app
+NEXT_PUBLIC_APP_URL=https://octopus-theceo.vercel.app
 NODE_ENV=production
 ```
 
 ### 5. Clave de Encriptación
+
 ```
-ENCRYPTION_KEY=fb22371513fe03ea9a4d18d1dfa07f5e08a8cbdbf5285902f4377a72b367ca6e
+ENCRYPTION_KEY=tu_clave_de_32_caracteres_hex
+```
+
+**Cómo generarla:**
+```bash
+openssl rand -hex 32
 ```
 
 ## 🔧 Cómo Configurar en Vercel
+
+### Opción 1: Usando el Dashboard (Recomendado)
 
 1. **Ve al Dashboard de Vercel**: https://vercel.com/dashboard
 2. **Selecciona tu proyecto**: "octopus"
 3. **Ve a Settings → Environment Variables**
 4. **Agrega cada variable una por una**:
-   - Copia y pega cada variable de arriba
-   - Marca "Production" para todas
+   - Copia el nombre de la variable
+   - Pega el valor (obtén los valores reales de Firebase/Google Console)
+   - Marca "Production" (y "Preview" si aplica)
    - Haz clic en "Save"
 5. **Redespliega la aplicación**:
+   - Ve a "Deployments"
+   - Click en "..." → "Redeploy"
+
+### Opción 2: Usando el Script (Requiere variables locales)
+
+```bash
+# Configura las variables localmente primero
+export FIREBASE_API_KEY='tu_api_key'
+export GOOGLE_CLIENT_SECRET='tu_client_secret'
+# ... más variables
+
+# Ejecuta el script
+./scripts/setup-vercel-env.sh
+```
+
+## 🔒 Seguridad
+
+### ✅ Buenas Prácticas
+
+- ✅ **NUNCA** subas secretos al repositorio
+- ✅ **NUNCA** hardcodees secretos en código
+- ✅ **SIEMPRE** usa variables de entorno
+- ✅ **ROTA** secretos si se exponen accidentalmente
+- ✅ **USA** `.env.local` para desarrollo local (está en .gitignore)
+
+### ❌ Qué NO hacer
+
+- ❌ No subas archivos `.json` con credenciales
+- ❌ No hardcodees secretos en scripts
+- ❌ No documentes secretos reales en markdown
+- ❌ No compartas secretos por email/chat
+
+## 🚨 Si un Secreto se Expone
+
+1. **Rota el secreto inmediatamente**:
+   - Genera nuevas credenciales en Firebase/Google Console
+   - Actualiza las variables en Vercel
+   - Elimina las credenciales antiguas
+
+2. **Limpia el historial de git** (si el secreto está en commits):
    ```bash
-   vercel --prod
+   # Usa git-filter-repo para eliminar del historial
+   git filter-repo --path archivo-con-secreto.json --invert-paths
    ```
 
-## 🎯 Nuevas Funcionalidades Desplegadas
+3. **Verifica que no haya más exposiciones**:
+   - Revisa todos los commits
+   - Busca en documentación
+   - Verifica logs y backups
 
-### ✅ Sistema de Persistencia de Planes
-- **Guardado automático**: Los planes se guardan automáticamente
-- **Navegación por fechas**: Navega entre días pasados y futuros
-- **Historial de planes**: Revisa todos los planes guardados
-- **Estadísticas de aprendizaje**: Insights sobre patrones de productividad
+## 📝 Referencias
 
-### ✅ APIs Implementadas
-- `GET /api/my-day/plans` - Listar planes y estadísticas
-- `POST /api/my-day/plans` - Guardar/actualizar planes
-- `GET /api/my-day/plans/[date]` - Obtener plan por fecha
-- `GET /api/my-day/plans?action=stats` - Estadísticas de planes
-- `GET /api/my-day/plans?action=recent` - Planes recientes
-
-### ✅ Componentes Nuevos
-- **PlanLearningInsights**: Análisis de patrones de trabajo
-- **Navegación temporal**: Botones para navegar entre fechas
-- **Panel de historial**: Lista de planes guardados
-- **Indicadores visuales**: Estados de guardado y carga
-
-## 🚨 Importante
-
-1. **Configura las variables de entorno** antes de usar la aplicación
-2. **Genera una nueva clave de encriptación** para producción
-3. **Verifica que las URLs de Google OAuth** estén configuradas correctamente
-4. **Prueba la funcionalidad** después de configurar las variables
-
-## 🔗 URLs Importantes
-
-- **Aplicación**: https://octopus-byh0hk7ri-arichicho1-gmailcoms-projects.vercel.app
-- **Dashboard Vercel**: https://vercel.com/arichicho1-gmailcoms-projects/octopus
-- **Mi Día**: https://octopus-byh0hk7ri-arichicho1-gmailcoms-projects.vercel.app/dashboard/my-day
-
-## 📝 Próximos Pasos
-
-1. Configurar variables de entorno en Vercel
-2. Probar la funcionalidad de "Mi Día" con persistencia
-3. Verificar que las integraciones funcionen correctamente
-4. Configurar dominio personalizado si es necesario
+- [Firebase Console](https://console.firebase.google.com/)
+- [Google Cloud Console](https://console.cloud.google.com/)
+- [Vercel Environment Variables](https://vercel.com/docs/concepts/projects/environment-variables)
+- [Configuración de Seguridad](./SECURITY.md)
