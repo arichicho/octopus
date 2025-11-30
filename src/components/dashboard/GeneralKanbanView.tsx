@@ -36,13 +36,10 @@ export function GeneralKanbanView({
 }: GeneralKanbanViewProps) {
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [selectedCompanyForTask, setSelectedCompanyForTask] = useState<CompanyEnhanced | null>(null);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
-  // Filter tasks
+  // Always show all tasks in general view (no filtering)
   const activeTasks = getActiveTasks(tasks);
-  const filteredTasks = selectedCompanyId
-    ? activeTasks.filter(t => t.companyId === selectedCompanyId)
-    : activeTasks;
+  const filteredTasks = activeTasks;
 
   // Use centralized task view hook
   const { activeView, setActiveView, viewConfigs, helpers } = useTaskView({
@@ -52,9 +49,8 @@ export function GeneralKanbanView({
 
   // Handlers
   const openCreateForCompany = (companyId?: string | null) => {
-    const id = companyId ?? selectedCompanyId;
-    if (id) {
-      const company = companies.find(c => c.id === id) || null;
+    if (companyId) {
+      const company = companies.find(c => c.id === companyId) || null;
       setSelectedCompanyForTask(company);
     } else {
       setSelectedCompanyForTask(null);
@@ -89,17 +85,19 @@ export function GeneralKanbanView({
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Empresas</h3>
-            <span className="text-xs text-gray-500 hidden sm:inline">Filtra por empresa</span>
+            <span className="text-xs text-gray-500 hidden sm:inline">Ver tareas por empresa</span>
           </div>
           <div className="flex gap-2 py-1 horizontal-scroll scrollbar-hide">
             <button
-              onClick={() => setSelectedCompanyId(null)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap flex-shrink-0 ${
-                selectedCompanyId === null
-                  ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-              title="Mostrar todas las tareas"
+              onClick={() => {
+                // Clear any company selection and stay in general view
+                if (onCompanyClick) {
+                  // Navigate to general view (clear hash)
+                  window.location.hash = '';
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors whitespace-nowrap flex-shrink-0"
+              title="Ver todas las tareas"
             >
               <span className="text-sm">Todas</span>
               <Badge variant="secondary" className="text-xs">{activeTasks.length}</Badge>
@@ -110,18 +108,13 @@ export function GeneralKanbanView({
                 <button
                   key={c.id}
                   onClick={() => {
-                    const newId = selectedCompanyId === c.id ? null : c.id;
-                    setSelectedCompanyId(newId);
-                    if (onCompanyClick && newId) {
+                    // Navigate to company view instead of filtering
+                    if (onCompanyClick) {
                       onCompanyClick(c);
                     }
                   }}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selectedCompanyId === c.id
-                      ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                  title={`Filtrar por ${c.name}`}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors whitespace-nowrap flex-shrink-0"
+                  title={`Ver tareas de ${c.name}`}
                 >
                   <CompanyIcon
                     logoUrl={c.logoUrl}
@@ -170,7 +163,7 @@ export function GeneralKanbanView({
       <CreateTaskModal
         isOpen={createTaskModalOpen}
         onClose={handleCloseCreateModal}
-        initialCompanyId={selectedCompanyForTask?.id || selectedCompanyId || undefined}
+        initialCompanyId={selectedCompanyForTask?.id || undefined}
         onTaskCreated={() => {
           handleCloseCreateModal();
         }}
