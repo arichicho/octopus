@@ -33,9 +33,9 @@ export function CompanyTasksView() {
   const [showAllCompanies, setShowAllCompanies] = useState(false);
 
   const { user } = useAuth();
-  const { companies, fetchCompanies, selectedCompany } = useCompanyEnhancedStore();
+  const { companies, fetchCompanies, selectedCompany, setSelectedCompany } = useCompanyEnhancedStore();
   const { tasks, loadTasks, updateTask, loading: tasksLoading } = useTaskStore();
-  const { companyId } = useHashNavigation();
+  const { companyId, clearHash } = useHashNavigation();
 
   const company = selectedCompany || companies.find(c => c.id === companyId);
   const companyTasks = showAllCompanies
@@ -97,7 +97,10 @@ export function CompanyTasksView() {
   };
 
   const handleBackToBoard = () => {
-    window.location.hash = '';
+    // Clear hash navigation
+    clearHash();
+    // Clear selected company from store
+    setSelectedCompany?.(null);
   };
 
   // Early returns for missing data

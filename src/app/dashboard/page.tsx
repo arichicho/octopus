@@ -126,42 +126,41 @@ export default function GoogleStyleDashboardPage() {
               </div>
             </div>
 
-            {/* General Overview - Default View */}
-            <GeneralKanbanView
-              companies={companiesForView}
-              tasks={activeTasks}
-              onTaskClick={(task) => {
-                // Navigate to company view with task selected
-                const taskCompany = userCompanies.find(c => c.id === task.companyId);
-                if (taskCompany) {
-                  setSelectedCompany?.(taskCompany);
-                  navigateToCompany(taskCompany.id);
-                }
-              }}
-              onCompleteTask={async (e, task) => {
-                e.stopPropagation();
-                try {
-                  await updateTask(task.id!, {
-                    status: 'completed',
-                    completedAt: new Date(),
-                    updatedAt: new Date(),
-                  });
-                  if (user?.uid) loadTasks(user.uid);
-                } catch (error) {
-                  console.error('Error completing task:', error);
-                }
-              }}
-              onCompanyClick={(company) => {
-                setSelectedCompany?.(company);
-                navigateToCompany(company.id);
-              }}
-            />
-
-            {/* Company Detail View - Only show when company is selected */}
-            {selectedCompany && (
-              <div className="mt-8">
-                <CompanyTasksView />
-              </div>
+            {/* Conditional View: Show either General or Company view, not both */}
+            {selectedCompany || companyId ? (
+              /* Company Detail View - Only show when company is selected */
+              <CompanyTasksView />
+            ) : (
+              /* General Overview - Default View - Only show when no company is selected */
+              <GeneralKanbanView
+                companies={companiesForView}
+                tasks={activeTasks}
+                onTaskClick={(task) => {
+                  // Navigate to company view with task selected
+                  const taskCompany = userCompanies.find(c => c.id === task.companyId);
+                  if (taskCompany) {
+                    setSelectedCompany?.(taskCompany);
+                    navigateToCompany(taskCompany.id);
+                  }
+                }}
+                onCompleteTask={async (e, task) => {
+                  e.stopPropagation();
+                  try {
+                    await updateTask(task.id!, {
+                      status: 'completed',
+                      completedAt: new Date(),
+                      updatedAt: new Date(),
+                    });
+                    if (user?.uid) loadTasks(user.uid);
+                  } catch (error) {
+                    console.error('Error completing task:', error);
+                  }
+                }}
+                onCompanyClick={(company) => {
+                  setSelectedCompany?.(company);
+                  navigateToCompany(company.id);
+                }}
+              />
             )}
 
             {/* Quick Add Modal */}
