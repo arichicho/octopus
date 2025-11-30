@@ -9,6 +9,7 @@ import { CheckCircle, Clock, AlertTriangle, Calendar, ArrowUpDown, ArrowUp, Arro
 import { TaskStatus } from '@/types/task';
 import { Task } from '@/lib/firebase/firestore';
 import { firestoreDateToDate } from '@/lib/utils/dateUtils';
+import { getPriorityText, getStatusText, getDaysRemaining } from '@/lib/utils/taskUtils';
 
 interface TaskListViewProps {
   tasks: Task[];
@@ -100,18 +101,23 @@ export function TaskListView({
   // Helper functions for improved UI
   const getPriorityBadge = (priority: string) => {
     const priorityConfig = {
+      urgent: { 
+        label: getPriorityText('urgent'), 
+        className: 'bg-red-100 text-red-800 border-red-200', 
+        icon: <AlertCircle className="h-3 w-3 mr-1" />
+      },
       high: { 
-        label: 'Alta', 
+        label: getPriorityText('high'), 
         className: 'bg-red-100 text-red-800 border-red-200', 
         icon: <AlertCircle className="h-3 w-3 mr-1" />
       },
       medium: { 
-        label: 'Media', 
+        label: getPriorityText('medium'), 
         className: 'bg-yellow-100 text-yellow-800 border-yellow-200', 
         icon: <Clock className="h-3 w-3 mr-1" />
       },
       low: { 
-        label: 'Baja', 
+        label: getPriorityText('low'), 
         className: 'bg-green-100 text-green-800 border-green-200', 
         icon: <CheckCircle className="h-3 w-3 mr-1" />
       }
@@ -128,30 +134,29 @@ export function TaskListView({
   };
 
   const getStatusBadge = (status: string) => {
-    console.log('🔍 TaskListView getStatusBadge called with status:', status, 'type:', typeof status);
     const statusConfig = {
       pending: { 
-        label: 'Pendiente', 
+        label: getStatusText('pending'), 
         className: 'bg-gray-100 text-gray-800 border-gray-200', 
         icon: <Clock className="h-3 w-3 mr-1" />
       },
       in_progress: { 
-        label: 'En Progreso', 
+        label: getStatusText('in_progress'), 
         className: 'bg-blue-100 text-blue-800 border-blue-200', 
         icon: <Zap className="h-3 w-3 mr-1" />
       },
       review: { 
-        label: 'Esperando Respuesta', 
+        label: getStatusText('review'), 
         className: 'bg-purple-100 text-purple-800 border-purple-200', 
         icon: <Clock className="h-3 w-3 mr-1" />
       },
       completed: { 
-        label: 'Completada', 
+        label: getStatusText('completed'), 
         className: 'bg-green-100 text-green-800 border-green-200', 
         icon: <CheckCircle className="h-3 w-3 mr-1" />
       },
       cancelled: { 
-        label: 'Cancelada', 
+        label: getStatusText('cancelled'), 
         className: 'bg-red-100 text-red-800 border-red-200', 
         icon: <AlertTriangle className="h-3 w-3 mr-1" />
       }
@@ -170,9 +175,8 @@ export function TaskListView({
   const getDaysUntilDue = (dueDate: Date | null) => {
     if (!dueDate) return null;
     
-    const today = new Date();
-    const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = getDaysRemaining(dueDate);
+    if (diffDays === null) return null;
     
     if (diffDays < 0) {
       return { text: `Vencida hace ${Math.abs(diffDays)} días`, className: 'text-red-600 font-semibold' };

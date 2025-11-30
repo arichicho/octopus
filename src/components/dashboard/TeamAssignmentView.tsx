@@ -63,9 +63,7 @@ function TeamAssignmentViewContent({
 
   useEffect(() => {
     if (companyId) {
-      console.log('🔄 TeamAssignmentView: Loading users for company:', companyId);
       loadUsers(companyId).catch(err => {
-        console.error('❌ TeamAssignmentView: Error loading users:', err);
         setNotification({
           type: 'error',
           title: 'Error al Cargar Usuarios',
@@ -148,10 +146,8 @@ function TeamAssignmentViewContent({
         });
       }
 
-      console.log('✅ TeamAssignmentView: Generated team members:', members.length);
       return members;
     } catch (error) {
-      console.error('❌ TeamAssignmentView: Error generating team members:', error);
       // Fallback: crear un miembro demo en caso de error
       return [{
         id: 'fallback-user',

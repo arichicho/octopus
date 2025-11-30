@@ -56,14 +56,12 @@ export function DraggableTaskCard({
   
   const handleDragStart = (e: React.DragEvent) => {
     e.stopPropagation();
-    console.log('🔄 DraggableTaskCard: Starting drag for task:', task.title);
     setIsBeingDragged(true);
     startDrag(task, weekId, priorityId, statusId, userId);
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
     e.stopPropagation();
-    console.log('🔄 DraggableTaskCard: Ending drag for task:', task.title);
     setIsBeingDragged(false);
     stopDrag();
   };

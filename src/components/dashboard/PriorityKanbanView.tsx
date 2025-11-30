@@ -5,11 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
 import { TaskStatus } from '@/types/task';
 import { Task } from '@/lib/firebase/firestore';
-import { firestoreDateToDate } from '@/lib/utils/dateUtils';
 import { DroppablePriorityColumn } from '@/components/tasks/DroppablePriorityColumn';
 import { useTaskStore } from '@/lib/store/useTaskStore';
 import { DragDropProvider } from '@/lib/context/DragDropContext';
 import { TaskNotification } from '@/components/ui/task-notification';
+import { getDaysRemaining } from '@/lib/utils/taskUtils';
 
 interface PriorityKanbanViewProps {
   tasks: Task[];
@@ -103,15 +103,6 @@ export function PriorityKanbanView({
     return tasks.filter(task => task.priority === priority);
   };
 
-  const getDaysRemaining = (dueDate: Date) => {
-    const today = new Date();
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const dueDateStart = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-    const diffTime = dueDateStart.getTime() - todayStart.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
   return (
     <DragDropProvider>
       <div className="space-y-6">
@@ -146,7 +137,7 @@ export function PriorityKanbanView({
                   getPriorityColor={getPriorityColor}
                   formatDate={formatDate}
                   isOverdue={isOverdue}
-                  getDaysRemaining={getDaysRemaining}
+                  getDaysRemaining={(dueDate: Date) => getDaysRemaining(dueDate) ?? 0}
                   showCompanyInfo={showCompanyInfo}
                   getCompanyName={getCompanyName}
                   getCompanyColor={getCompanyColor}

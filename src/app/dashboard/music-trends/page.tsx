@@ -52,6 +52,7 @@ export default function MusicTrendsPage() {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           territory: currentTerritory,
           period: currentPeriod

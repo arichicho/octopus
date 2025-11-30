@@ -4,8 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tag, Calendar, User, Building2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatTaskDate, getPriorityColor, getPriorityText, getStatusColor, getStatusText } from '@/lib/utils/taskUtils';
 
 interface TaskCardProps {
   task: {
@@ -27,69 +26,6 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onEdit, onComplete }: TaskCardProps) {
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'high':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low':
-        return 'bg-green-100 text-green-800 border-green-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'review':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'cancelled':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Completada';
-      case 'in_progress':
-        return 'En Progreso';
-      case 'review':
-        return 'Esperando Respuesta';
-      case 'cancelled':
-        return 'Cancelada';
-      case 'pending':
-        return 'Pendiente';
-      default:
-        return 'Pendiente'; // Fallback para cualquier caso inesperado
-    }
-  };
-
-  const getPriorityText = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return 'Urgente';
-      case 'high':
-        return 'Alta';
-      case 'medium':
-        return 'Media';
-      case 'low':
-        return 'Baja';
-      default:
-        return 'Normal';
-    }
-  };
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -101,7 +37,7 @@ export function TaskCard({ task, onEdit, onComplete }: TaskCardProps) {
               {task.description}
             </CardDescription>
           </div>
-          <Badge className={getPriorityColor(task.priority)}>
+          <Badge className={`${getPriorityColor(task.priority)} border`}>
             {getPriorityText(task.priority)}
           </Badge>
         </div>
@@ -135,7 +71,7 @@ export function TaskCard({ task, onEdit, onComplete }: TaskCardProps) {
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Vence:</span>
               <span className="font-medium">
-                {format(task.dueDate, 'dd/MM/yyyy', { locale: es })}
+                {formatTaskDate(task.dueDate)}
               </span>
             </div>
           )}
@@ -143,7 +79,7 @@ export function TaskCard({ task, onEdit, onComplete }: TaskCardProps) {
           {/* Estado */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Estado:</span>
-            <Badge className={getStatusColor(task.status)}>
+            <Badge className={`${getStatusColor(task.status)} border`}>
               {getStatusText(task.status)}
             </Badge>
           </div>

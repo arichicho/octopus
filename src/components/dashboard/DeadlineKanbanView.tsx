@@ -15,6 +15,7 @@ import { useTaskStore } from '@/lib/store/useTaskStore';
 import { DragDropProvider } from '@/lib/context/DragDropContext';
 import { TaskNotification } from '@/components/ui/task-notification';
 import { useState } from 'react';
+import { getDaysRemaining } from '@/lib/utils/taskUtils';
 
 interface DeadlineKanbanViewProps {
   tasks: Task[];
@@ -155,16 +156,6 @@ export function DeadlineKanbanView({
     return tasks.filter(week.filterFn);
   };
 
-  const getDaysRemaining = (dueDate: Date) => {
-    const today = new Date();
-    // Reset time to start of day for accurate comparison
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const dueDateStart = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-    const diffTime = dueDateStart.getTime() - todayStart.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
   return (
     <DragDropProvider>
       <div className="space-y-6">
@@ -200,7 +191,7 @@ export function DeadlineKanbanView({
                 getPriorityColor={getPriorityColor}
                 formatDate={formatDate}
                 isOverdue={isOverdue}
-                getDaysRemaining={getDaysRemaining}
+                getDaysRemaining={(dueDate: Date) => getDaysRemaining(dueDate) ?? 0}
                 isCurrentWeek={true}
                 showCompanyInfo={showCompanyInfo}
                 getCompanyName={getCompanyName}
@@ -230,7 +221,7 @@ export function DeadlineKanbanView({
                     getPriorityColor={getPriorityColor}
                     formatDate={formatDate}
                     isOverdue={isOverdue}
-                    getDaysRemaining={getDaysRemaining}
+                    getDaysRemaining={(dueDate: Date) => getDaysRemaining(dueDate) ?? 0}
                     showCompanyInfo={showCompanyInfo}
                     getCompanyName={getCompanyName}
                     getCompanyColor={getCompanyColor}
@@ -259,7 +250,7 @@ export function DeadlineKanbanView({
                 getPriorityColor={getPriorityColor}
                 formatDate={formatDate}
                 isOverdue={isOverdue}
-                getDaysRemaining={getDaysRemaining}
+                getDaysRemaining={(dueDate: Date) => getDaysRemaining(dueDate) ?? 0}
                 isNoDateSection={true}
                 showCompanyInfo={showCompanyInfo}
                 getCompanyName={getCompanyName}

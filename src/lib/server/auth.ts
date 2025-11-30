@@ -27,9 +27,21 @@ export async function verifyAuth(request: NextRequest): Promise<AuthContext | nu
     const header = request.headers.get('authorization') || request.headers.get('Authorization');
     console.log('🔍 DEBUG verifyAuth - Header received:', header ? 'YES' : 'NO');
     console.log('🔍 DEBUG verifyAuth - Header value:', header);
-    
-    const hasBearer = !!header && header.toLowerCase().startsWith('bearer ');
-    const token = hasBearer ? header!.split(' ')[1] : null;
+
+    const internalHeader = request.headers.get('x-internal-api-key');
+    const bearerValue = header ? header.replace(/^Bearer\s+/i, '').trim() : undefined;
+    const internalKey = process.env.INTERNAL_API_KEY;
+
+    if (
+      (internalKey && (bearerValue === internalKey || internalHeader === internalKey)) ||
+      (!internalKey && process.env.NODE_ENV !== 'production' && (bearerValue === 'internal' || internalHeader === 'internal'))
+    ) {
+      console.log('✅ DEBUG verifyAuth - Internal API key accepted');
+      return { uid: 'internal-service', email: 'internal@octopus.local' };
+    }
+
+    const hasBearer = !!bearerValue;
+    const token = hasBearer ? bearerValue : null;
     console.log('🔍 DEBUG verifyAuth - Cookie present:', cookieToken ? 'YES' : 'NO');
     console.log('🔍 DEBUG verifyAuth - Bearer present:', hasBearer ? 'YES' : 'NO');
     

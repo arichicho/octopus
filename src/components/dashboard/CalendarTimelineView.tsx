@@ -11,6 +11,7 @@ import { Task } from '@/lib/firebase/firestore';
 import { firestoreDateToDate } from '@/lib/utils/dateUtils';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isToday, isTomorrow, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getPriorityText, getStatusText } from '@/lib/utils/taskUtils';
 
 interface CalendarTimelineViewProps {
   tasks: Task[];
@@ -199,15 +200,11 @@ export function CalendarTimelineView({
                             
                             <div className="flex items-center justify-between">
                               <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
-                                {task.priority === 'urgent' ? 'Urgente' :
-                                 task.priority === 'high' ? 'Alta' :
-                                 task.priority === 'medium' ? 'Media' : 'Baja'}
+                                {getPriorityText(task.priority)}
                               </Badge>
                               
                               <Badge className={`text-xs ${getStatusColor(task.status)}`}>
-                                {task.status === 'pending' ? 'Pendiente' :
-                                 task.status === 'in_progress' ? 'En Progreso' :
-                                 task.status === 'completed' ? 'Completada' : 'Cancelada'}
+                                {getStatusText(task.status)}
                               </Badge>
                             </div>
                             
@@ -293,15 +290,11 @@ export function CalendarTimelineView({
                   
                   <div className="flex items-center justify-between">
                     <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
-                      {task.priority === 'urgent' ? 'Urgente' :
-                       task.priority === 'high' ? 'Alta' :
-                       task.priority === 'medium' ? 'Media' : 'Baja'}
+                      {getPriorityText(task.priority)}
                     </Badge>
                     
                     <Badge className={`text-xs ${getStatusColor(task.status)}`}>
-                      {task.status === 'pending' ? 'Pendiente' :
-                       task.status === 'in_progress' ? 'En Progreso' :
-                       task.status === 'completed' ? 'Completada' : 'Cancelada'}
+                      {getStatusText(task.status)}
                     </Badge>
                   </div>
                 </div>

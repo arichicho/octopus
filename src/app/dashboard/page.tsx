@@ -31,13 +31,7 @@ export default function GoogleStyleDashboardPage() {
 
   // Active tasks
   const activeTasks = useMemo(() => {
-    const filtered = tasks.filter((t) => t.status !== "completed" && t.status !== "cancelled");
-    console.log('🔍 Debug activeTasks:', {
-      totalTasks: tasks.length,
-      activeTasks: filtered.length,
-      tasks: tasks.map(t => ({ id: t.id, title: t.title, status: t.status, companyId: t.companyId }))
-    });
-    return filtered;
+    return tasks.filter((t) => t.status !== "completed" && t.status !== "cancelled");
   }, [tasks]);
 
   // Filter companies to only show user's companies
@@ -75,16 +69,6 @@ export default function GoogleStyleDashboardPage() {
       const companyIdsWithTasks = Array.from(new Set(activeTasks.map((t: any) => t.companyId).filter(Boolean)));
       filtered = companies.filter((c: any) => companyIdsWithTasks.includes(c.id));
     }
-    
-    console.log('🔍 Debug userCompanies:', {
-      userUid: user.uid,
-      userEmail: user.email,
-      totalCompanies: companies.length,
-      filteredCompanies: filtered.length,
-      activeTasksCount: activeTasks.length,
-      filterMethod: filtered.length > 0 ? 'found' : 'none',
-      companies: companies.map(c => ({ id: c.id, name: c.name, createdBy: c.createdBy }))
-    });
     
     return filtered;
   }, [companies, user]);
