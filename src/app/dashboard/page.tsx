@@ -98,12 +98,14 @@ export default function GoogleStyleDashboardPage() {
           [...prev, ...valid].forEach((c) => c?.id && map.set(c.id, c));
           return Array.from(map.values());
         });
-        // Select first as a sensible default for follow-up navigation
-        setSelectedCompany?.(valid[0]);
+        // DON'T auto-select company - let user choose via navigation
       }
     };
-    if (activeTasks.length > 0) ensureCompanies();
-  }, [activeTasks, companiesForView, setSelectedCompany]);
+    // Only ensure companies if we're in general view (no company selected)
+    if (activeTasks.length > 0 && !selectedCompany && !companyId) {
+      ensureCompanies();
+    }
+  }, [activeTasks, companiesForView, selectedCompany, companyId]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 content-width-fix">
@@ -127,11 +129,12 @@ export default function GoogleStyleDashboardPage() {
             </div>
 
             {/* Conditional View: Show either General or Company view, not both */}
-            {selectedCompany || companyId ? (
-              /* Company Detail View - Only show when company is selected */
+            {/* Use companyId from hash as PRIMARY source of truth - ignore selectedCompany */}
+            {companyId ? (
+              /* Company Detail View - Only show when companyId is in hash */
               <CompanyTasksView />
             ) : (
-              /* General Overview - Default View - Only show when no company is selected */
+              /* General Overview - Default View - Only show when no companyId in hash */
               <GeneralKanbanView
                 companies={companiesForView}
                 tasks={activeTasks}
